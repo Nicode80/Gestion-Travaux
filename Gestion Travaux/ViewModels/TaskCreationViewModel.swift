@@ -204,6 +204,7 @@ final class TaskCreationViewModel {
         isRecordingPiece = false
         isRecordingActivite = false
         activeField = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     // MARK: - Private helpers
@@ -258,13 +259,24 @@ final class TaskCreationViewModel {
         request.shouldReportPartialResults = true
         recognitionRequest = request
 
-        let inputNode = voiceEngine.inputNode
-        let format = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-        }
-
         do {
+            // AVAudioSession must be configured before accessing inputNode format
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+
+            let inputNode = voiceEngine.inputNode
+            let format = inputNode.outputFormat(forBus: 0)
+            // Guard against invalid format (0-channel) which crashes installTap on simulator
+            guard format.channelCount > 0 else {
+                stopVoiceInput()
+                errorMessage = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."
+                return
+            }
+            inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+                self?.recognitionRequest?.append(buffer)
+            }
+
             voiceEngine.prepare()
             try voiceEngine.start()
         } catch {

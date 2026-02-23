@@ -31,19 +31,15 @@ struct TacheDetailView: View {
                 }
             }
 
-            // Linked activity
-            if let activite = tache.activite {
-                Section("Activité") {
-                    Label(activite.nom, systemImage: "wrench.and.screwdriver")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                }
-            }
-
-            // Linked room
-            if let piece = tache.piece {
-                Section("Pièce") {
-                    Label(piece.nom, systemImage: "door.left.hand.open")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+            // Linked piece and activity — plain info, never navigable
+            if tache.piece != nil || tache.activite != nil {
+                Section("Détails") {
+                    if let piece = tache.piece {
+                        LabeledContent("Pièce", value: piece.nom)
+                    }
+                    if let activite = tache.activite {
+                        LabeledContent("Activité", value: activite.nom)
+                    }
                 }
             }
 
