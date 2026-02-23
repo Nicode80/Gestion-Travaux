@@ -20,7 +20,9 @@ struct PieceListView: View {
                 )
             } else {
                 List(pieces) { piece in
-                    NavigationLink(value: piece) {
+                    NavigationLink {
+                        PieceDetailView(piece: piece)
+                    } label: {
                         HStack {
                             Image(systemName: "door.left.hand.open")
                                 .foregroundStyle(Color(hex: Constants.Couleurs.accent))

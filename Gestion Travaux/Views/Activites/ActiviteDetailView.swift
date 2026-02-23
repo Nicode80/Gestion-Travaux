@@ -5,10 +5,12 @@
 // Shell — astuces list implemented in Story 4.3.
 
 import SwiftUI
+import SwiftData
 
 struct ActiviteDetailView: View {
 
     let activite: ActiviteEntity
+    @Environment(\.modelContext) private var modelContext
 
     private var tachesActives: [TacheEntity] {
         activite.taches
@@ -39,7 +41,7 @@ struct ActiviteDetailView: View {
                         .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
                         .font(.subheadline)
                 } else {
-                    TacheListView(taches: tachesActives)
+                    TacheListView(taches: tachesActives, modelContext: modelContext)
                 }
             }
         }

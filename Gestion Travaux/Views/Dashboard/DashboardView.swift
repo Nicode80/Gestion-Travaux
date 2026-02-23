@@ -28,15 +28,6 @@ struct DashboardView: View {
                 .navigationTitle("Gestion Travaux")
                 .navigationBarTitleDisplayMode(.large)
                 .background(Color(hex: Constants.Couleurs.backgroundBureau))
-                .navigationDestination(for: TacheEntity.self) { tache in
-                    TacheDetailView(tache: tache, modelContext: modelContext)
-                }
-                .navigationDestination(for: PieceEntity.self) { piece in
-                    PieceDetailView(piece: piece)
-                }
-                .navigationDestination(for: ActiviteEntity.self) { activite in
-                    ActiviteDetailView(activite: activite)
-                }
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         // Disabled during active recording (boutonVert lockdown — Story 2.1)
@@ -120,7 +111,9 @@ struct DashboardView: View {
                     emptyTasksRow
                 } else {
                     ForEach(viewModel.tachesActives) { tache in
-                        NavigationLink(value: tache) {
+                        NavigationLink {
+                            TacheDetailView(tache: tache, modelContext: modelContext)
+                        } label: {
                             TaskRowView(tache: tache)
                         }
                     }

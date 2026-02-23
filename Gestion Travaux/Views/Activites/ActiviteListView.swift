@@ -20,7 +20,9 @@ struct ActiviteListView: View {
                 )
             } else {
                 List(activites) { activite in
-                    NavigationLink(value: activite) {
+                    NavigationLink {
+                        ActiviteDetailView(activite: activite)
+                    } label: {
                         HStack {
                             Image(systemName: "wrench.and.screwdriver")
                                 .foregroundStyle(Color(hex: Constants.Couleurs.accent))

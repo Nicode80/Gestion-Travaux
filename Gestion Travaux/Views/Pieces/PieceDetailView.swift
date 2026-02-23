@@ -5,10 +5,12 @@
 // Receives the PieceEntity from a NavigationLink in PieceListView.
 
 import SwiftUI
+import SwiftData
 
 struct PieceDetailView: View {
 
     let piece: PieceEntity
+    @Environment(\.modelContext) private var modelContext
 
     private var tachesActives: [TacheEntity] {
         piece.taches
@@ -41,7 +43,9 @@ struct PieceDetailView: View {
                 if !tachesActives.isEmpty {
                     Section("Actives") {
                         ForEach(tachesActives) { tache in
-                            NavigationLink(value: tache) {
+                            NavigationLink {
+                                TacheDetailView(tache: tache, modelContext: modelContext)
+                            } label: {
                                 TaskRowView(tache: tache)
                             }
                         }
@@ -51,7 +55,9 @@ struct PieceDetailView: View {
                 if !tachesTerminees.isEmpty {
                     Section("Terminées") {
                         ForEach(tachesTerminees) { tache in
-                            NavigationLink(value: tache) {
+                            NavigationLink {
+                                TacheDetailView(tache: tache, modelContext: modelContext)
+                            } label: {
                                 TaskRowView(tache: tache)
                             }
                         }
@@ -61,7 +67,9 @@ struct PieceDetailView: View {
                 if !tachesArchivees.isEmpty {
                     Section("Archivées") {
                         ForEach(tachesArchivees) { tache in
-                            NavigationLink(value: tache) {
+                            NavigationLink {
+                                TacheDetailView(tache: tache, modelContext: modelContext)
+                            } label: {
                                 TaskRowView(tache: tache)
                             }
                         }
