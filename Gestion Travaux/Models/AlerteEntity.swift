@@ -12,6 +12,8 @@ final class AlerteEntity {
     /// JSON-encoded [ContentBlock]
     var blocksData: Data = Data()
     var createdAt: Date = Date()
+    /// Set to true when the linked task is archived (FR31 — auto-resolution)
+    var resolue: Bool = false
 
     var tache: TacheEntity?
 

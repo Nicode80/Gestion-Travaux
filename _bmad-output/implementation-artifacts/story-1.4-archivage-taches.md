@@ -2,7 +2,7 @@
 story: "1.4"
 epic: 1
 title: "Archivage des tâches terminées"
-status: pending
+status: done
 frs: [FR28, FR31]
 nfrs: []
 ---
@@ -60,9 +60,54 @@ afin de distinguer clairement ce qui est fini de ce qui est en cours.
 
 ## Tasks
 
-- [ ] Ajouter bouton [Archiver cette tâche] dans TacheDetailView (visible si statut == .terminee)
-- [ ] Implémenter `.alert` de confirmation dans TacheDetailView
-- [ ] Implémenter logique d'archivage dans le ViewModel : statut → .archivee + résolution AlerteEntities + modelContext.save()
-- [ ] Mettre à jour le filtre @Query de TacheListView pour exclure les tâches archivées de la liste active
-- [ ] Vérifier que la tâche archivée disparaît immédiatement de la liste active
-- [ ] Vérifier que la création d'une nouvelle tâche avec le même nom crée bien une nouvelle instance
+- [x] Ajouter bouton [Archiver cette tâche] dans TacheDetailView (visible si statut == .terminee)
+- [x] Implémenter `.alert` de confirmation dans TacheDetailView
+- [x] Implémenter logique d'archivage dans le ViewModel : statut → .archivee + résolution AlerteEntities + modelContext.save()
+- [x] Mettre à jour le filtre @Query de TacheListView pour exclure les tâches archivées de la liste active
+- [x] Vérifier que la tâche archivée disparaît immédiatement de la liste active
+- [x] Vérifier que la création d'une nouvelle tâche avec le même nom crée bien une nouvelle instance
+
+## Dev Agent Record
+
+### Files Created
+
+| Fichier | Description |
+|---------|-------------|
+| `Gestion Travaux/ViewModels/TacheDetailViewModel.swift` | Logique d'archivage : `demanderArchivage()`, `archiver()` (résolution alertes FR31 + statut .archivee + save). |
+| `Gestion TravauxTests/Taches/TacheDetailViewModelTests.swift` | 6 tests : archivage statut, résolution alertes, isolation alertes autres tâches, doublon archivé exclu. |
+
+### Files Modified
+
+| Fichier | Modification |
+|---------|-------------|
+| `Gestion Travaux/Models/AlerteEntity.swift` | Ajout `var resolue: Bool = false` (FR31 — auto-résolution à l'archivage). |
+| `Gestion Travaux/Views/Taches/TacheDetailView.swift` | Ajout paramètre `modelContext`, `TacheDetailViewModel`, bouton archive (si .terminee), `.alert` confirmation. |
+| `Gestion Travaux/Views/Dashboard/DashboardView.swift` | Pass `modelContext` à `TacheDetailView` dans `navigationDestination`. |
+
+### Implementation Notes
+
+**Filtre actif déjà en place :** `DashboardViewModel.charger()` filtre `{ $0.statut == .active }` depuis la story 1.2 — les tâches archivées n'apparaissent jamais dans la liste principale sans modification.
+
+**Doublon archivé :** `TaskCreationViewModel.valider()` ne vérifie les doublons que sur `statut == .active` (depuis story 1.3) — une tâche archivée du même nom ne bloque pas la création d'une nouvelle instance.
+
+**Folder references Xcode :** Le projet utilise des folder references — les nouveaux fichiers Swift sont automatiquement inclus dans la compilation sans modification de `project.pbxproj`.
+
+**AlerteEntity.resolue :** Propriété ajoutée avec valeur par défaut `false` — SwiftData la migre automatiquement (iOS 18, pas de migration manuelle nécessaire).
+
+### Test Results
+
+**Suite complète : 50 tests passés, 0 échec** (iPhone 17 simulator, iOS 26.2)
+
+- `TacheDetailViewModelTests` : 6/6 ✓
+- `BriefingEngineTests` : 9/9 ✓ (régression)
+- `JaroWinklerTests` : 5/5 ✓ (régression)
+- `DashboardViewModelTests` : 8/8 ✓ (régression)
+- `SwiftDataSchemaTests` : 10/10 ✓ (régression)
+- UI Tests : 3/3 ✓ (régression)
+
+### Change Log
+
+| Date | Auteur | Description |
+|------|--------|-------------|
+| 2026-02-23 | Dev Agent | Implémentation story 1.4 : TacheDetailViewModel (archivage + FR31), TacheDetailView (bouton + alert), AlerteEntity.resolue, DashboardView patch navigationDestination. 50/50 tests passés. |
+| 2026-02-23 | Review Agent | Code review fixes : M1 rollback in-memory sur échec save() + errorMessage reset (TacheDetailViewModel), M2 remplacement test bidon archivedTaskNotDuplicate par archiverRollsBackOnSaveFailure, L1 dismiss() automatique après archivage réussi (TacheDetailView). 50/50 tests passés. |

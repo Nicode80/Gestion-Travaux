@@ -29,7 +29,7 @@ struct DashboardView: View {
                 .navigationBarTitleDisplayMode(.large)
                 .background(Color(hex: Constants.Couleurs.backgroundBureau))
                 .navigationDestination(for: TacheEntity.self) { tache in
-                    TacheDetailView(tache: tache)
+                    TacheDetailView(tache: tache, modelContext: modelContext)
                 }
                 .navigationDestination(for: PieceEntity.self) { piece in
                     PieceDetailView(piece: piece)
