@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Travaux — Directions de Design v2</title>
+<style>
+  :root {
+    --bg-chantier: #0C0C0E;
+    --bg-bureau: #F8F6F2;
+    --bg-card: #EFEEED;
+    --bg-chantier-card: #1C1C1E;
+    --accent: #1B3D6F;
+    --text-primary: #1C1C1E;
+    --text-secondary: #6C6C70;
+    --separator: #E5E3DF;
+    --red: #E53E3E;
+    --green: #34C759;
+    --alerte: #FF3B30;
+    --astuce-critique: #FF9500;
+    --astuce-importante: #FFCC00;
+    --note: #6C6C70;
+    --achat: #1B3D6F;
+    --white: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    background: #1A1A1A;
+    color: #F0F0F0;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    text-align: center;
+    padding: 48px 24px 28px;
+    border-bottom: 1px solid #333;
+  }
+
+  .page-header h1 { font-size: 28px; font-weight: 700; color: #F0F0F0; margin-bottom: 6px; }
+  .page-header p { font-size: 14px; color: #888; }
+
+  .version-badge {
+    display: inline-block;
+    background: #2A3F60;
+    color: #6EA8FE;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 10px;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #888;
+    padding: 36px 32px 14px;
+  }
+
+  .section-note {
+    font-size: 12px;
+    color: #555;
+    padding: 0 32px 16px;
+    font-style: italic;
+  }
+
+  .screens-row {
+    display: flex;
+    gap: 24px;
+    padding: 0 32px 44px;
+    flex-wrap: wrap;
+  }
+
+  .screen-block { flex: 0 0 auto; }
+
+  .screen-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .screen-change {
+    font-size: 11px;
+    color: #4CAF50;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  /* iPhone Frame */
+  .iphone {
+    width: 280px;
+    height: 560px;
+    border-radius: 36px;
+    border: 3px solid #3A3A3A;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .iphone-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 24px;
+    background: #0C0C0E;
+    border-radius: 0 0 18px 18px;
+    z-index: 10;
+  }
+
+  .iphone-notch-light { background: #F8F6F2; }
+
+  .iphone-screen {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ====== MODE CHANTIER — CORRECTED ====== */
+  .chantier {
+    background: var(--bg-chantier);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chantier-top {
+    padding: 32px 16px 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .chantier-top-info {}
+
+  .chantier-status {
+    font-size: 10px;
+    color: #444;
+    margin-bottom: 6px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .chantier-task-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8A9BB8;
+  }
+
+  .chantier-task-sub {
+    font-size: 11px;
+    color: #3A3A3A;
+    margin-top: 2px;
+  }
+
+  .hamburger {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    background: #1C1C1E;
+    border: 1px solid #2E2E2E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #8A9BB8;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .chantier-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .big-btn-red {
+    width: 140px;
+    height: 140px;
+    border-radius: 70px;
+    background: radial-gradient(circle at 40% 35%, #FF6B6B, #C0392B);
+    box-shadow: 0 0 0 14px rgba(192,57,43,0.12), 0 8px 32px rgba(192,57,43,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .big-btn-green {
+    width: 140px;
+    height: 140px;
+    border-radius: 70px;
+    background: radial-gradient(circle at 40% 35%, #5EE07D, #27AE60);
+    box-shadow: 0 0 0 14px rgba(39,174,96,0.18), 0 0 0 28px rgba(39,174,96,0.08), 0 8px 32px rgba(39,174,96,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse-green 2s infinite;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 14px rgba(39,174,96,0.18), 0 0 0 28px rgba(39,174,96,0.08), 0 8px 32px rgba(39,174,96,0.4); }
+    50% { box-shadow: 0 0 0 20px rgba(39,174,96,0.22), 0 0 0 40px rgba(39,174,96,0.1), 0 8px 32px rgba(39,174,96,0.4); }
+  }
+
+  .btn-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.22);
+  }
+
+  .chantier-bottom {
+    padding: 0 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .bottom-btn {
+    flex: 1;
+    background: #1C1C1E;
+    border: 1px solid #2E2E2E;
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: #8A9BB8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .bottom-btn-fin {
+    background: #1A1A22;
+    border-color: #333340;
+    color: #666;
+  }
+
+  .recording-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(52,199,89,0.1);
+    border: 1px solid rgba(52,199,89,0.2);
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  .rec-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #34C759;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .rec-text {
+    font-size: 10px;
+    color: #34C759;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 16px;
+  }
+  .wave-bar { width: 2px; background: #34C759; border-radius: 1px; }
+
+  /* ====== MODE BUREAU ====== */
+  .bureau-screen {
+    background: var(--bg-bureau);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .bureau-nav {
+    padding: 28px 16px 8px;
+    border-bottom: 1px solid var(--separator);
+    flex-shrink: 0;
+  }
+
+  .bureau-nav-back { font-size: 13px; color: var(--accent); font-weight: 500; margin-bottom: 4px; }
+  .bureau-nav-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .bureau-nav-sub { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+
+  .bureau-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .bureau-section { display: flex; flex-direction: column; gap: 8px; }
+
+  .section-header {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 0 4px;
+  }
+
+  .prochaine-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--accent);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .prochaine-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
+  }
+
+  .prochaine-text { font-size: 14px; color: var(--text-primary); font-weight: 500; line-height: 1.4; }
+
+  .alert-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 11px 14px;
+    border-left: 3px solid var(--alerte);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .alert-text { font-size: 13px; color: var(--text-primary); line-height: 1.4; }
+
+  .astuce-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 11px 14px;
+    border-left: 3px solid var(--astuce-critique);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .astuce-text { font-size: 13px; color: var(--text-primary); line-height: 1.4; }
+
+  .cta-btn {
+    background: var(--accent);
+    color: white;
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(27,61,111,0.3);
+    flex-shrink: 0;
+    margin: 0 16px 16px;
+  }
+
+  /* ====== SWIPE CLASSIFIER — ARC CONCEPT ====== */
+  .classifier-screen {
+    background: var(--bg-bureau);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .classifier-nav {
+    padding: 28px 16px 10px;
+    border-bottom: 1px solid var(--separator);
+    flex-shrink: 0;
+  }
+
+  .classifier-nav-title { font-size: 17px; font-weight: 600; color: var(--text-primary); }
+  .classifier-nav-count { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  .classifier-arena {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .arc-container {
+    position: relative;
+    width: 240px;
+    height: 190px;
+  }
+
+  .capture-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 156px;
+    background: var(--white);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.06);
+    z-index: 3;
+  }
+
+  .capture-card-tilt-left {
+    transform: translate(-50%, -50%) rotate(-8deg) translateX(-10px);
+  }
+
+  .capture-card-task {
+    font-size: 9px;
+    color: var(--text-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 7px;
+  }
+
+  .capture-card-text { font-size: 12px; color: var(--text-primary); line-height: 1.5; }
+  .capture-card-time { font-size: 9px; color: var(--text-secondary); margin-top: 7px; }
+
+  .capture-card-stack-2 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(calc(-50% + 5px), calc(-50% + 5px));
+    width: 156px;
+    height: 60px;
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    z-index: 2;
+    opacity: 0.7;
+  }
+
+  .capture-card-stack-3 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(calc(-50% + 10px), calc(-50% + 10px));
+    width: 156px;
+    height: 60px;
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    z-index: 1;
+    opacity: 0.4;
+  }
+
+  .classifier-bottom {
+    padding: 10px 16px 14px;
+    border-top: 1px solid var(--separator);
+    flex-shrink: 0;
+  }
+
+  .progress-bar-bg {
+    height: 3px;
+    background: var(--separator);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill { height: 100%; width: 33%; background: var(--accent); border-radius: 2px; }
+  .progress-text { font-size: 11px; color: var(--text-secondary); text-align: center; margin-top: 6px; }
+
+  /* ====== DASHBOARD ====== */
+  .dashboard-screen {
+    background: var(--bg-bureau);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .dashboard-header {
+    padding: 28px 16px 12px;
+    flex-shrink: 0;
+  }
+
+  .dashboard-greeting { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .dashboard-title { font-size: 26px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; margin-top: 2px; }
+
+  .dashboard-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mode-chantier-cta {
+    background: var(--accent);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(27,61,111,0.3);
+  }
+
+  .cta-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .cta-text { flex: 1; }
+  .cta-label { font-size: 15px; font-weight: 700; color: white; }
+  .cta-sub { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+
+  .stats-row { display: flex; gap: 10px; }
+
+  .stat-card {
+    flex: 1;
+    background: var(--white);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    text-align: center;
+  }
+
+  .stat-number { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+  .stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 2px; font-weight: 500; }
+
+  .last-task-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .last-task-header { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+  .last-task-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .last-task-time { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .last-task-next { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--separator); font-size: 13px; color: var(--text-primary); display: flex; align-items: flex-start; gap: 6px; }
+  .next-icon { color: var(--accent); font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+
+  /* ====== ONBOARDING ====== */
+  .onboarding-screen {
+    background: var(--bg-bureau);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .onboarding-header { padding: 36px 20px 16px; flex-shrink: 0; }
+  .onboarding-step { font-size: 11px; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+  .onboarding-title { font-size: 24px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; }
+
+  .onboarding-body {
+    flex: 1;
+    padding: 8px 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .input-field {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 13px 14px;
+    font-size: 15px;
+    color: var(--text-primary);
+    border: 1.5px solid var(--separator);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .input-field-active { border-color: var(--accent); }
+  .input-placeholder { color: var(--text-secondary); }
+  .input-value { color: var(--text-primary); font-weight: 500; }
+  .input-chevron { color: var(--text-secondary); font-size: 12px; }
+  .input-hint { font-size: 12px; color: var(--text-secondary); padding: 0 4px; }
+
+  .voice-row { display: flex; gap: 10px; align-items: center; }
+
+  .voice-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 22px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(27,61,111,0.3);
+  }
+
+  .voice-hint { font-size: 13px; color: var(--text-secondary); }
+
+  .onboarding-cta {
+    background: var(--accent);
+    border-radius: 14px;
+    padding: 15px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    box-shadow: 0 4px 16px rgba(27,61,111,0.3);
+    margin: 12px 20px 20px;
+    flex-shrink: 0;
+  }
+
+  .onboarding-cta-disabled {
+    background: var(--separator);
+    color: var(--text-secondary);
+    box-shadow: none;
+  }
+
+  .page-divider { height: 1px; background: #2A2A2A; margin: 0 32px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Gestion Travaux — Directions de Design</h1>
+  <p>Direction : Acier Discret · SF Pro · 8pt grid · iOS 18+</p>
+  <div class="version-badge">v3 — Arcs bords d'écran</div>
+</div>
+
+<!-- ============================
+     SECTION 1 : MODE CHANTIER
+     ============================ -->
+<div class="section-label">1 · Mode Chantier — CORRIGÉ</div>
+<div class="section-note">☰ Hamburger en haut à droite · Photo + Fin session en bas · Bouton dominant au centre</div>
+<div class="screens-row">
+
+  <!-- Inactif rouge -->
+  <div class="screen-block">
+    <div class="screen-change">✅ CORRIGÉ — Hamburger haut, actions bas</div>
+    <div class="screen-label">Inactif (bouton rouge)</div>
+    <div class="iphone">
+      <div class="iphone-notch"></div>
+      <div class="iphone-screen">
+        <div class="chantier">
+          <div class="chantier-top">
+            <div class="chantier-top-info">
+              <div class="chantier-status"><span>9:41</span><span>●●●</span></div>
+              <div class="chantier-task-name">Chambre 1 · Pose Placo</div>
+              <div class="chantier-task-sub">Mode Chantier actif</div>
+            </div>
+            <div class="hamburger">☰</div>
+          </div>
+          <div class="chantier-center">
+            <div class="big-btn-red"><div class="btn-dot"></div></div>
+          </div>
+          <div class="chantier-bottom">
+            <div class="bottom-btn">📷 Photo</div>
+            <div class="bottom-btn bottom-btn-fin">■ Fin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actif vert pulsant -->
+  <div class="screen-block">
+    <div class="screen-change">✅ CORRIGÉ — Photo + Fin en bas</div>
+    <div class="screen-label">Actif (vert pulsant — enregistrement)</div>
+    <div class="iphone">
+      <div class="iphone-notch"></div>
+      <div class="iphone-screen">
+        <div class="chantier">
+          <div class="chantier-top">
+            <div class="chantier-top-info">
+              <div class="chantier-status"><span>9:41</span><span>●●●</span></div>
+              <div class="chantier-task-name">Chambre 1 · Pose Placo</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+                <div class="recording-indicator">
+                  <div class="rec-dot"></div>
+                  <span class="rec-text">REC</span>
+                  <div class="waveform">
+                    <div class="wave-bar" style="height:5px"></div>
+                    <div class="wave-bar" style="height:13px"></div>
+                    <div class="wave-bar" style="height:7px"></div>
+                    <div class="wave-bar" style="height:16px"></div>
+                    <div class="wave-bar" style="height:9px"></div>
+                    <div class="wave-bar" style="height:13px"></div>
+                    <div class="wave-bar" style="height:5px"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="hamburger" style="opacity:0.25">☰</div>
+          </div>
+          <div class="chantier-center">
+            <div class="big-btn-green"><div class="btn-dot"></div></div>
+          </div>
+          <div class="chantier-bottom">
+            <div class="bottom-btn">📷 Photo</div>
+            <div class="bottom-btn bottom-btn-fin" style="opacity:0.3">■ Fin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast confirmation après sauvegarde -->
+  <div class="screen-block">
+    <div class="screen-label">Après re-tap : toast confirmation</div>
+    <div class="iphone">
+      <div class="iphone-notch"></div>
+      <div class="iphone-screen">
+        <div class="chantier" style="position:relative">
+          <div class="chantier-top">
+            <div class="chantier-top-info">
+              <div class="chantier-status"><span>9:41</span><span>●●●</span></div>
+              <div class="chantier-task-name">Chambre 1 · Pose Placo</div>
+              <div class="chantier-task-sub">Mode Chantier actif</div>
+            </div>
+            <div class="hamburger">☰</div>
+          </div>
+          <div class="chantier-center">
+            <div class="big-btn-red"><div class="btn-dot"></div></div>
+          </div>
+          <!-- Toast notification -->
+          <div style="position:absolute;bottom:90px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#1C2E1C;border:1px solid rgba(52,199,89,0.3);border-radius:20px;padding:8px 16px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,0.4)">
+            <span style="font-size:14px">✅</span>
+            <span style="font-size:12px;color:#34C759;font-weight:600">Capture sauvegardée</span>
+          </div>
+          <div class="chantier-bottom">
+            <div class="bottom-btn">📷 Photo</div>
+            <div class="bottom-btn bottom-btn-fin">■ Fin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="page-divider"></div>
+
+<!-- ============================
+     SECTION 2 : MODE BUREAU
+     ============================ -->
+<div class="section-label">2 · Mode Bureau — Briefing de Reprise</div>
+<div class="section-note">Inchangé — validé ✓</div>
+<div class="screens-row">
+
+  <div class="screen-block">
+    <div class="screen-label">C · Cards séparées — Standard</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="bureau-screen">
+          <div class="bureau-nav">
+            <div class="bureau-nav-back">‹ Maison</div>
+            <div class="bureau-nav-title">Chambre 1</div>
+            <div class="bureau-nav-sub">Pose Placo · il y a 8 mois</div>
+          </div>
+          <div class="bureau-content">
+            <div class="bureau-section">
+              <div class="section-header">▶ Prochaine action</div>
+              <div class="prochaine-card">
+                <div class="prochaine-text">Finir les 3 dernières plaques, puis poncer</div>
+              </div>
+            </div>
+            <div class="bureau-section">
+              <div class="section-header">🚨 Alertes (2)</div>
+              <div class="alert-card">
+                <span style="font-size:15px">🚨</span>
+                <div class="alert-text">Rail vertical AVANT horizontal pour la porte</div>
+              </div>
+              <div class="alert-card">
+                <span style="font-size:15px">🚨</span>
+                <div class="alert-text">Gaine électrique gauche : ne pas fermer</div>
+              </div>
+            </div>
+            <div class="bureau-section">
+              <div class="section-header">💡 Astuces critiques</div>
+              <div class="astuce-card">
+                <span style="font-size:15px">⭐</span>
+                <div class="astuce-text">Cale de bois dans rail avant de visser</div>
+              </div>
+            </div>
+          </div>
+          <div class="cta-btn">🚀 Mode Chantier</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-block">
+    <div class="screen-label">D · Sections compactes — Dense</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="bureau-screen">
+          <div class="bureau-nav" style="padding-bottom:8px">
+            <div class="bureau-nav-back">‹ Maison</div>
+            <div class="bureau-nav-title">Chambre 1</div>
+            <div class="bureau-nav-sub">Pose Placo · 8 mois</div>
+          </div>
+          <div class="bureau-content" style="gap:10px;padding:10px 16px">
+            <div class="prochaine-card" style="padding:10px 12px">
+              <div class="prochaine-label" style="font-size:10px;margin-bottom:3px">▶ Prochaine action</div>
+              <div class="prochaine-text" style="font-size:13px">Finir les 3 plaques, poncer</div>
+            </div>
+            <div class="section-header" style="padding:0 4px">🚨 Alertes</div>
+            <div class="alert-card" style="border-radius:8px;padding:9px 12px">
+              <span style="font-size:14px">🚨</span>
+              <div class="alert-text" style="font-size:12px">Rail vertical AVANT horizontal pour la porte</div>
+            </div>
+            <div class="alert-card" style="border-radius:8px;padding:9px 12px">
+              <span style="font-size:14px">🚨</span>
+              <div class="alert-text" style="font-size:12px">Gaine électrique gauche : ne pas fermer</div>
+            </div>
+            <div class="section-header" style="padding:0 4px">💡 Astuces critiques</div>
+            <div class="astuce-card" style="border-radius:8px;padding:9px 12px">
+              <span style="font-size:14px">⭐</span>
+              <div class="astuce-text" style="font-size:12px">Cale de bois dans rail avant de visser</div>
+            </div>
+            <div class="astuce-card" style="border-radius:8px;padding:9px 12px;border-left-color:var(--astuce-importante)">
+              <span style="font-size:14px">🟡</span>
+              <div class="astuce-text" style="font-size:12px">Percer rails AVANT installation en espace étroit</div>
+            </div>
+          </div>
+          <div class="cta-btn" style="padding:12px;margin:0 16px 12px">🚀 Mode Chantier</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="page-divider"></div>
+
+<!-- ============================
+     SECTION 3 : SWIPE CLASSIFIER — ARCS BORDS D'ÉCRAN
+     ============================ -->
+<div class="section-label">3 · Swipe Classifier — Arcs aux Bords d'Écran</div>
+<div class="section-note">Fins croissants (~1cm) aux 4 bords · Labels à l'intérieur, lettres empilées verticalement gauche/droite · Remplissage couleur au swipe · Sous-menu criticité après swipe ASTUCE</div>
+<div class="screens-row">
+
+  <!-- État neutre -->
+  <div class="screen-block">
+    <div class="screen-change">✅ V3 — Arcs bords d'écran, lettres empilées</div>
+    <div class="screen-label">E · Neutre — Aucun swipe</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="classifier-screen">
+          <div class="classifier-nav">
+            <div class="classifier-nav-title">Classer les captures</div>
+            <div class="classifier-nav-count">7 captures à classer</div>
+          </div>
+          <div class="classifier-arena">
+            <!-- SVG arcs couvrant toute l'arena — état neutre -->
+            <svg style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none" viewBox="0 0 280 400" preserveAspectRatio="none">
+              <!-- 4 arcs contour gris discret -->
+              <path d="M 0 20 C 32 100 32 300 0 380" fill="none" stroke="#DEDAD5" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M 280 20 C 248 100 248 300 280 380" fill="none" stroke="#DEDAD5" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M 20 0 C 100 28 180 28 260 0" fill="none" stroke="#DEDAD5" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M 20 400 C 100 372 180 372 260 400" fill="none" stroke="#DEDAD5" stroke-width="1.5" stroke-linecap="round"/>
+              <!-- ALERTE — lettres empilées, chacune à l'endroit -->
+              <text fill="#C5C1BB" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif" text-anchor="middle">
+                <tspan x="13" y="178">A</tspan><tspan x="13" dy="11">L</tspan><tspan x="13" dy="11">E</tspan><tspan x="13" dy="11">R</tspan><tspan x="13" dy="11">T</tspan><tspan x="13" dy="11">E</tspan>
+              </text>
+              <!-- ASTUCE — lettres empilées, chacune à l'endroit -->
+              <text fill="#C5C1BB" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif" text-anchor="middle">
+                <tspan x="267" y="178">A</tspan><tspan x="267" dy="11">S</tspan><tspan x="267" dy="11">T</tspan><tspan x="267" dy="11">U</tspan><tspan x="267" dy="11">C</tspan><tspan x="267" dy="11">E</tspan>
+              </text>
+              <!-- NOTE — horizontal en haut -->
+              <text x="140" y="16" text-anchor="middle" fill="#C5C1BB" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif">NOTE</text>
+              <!-- ACHAT — horizontal en bas -->
+              <text x="140" y="396" text-anchor="middle" fill="#C5C1BB" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif">ACHAT</text>
+            </svg>
+            <!-- Carte centrée (z-index au-dessus du SVG) -->
+            <div style="position:relative;z-index:3">
+              <div style="position:absolute;inset:0;transform:translate(8px,8px);background:white;border-radius:14px;opacity:0.4"></div>
+              <div style="position:absolute;inset:0;transform:translate(4px,4px);background:white;border-radius:14px;opacity:0.7"></div>
+              <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 8px 28px rgba(0,0,0,0.14),0 2px 6px rgba(0,0,0,0.06);position:relative;width:160px">
+                <div class="capture-card-task">Chambre 1 · Pose Placo</div>
+                <div class="capture-card-text">"Attention, la gaine électrique côté gauche ne pas fermer avant vérif électricien"</div>
+                <div class="capture-card-time">Aujourd'hui · 11h23</div>
+              </div>
+            </div>
+          </div>
+          <div class="classifier-bottom">
+            <div class="progress-bar-bg"><div class="progress-bar-fill"></div></div>
+            <div class="progress-text">3 classées · 4 restantes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Swipe gauche → ALERTE (rouge) -->
+  <div class="screen-block">
+    <div class="screen-change">✅ Croissant gauche rouge — ALERTE</div>
+    <div class="screen-label">F · Swipe gauche — ALERTE</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="classifier-screen">
+          <div class="classifier-nav">
+            <div class="classifier-nav-title">Classer les captures</div>
+            <div class="classifier-nav-count">7 captures à classer</div>
+          </div>
+          <div class="classifier-arena">
+            <svg style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none" viewBox="0 0 280 400" preserveAspectRatio="none">
+              <!-- ALERTE — croissant gauche rempli rouge -->
+              <path d="M 0 20 C 32 100 32 300 0 380 L 0 20 Z" fill="rgba(255,59,48,0.18)"/>
+              <path d="M 0 20 C 32 100 32 300 0 380" fill="none" stroke="#FF3B30" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- Autres arcs — effacés -->
+              <path d="M 280 20 C 248 100 248 300 280 380" fill="none" stroke="#ECEAE6" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 20 0 C 100 28 180 28 260 0" fill="none" stroke="#ECEAE6" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 20 400 C 100 372 180 372 260 400" fill="none" stroke="#ECEAE6" stroke-width="1" stroke-linecap="round"/>
+              <!-- ALERTE — rouge vif, bold -->
+              <text fill="#FF3B30" font-size="9" font-weight="800" font-family="-apple-system,sans-serif" text-anchor="middle">
+                <tspan x="13" y="178">A</tspan><tspan x="13" dy="11">L</tspan><tspan x="13" dy="11">E</tspan><tspan x="13" dy="11">R</tspan><tspan x="13" dy="11">T</tspan><tspan x="13" dy="11">E</tspan>
+              </text>
+              <!-- Autres labels — très effacés -->
+              <text fill="#DFDDDA" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif" text-anchor="middle">
+                <tspan x="267" y="178">A</tspan><tspan x="267" dy="11">S</tspan><tspan x="267" dy="11">T</tspan><tspan x="267" dy="11">U</tspan><tspan x="267" dy="11">C</tspan><tspan x="267" dy="11">E</tspan>
+              </text>
+              <text x="140" y="16" text-anchor="middle" fill="#DFDDDA" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif">NOTE</text>
+              <text x="140" y="396" text-anchor="middle" fill="#DFDDDA" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif">ACHAT</text>
+            </svg>
+            <!-- Carte inclinée à gauche — sans badge -->
+            <div style="position:relative;z-index:3">
+              <div style="position:absolute;inset:0;transform:translate(8px,8px);background:white;border-radius:14px;opacity:0.35"></div>
+              <div style="position:absolute;inset:0;transform:translate(4px,4px);background:white;border-radius:14px;opacity:0.65"></div>
+              <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 8px 28px rgba(255,59,48,0.2),-6px 4px 16px rgba(255,59,48,0.1);border:1.5px solid rgba(255,59,48,0.25);transform:rotate(-8deg) translateX(-10px);position:relative;width:160px">
+                <div class="capture-card-task">Chambre 1 · Pose Placo</div>
+                <div class="capture-card-text">"Attention, la gaine électrique côté gauche ne pas fermer avant vérif électricien"</div>
+                <div class="capture-card-time">Aujourd'hui · 11h23</div>
+              </div>
+            </div>
+          </div>
+          <div class="classifier-bottom">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="background:#FF3B30"></div></div>
+            <div class="progress-text">3 classées · 4 restantes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Swipe droite → ASTUCE (orange) -->
+  <div class="screen-block">
+    <div class="screen-label">G · Swipe droite — ASTUCE</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="classifier-screen">
+          <div class="classifier-nav">
+            <div class="classifier-nav-title">Classer les captures</div>
+            <div class="classifier-nav-count">7 captures à classer</div>
+          </div>
+          <div class="classifier-arena">
+            <svg style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none" viewBox="0 0 280 400" preserveAspectRatio="none">
+              <!-- Autres arcs — effacés -->
+              <path d="M 0 20 C 32 100 32 300 0 380" fill="none" stroke="#ECEAE6" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 20 0 C 100 28 180 28 260 0" fill="none" stroke="#ECEAE6" stroke-width="1" stroke-linecap="round"/>
+              <path d="M 20 400 C 100 372 180 372 260 400" fill="none" stroke="#ECEAE6" stroke-width="1" stroke-linecap="round"/>
+              <!-- ASTUCE — croissant droit rempli orange -->
+              <path d="M 280 20 C 248 100 248 300 280 380 L 280 20 Z" fill="rgba(255,149,0,0.18)"/>
+              <path d="M 280 20 C 248 100 248 300 280 380" fill="none" stroke="#FF9500" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- Autres labels — très effacés -->
+              <text fill="#DFDDDA" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif" text-anchor="middle">
+                <tspan x="13" y="178">A</tspan><tspan x="13" dy="11">L</tspan><tspan x="13" dy="11">E</tspan><tspan x="13" dy="11">R</tspan><tspan x="13" dy="11">T</tspan><tspan x="13" dy="11">E</tspan>
+              </text>
+              <!-- ASTUCE — orange vif, bold -->
+              <text fill="#FF9500" font-size="9" font-weight="800" font-family="-apple-system,sans-serif" text-anchor="middle">
+                <tspan x="267" y="178">A</tspan><tspan x="267" dy="11">S</tspan><tspan x="267" dy="11">T</tspan><tspan x="267" dy="11">U</tspan><tspan x="267" dy="11">C</tspan><tspan x="267" dy="11">E</tspan>
+              </text>
+              <text x="140" y="16" text-anchor="middle" fill="#DFDDDA" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif">NOTE</text>
+              <text x="140" y="396" text-anchor="middle" fill="#DFDDDA" font-size="8.5" font-weight="700" font-family="-apple-system,sans-serif">ACHAT</text>
+            </svg>
+            <!-- Carte inclinée à droite — sans badge -->
+            <div style="position:relative;z-index:3">
+              <div style="position:absolute;inset:0;transform:translate(8px,8px);background:white;border-radius:14px;opacity:0.35"></div>
+              <div style="position:absolute;inset:0;transform:translate(4px,4px);background:white;border-radius:14px;opacity:0.65"></div>
+              <div style="background:white;border-radius:14px;padding:14px;box-shadow:0 8px 28px rgba(255,149,0,0.2),6px 4px 16px rgba(255,149,0,0.1);border:1.5px solid rgba(255,149,0,0.25);transform:rotate(8deg) translateX(10px);position:relative;width:160px">
+                <div class="capture-card-task">Chambre 1 · Pose Placo</div>
+                <div class="capture-card-text">"Mettre une cale de bois dans le rail avant de visser, ça évite la déformation"</div>
+                <div class="capture-card-time">Aujourd'hui · 14h07</div>
+              </div>
+            </div>
+          </div>
+          <div class="classifier-bottom">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="background:#FF9500"></div></div>
+            <div class="progress-text">3 classées · 4 restantes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sous-menu criticité ASTUCE -->
+  <div class="screen-block">
+    <div class="screen-change">✅ NOUVEAU — Sous-menu criticité ASTUCE</div>
+    <div class="screen-label">G2 · Après swipe droite — Choisir criticité</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="classifier-screen" style="position:relative;overflow:hidden">
+          <!-- Arrière-plan classifier — atténué -->
+          <div class="classifier-nav" style="opacity:0.35">
+            <div class="classifier-nav-title">Classer les captures</div>
+            <div class="classifier-nav-count">7 captures à classer</div>
+          </div>
+          <div class="classifier-arena" style="opacity:0.35">
+            <div style="background:white;border-radius:14px;padding:14px;width:150px;transform:rotate(8deg);box-shadow:0 4px 12px rgba(0,0,0,0.1);border:1.5px solid rgba(255,149,0,0.3)">
+              <div class="capture-card-task">Chambre 1 · Pose Placo</div>
+              <div class="capture-card-text">"Mettre une cale de bois dans le rail avant de visser..."</div>
+            </div>
+          </div>
+          <div class="classifier-bottom" style="opacity:0.35">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="background:#FF9500;width:44%"></div></div>
+            <div class="progress-text">3 classées · 4 restantes</div>
+          </div>
+
+          <!-- Bottom sheet criticité -->
+          <div style="position:absolute;bottom:0;left:0;right:0;background:white;border-radius:24px 24px 0 0;padding:18px 18px 24px;box-shadow:0 -8px 32px rgba(0,0,0,0.18);z-index:10">
+            <!-- Handle -->
+            <div style="width:36px;height:4px;background:#E0DEDA;border-radius:2px;margin:0 auto 14px"></div>
+            <!-- Titre -->
+            <div style="font-size:14px;font-weight:700;color:#1C1C1E;margin-bottom:2px">💡 Quel niveau d'astuce ?</div>
+            <div style="font-size:11px;color:#6C6C70;margin-bottom:16px">"Cale de bois dans le rail..."</div>
+            <!-- Critique -->
+            <div style="background:#FFF4E6;border:1.5px solid #FF9500;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <div style="width:32px;height:32px;border-radius:16px;background:#FF9500;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">⚠️</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#1C1C1E">Critique</div>
+                <div style="font-size:10px;color:#6C6C70">À consulter avant chaque session</div>
+              </div>
+            </div>
+            <!-- Importante -->
+            <div style="background:var(--bg-card);border:1.5px solid var(--separator);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <div style="width:32px;height:32px;border-radius:16px;background:#FFCC00;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">💡</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#1C1C1E">Importante</div>
+                <div style="font-size:10px;color:#6C6C70">Bonne pratique à retenir</div>
+              </div>
+            </div>
+            <!-- Utile -->
+            <div style="background:var(--bg-card);border:1.5px solid var(--separator);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+              <div style="width:32px;height:32px;border-radius:16px;background:#34C759;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✅</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#1C1C1E">Utile</div>
+                <div style="font-size:10px;color:#6C6C70">Info pratique complémentaire</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="page-divider"></div>
+
+<!-- ============================
+     SECTION 4 : DASHBOARD & ONBOARDING
+     ============================ -->
+<div class="section-label">4 · Dashboard &amp; Sélection Tâche</div>
+<div class="section-note">Inchangé — validé ✓</div>
+<div class="screens-row">
+
+  <div class="screen-block">
+    <div class="screen-label">H · Dashboard Accueil</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="dashboard-screen">
+          <div class="dashboard-header">
+            <div class="dashboard-greeting">Bonjour Nico 👋</div>
+            <div class="dashboard-title">Gestion Travaux</div>
+          </div>
+          <div class="dashboard-content">
+            <div class="mode-chantier-cta">
+              <div class="cta-icon">🏗️</div>
+              <div class="cta-text">
+                <div class="cta-label">Mode Chantier</div>
+                <div class="cta-sub">Chambre 1 · Pose Placo</div>
+              </div>
+              <div style="color:rgba(255,255,255,0.6);font-size:16px">›</div>
+            </div>
+            <div class="stats-row">
+              <div class="stat-card">
+                <div class="stat-number" style="color:var(--alerte)">3</div>
+                <div class="stat-label">Alertes</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" style="color:var(--text-secondary)">12</div>
+                <div class="stat-label">Astuces</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" style="color:var(--astuce-critique)">5</div>
+                <div class="stat-label">Achats</div>
+              </div>
+            </div>
+            <div class="last-task-card">
+              <div class="last-task-header">Dernière activité</div>
+              <div class="last-task-name">Chambre 1 — Pose Placo</div>
+              <div class="last-task-time">Il y a 8 mois</div>
+              <div class="last-task-next">
+                <div class="next-icon">▶</div>
+                <div>Finir les 3 dernières plaques, puis poncer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen-block">
+    <div class="screen-label">I · Sélection Pièce &amp; Activité</div>
+    <div class="iphone">
+      <div class="iphone-notch iphone-notch-light"></div>
+      <div class="iphone-screen">
+        <div class="onboarding-screen">
+          <div class="onboarding-header">
+            <div class="onboarding-step">Mode Chantier</div>
+            <div class="onboarding-title">Quelle est ta tâche ?</div>
+          </div>
+          <div class="onboarding-body">
+            <div class="input-group">
+              <div class="input-label">Pièce / Lieu</div>
+              <div class="input-field input-field-active">
+                <span class="input-value">Chambre 1</span>
+                <span class="input-chevron">⌄</span>
+              </div>
+            </div>
+            <div class="input-group">
+              <div class="input-label">Activité</div>
+              <div class="input-field">
+                <span class="input-placeholder">Pose placo, électricité…</span>
+                <span class="input-chevron">⌄</span>
+              </div>
+              <div class="input-hint">Créées automatiquement si nouvelles</div>
+            </div>
+            <div class="voice-row">
+              <div class="voice-btn">🎤</div>
+              <div class="voice-hint">Ou dicte vocalement</div>
+            </div>
+          </div>
+          <div class="onboarding-cta onboarding-cta-disabled">Démarrer →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="text-align:center;padding:32px;color:#444;font-size:12px;letter-spacing:0.3px">
+  Gestion Travaux · Direction Acier Discret · #1B3D6F · SF Pro · v2 · 2026
+</div>
+
+</body>
+</html>

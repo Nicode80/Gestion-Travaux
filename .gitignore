@@ -1,0 +1,64 @@
+# Claude Code (assistant memory — session data, not source code)
+.claude/
+
+# Xcode
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+
+# Build
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# CocoaPods (not used but just in case)
+Pods/
+Podfile.lock
+
+# Carthage (not used but just in case)
+Carthage/Build/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Instruments
+*.trace
+
+# TestFlight / Distribution
+*.mobileprovision
+*.p12
+
+# Simulators
+simulator_output/
+
+# Sensitive / personal
+*.env
+secrets.plist

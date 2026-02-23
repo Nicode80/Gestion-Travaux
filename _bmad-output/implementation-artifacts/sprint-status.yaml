@@ -1,0 +1,89 @@
+# generated: 2026-02-23
+# project: Gestion Travaux
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-23
+project: Gestion Travaux
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # ─────────────────────────────────────────────────────
+  # Epic 1 : Structure, Navigation et Persistance
+  # ─────────────────────────────────────────────────────
+  epic-1: in-progress
+  1-1-initialisation-du-projet-et-schema-swiftdata: done
+  1-2-dashboard-et-navigation-hierarchique: done
+  1-3-creation-dune-tache-avec-detection-de-doublons: review
+  1-4-archivage-des-taches-terminees: ready-for-dev
+  epic-1-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 2 : Mode Chantier — Capture Vocale et Photo
+  # ─────────────────────────────────────────────────────
+  epic-2: in-progress
+  2-1-selection-de-tache-et-entree-en-mode-chantier: ready-for-dev
+  2-2-capture-vocale-avec-le-gros-bouton: ready-for-dev
+  2-3-photos-intercalees-sans-interruption-audio: ready-for-dev
+  2-4-gestion-des-interruptions-ios-et-mode-economie-batterie: ready-for-dev
+  2-5-menu-hamburger-changer-de-tache-et-parcourir-lapp: ready-for-dev
+  2-6-fin-de-session-mode-chantier: ready-for-dev
+  epic-2-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 3 : Mode Bureau — Classification et Check-out
+  # ─────────────────────────────────────────────────────
+  epic-3: in-progress
+  3-1-liste-chronologique-des-captures-non-classees: ready-for-dev
+  3-2-swipe-game-classification-par-direction: ready-for-dev
+  3-3-recapitulatif-validation-et-check-out: ready-for-dev
+  epic-3-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 4 : Mémoire Active — Alertes, Astuces, Briefing et Note de Saison
+  # ─────────────────────────────────────────────────────
+  epic-4: in-progress
+  4-1-briefing-de-reprise-dune-tache: ready-for-dev
+  4-2-vue-globale-des-alertes-et-drill-down-note-originale: ready-for-dev
+  4-3-fiches-activites-astuces-accumulees-par-niveau: ready-for-dev
+  4-4-note-de-saison-message-au-futur-soi: ready-for-dev
+  epic-4-retrospective: optional
+
+  # ─────────────────────────────────────────────────────
+  # Epic 5 : Liste de Courses
+  # ─────────────────────────────────────────────────────
+  epic-5: in-progress
+  5-1-liste-de-courses-consultation-et-gestion: ready-for-dev
+  epic-5-retrospective: optional
