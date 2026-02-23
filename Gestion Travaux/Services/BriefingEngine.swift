@@ -72,7 +72,7 @@ final class BriefingEngine {
         guard n > 0, m > 0 else { return 0 }
         guard a != b else { return 1.0 }
 
-        let matchWindow = max(n, m) / 2 - 1
+        let matchWindow = max(0, max(n, m) / 2 - 1)
         var aMatched = Array(repeating: false, count: n)
         var bMatched = Array(repeating: false, count: m)
         var matches = 0

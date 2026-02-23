@@ -132,6 +132,9 @@ final class TaskCreationViewModel {
             try creer(pieces: pieces, activites: activites, nomPiece: nomPiece, nomActivite: nomActivite)
 
         } catch {
+            #if DEBUG
+            print("[TaskCreationViewModel] valider() failed: \(error)")
+            #endif
             errorMessage = "Impossible de créer la tâche. Réessayez."
         }
     }

@@ -2,7 +2,7 @@
 story: "1.3"
 epic: 1
 title: "Création d'une tâche avec détection de doublons"
-status: review
+status: done
 frs: [FR22, FR23, FR24, FR25, FR26, FR51]
 nfrs: [NFR-U5]
 ---
@@ -101,7 +101,7 @@ enum TaskCreationError: LocalizedError {
 - [x] Implémenter suggestion non-bloquante pour doublon Pièce (similarité ≥ 0.85)
 - [x] Implémenter suggestion non-bloquante pour doublon Activité (avec compteur astuces)
 - [x] Implémenter détection tâche active dupliquée + [Reprendre] (FR25, FR26)
-- [x] Ajouter bouton [+ Créer une tâche] au Dashboard et TacheListView
+- [x] Ajouter bouton [+ Créer une tâche] au Dashboard (TacheListView est un ForEach réutilisable sans toolbar — hors scope story)
 - [x] Créer `GestionTravauxTests/Services/BriefingEngineTests.swift` : tests fuzzy matching
 - [x] Tester création tâche en < 2 minutes (onboarding — NFR-U5)
 
@@ -152,3 +152,4 @@ enum TaskCreationError: LocalizedError {
 | Date | Auteur | Description |
 |------|--------|-------------|
 | 2026-02-23 | Dev Agent | Implémentation complète story 1.3 : BriefingEngine (NLEmbedding + Jaro-Winkler), TaskCreationViewModel (pipeline 4 étapes + voice one-shot), TaskCreationView (sheet + dialogs), DashboardView (NavigationPath + bouton + sheet). 44/44 tests passés. |
+| 2026-02-23 | Code Review | 2 MEDIUM + 3 LOW corrigés : `.onDisappear` micro leak (M2), binding setters → `reinitialiserStep()` (L1/M1-binding), #if DEBUG log dans catch (L2), Jaro-Winkler matchWindow plancher 0 (L3). Tâche TacheListView clarifiée hors-scope. 44/44 tests passés. |

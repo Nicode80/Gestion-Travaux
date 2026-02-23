@@ -57,6 +57,10 @@ struct TaskCreationView: View {
                 }
             }
         }
+        // Stop microphone if sheet is dismissed via swipe (not cancel button)
+        .onDisappear {
+            viewModel.stopVoiceInput()
+        }
         // Observe successful creation
         .onChange(of: viewModel.tacheCreee != nil) { _, hasTask in
             if hasTask, let tache = viewModel.tacheCreee {
@@ -176,7 +180,8 @@ struct TaskCreationView: View {
     private var pieceSuggestionBinding: Binding<Bool> {
         Binding(
             get: { if case .confirmingPieceSuggestion = viewModel.step { return true }; return false },
-            set: { if !$0 { viewModel.ignorerSuggestionPiece() } }
+            // Outside-tap dismiss: reset to form without marking as declined (only the "Non" button declines)
+            set: { if !$0 { viewModel.reinitialiserStep() } }
         )
     }
 
@@ -190,7 +195,8 @@ struct TaskCreationView: View {
     private var activiteSuggestionBinding: Binding<Bool> {
         Binding(
             get: { if case .confirmingActiviteSuggestion = viewModel.step { return true }; return false },
-            set: { if !$0 { viewModel.ignorerSuggestionActivite() } }
+            // Outside-tap dismiss: reset to form without marking as declined (only the "Non" button declines)
+            set: { if !$0 { viewModel.reinitialiserStep() } }
         )
     }
 

@@ -46,7 +46,7 @@ development_status:
   epic-1: in-progress
   1-1-initialisation-du-projet-et-schema-swiftdata: done
   1-2-dashboard-et-navigation-hierarchique: done
-  1-3-creation-dune-tache-avec-detection-de-doublons: review
+  1-3-creation-dune-tache-avec-detection-de-doublons: done
   1-4-archivage-des-taches-terminees: ready-for-dev
   epic-1-retrospective: optional
 
