@@ -34,20 +34,16 @@ struct TacheDetailView: View {
             // Linked activity
             if let activite = tache.activite {
                 Section("Activité") {
-                    NavigationLink(value: activite) {
-                        Label(activite.nom, systemImage: "wrench.and.screwdriver")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                    }
+                    Label(activite.nom, systemImage: "wrench.and.screwdriver")
+                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                 }
             }
 
             // Linked room
             if let piece = tache.piece {
                 Section("Pièce") {
-                    NavigationLink(value: piece) {
-                        Label(piece.nom, systemImage: "door.left.hand.open")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                    }
+                    Label(piece.nom, systemImage: "door.left.hand.open")
+                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                 }
             }
 
