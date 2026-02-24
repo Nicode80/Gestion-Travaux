@@ -16,6 +16,7 @@ struct DashboardView: View {
     @State private var viewModel: DashboardViewModel
     @State private var navigationPath = NavigationPath()
     @State private var showCreation = false
+    @State private var showTaskSelection = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -23,6 +24,9 @@ struct DashboardView: View {
     }
 
     var body: some View {
+        // @Bindable enables $chantier.sessionActive binding for fullScreenCover.
+        @Bindable var chantier = chantier
+
         NavigationStack(path: $navigationPath) {
             content
                 .navigationTitle("Gestion Travaux")
@@ -30,13 +34,24 @@ struct DashboardView: View {
                 .background(Color(hex: Constants.Couleurs.backgroundBureau))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        // Disabled during active recording (boutonVert lockdown — Story 2.1)
+                        // Both buttons hidden during active recording (boutonVert lockdown).
                         if !chantier.boutonVert {
-                            Button {
-                                showCreation = true
-                            } label: {
-                                Image(systemName: "plus")
-                                    .accessibilityLabel("Créer une tâche")
+                            HStack(spacing: 4) {
+                                // [🏗️ Mode Chantier] — Story 2.1
+                                Button {
+                                    showTaskSelection = true
+                                } label: {
+                                    Image(systemName: "hammer.circle.fill")
+                                        .accessibilityLabel("Mode Chantier")
+                                }
+
+                                // Create task
+                                Button {
+                                    showCreation = true
+                                } label: {
+                                    Image(systemName: "plus")
+                                        .accessibilityLabel("Créer une tâche")
+                                }
                             }
                         }
                     }
@@ -49,6 +64,18 @@ struct DashboardView: View {
         }
         .onAppear {
             viewModel.charger()
+        }
+        // fullScreenCover driven by ModeChantierState.sessionActive (Story 2.1)
+        .fullScreenCover(isPresented: $chantier.sessionActive) {
+            ModeChantierView()
+        }
+        // Sheet: task selection before entering Mode Chantier (Story 2.1)
+        .sheet(isPresented: $showTaskSelection) {
+            TaskSelectionView(modelContext: modelContext)
+        }
+        // Dismiss TaskSelectionView automatically when session starts
+        .onChange(of: chantier.sessionActive) { _, isActive in
+            if isActive { showTaskSelection = false }
         }
         .sheet(isPresented: $showCreation) {
             TaskCreationView(

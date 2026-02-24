@@ -12,6 +12,9 @@ final class TacheEntity {
     var statut: StatutTache = StatutTache.active
     var prochaineAction: String?
     var createdAt: Date = Date()
+    /// Set each time a Mode Chantier session starts on this task.
+    /// Used to propose the most-recently-worked task first. Nil until first session.
+    var lastSessionDate: Date? = nil
 
     var piece: PieceEntity?
     var activite: ActiviteEntity?

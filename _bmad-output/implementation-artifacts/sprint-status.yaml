@@ -54,7 +54,7 @@ development_status:
   # Epic 2 : Mode Chantier — Capture Vocale et Photo
   # ─────────────────────────────────────────────────────
   epic-2: in-progress
-  2-1-selection-de-tache-et-entree-en-mode-chantier: ready-for-dev
+  2-1-selection-de-tache-et-entree-en-mode-chantier: done
   2-2-capture-vocale-avec-le-gros-bouton: ready-for-dev
   2-3-photos-intercalees-sans-interruption-audio: ready-for-dev
   2-4-gestion-des-interruptions-ios-et-mode-economie-batterie: ready-for-dev
