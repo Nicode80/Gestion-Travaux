@@ -241,9 +241,10 @@ final class ModeChantierViewModel {
 
     private func demarrerPulseTimer() {
         pulseTimer?.invalidate()
-        // M1: Timer fires on the main run loop — use assumeIsolated instead of spawning a Task
+        // Timer fires on the main RunLoop thread, but NOT on DispatchQueue.main's executor context.
+        // Task { @MainActor } correctly hops to the MainActor executor to update @Observable state.
         pulseTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.pulseScale = 1.0 + CGFloat(self.audioEngine.averagePower) * 0.12
             }
