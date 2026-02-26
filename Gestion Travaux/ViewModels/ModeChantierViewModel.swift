@@ -51,13 +51,20 @@ final class ModeChantierViewModel {
     /// In-progress capture for incremental persistence.
     private var captureEnCours: CaptureEntity? = nil
     /// Timer driving BigButton pulse at ~60 fps.
-    private var pulseTimer: Timer? = nil
+    /// nonisolated(unsafe): always accessed from @MainActor; nonisolated only in deinit (safe, last access).
+    @ObservationIgnored nonisolated(unsafe) private var pulseTimer: Timer? = nil
+    /// Guard against concurrent toggleEnregistrement calls during async permission dialog (H3).
+    @ObservationIgnored private var isProcessingToggle = false
 
     // MARK: - Init
 
     init(modelContext: ModelContext, audioEngine: AudioEngineProtocol? = nil) {
         self.modelContext = modelContext
         self.audioEngine = audioEngine ?? AudioEngine()
+    }
+
+    deinit {
+        pulseTimer?.invalidate()
     }
 
     // MARK: - Story 2.1: Data loading
@@ -96,6 +103,11 @@ final class ModeChantierViewModel {
 
     /// Toggles recording on/off. Manages permissions, persistence, haptics, and toast.
     func toggleEnregistrement(chantier: ModeChantierState) async {
+        // H3: Prevent concurrent calls while permission dialog is open or engine is starting
+        guard !isProcessingToggle else { return }
+        isProcessingToggle = true
+        defer { isProcessingToggle = false }
+
         if audioEngine.isRecording {
             stopEnregistrement(chantier: chantier)
         } else {
@@ -124,6 +136,10 @@ final class ModeChantierViewModel {
         permissionRefusee = false
         erreurEnregistrement = nil
 
+        // H1: Optimistic UI update for < 100ms visual response (NFR-P2)
+        chantier.boutonVert = true
+        demarrerPulseTimer()
+
         do {
             try audioEngine.demarrer { [weak self] partialText in
                 guard let self else { return }
@@ -135,9 +151,10 @@ final class ModeChantierViewModel {
             }
             // Haptic léger (activation)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            chantier.boutonVert = true
-            demarrerPulseTimer()
         } catch {
+            // Rollback optimistic UI update
+            chantier.boutonVert = false
+            arreterPulseTimer()
             erreurEnregistrement = error.localizedDescription
         }
     }
@@ -157,6 +174,10 @@ final class ModeChantierViewModel {
 
     /// Creates or updates CaptureEntity with the latest partial transcription.
     private func mettreAJourCaptureEnCours(texte: String, tache: TacheEntity, sessionId: UUID) {
+        // M3: Discard stale capture if session changed (e.g. force-terminated previous session)
+        if captureEnCours?.sessionId != sessionId {
+            captureEnCours = nil
+        }
         if captureEnCours == nil {
             let capture = CaptureEntity()
             capture.sessionId = sessionId
@@ -220,8 +241,9 @@ final class ModeChantierViewModel {
 
     private func demarrerPulseTimer() {
         pulseTimer?.invalidate()
+        // M1: Timer fires on the main run loop — use assumeIsolated instead of spawning a Task
         pulseTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
+            MainActor.assumeIsolated {
                 guard let self else { return }
                 self.pulseScale = 1.0 + CGFloat(self.audioEngine.averagePower) * 0.12
             }

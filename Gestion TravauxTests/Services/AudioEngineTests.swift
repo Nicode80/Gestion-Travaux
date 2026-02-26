@@ -108,9 +108,7 @@ struct AudioEngineTests {
     @Test("simulerResultatPartiel() is a no-op when not recording")
     func simulerResultatSansEnregistrement() {
         let engine = MockAudioEngine()
-        var appele = false
         engine.simulerResultatPartiel("Ignoré")
-        #expect(appele == false)
         #expect(engine.transcriptionEnCours.isEmpty)
     }
 

@@ -2,7 +2,7 @@
 story: "2.2"
 epic: 2
 title: "Capture vocale avec le Gros Bouton"
-status: review
+status: done
 frs: [FR2, FR3, FR4, FR11, FR52, FR56, FR57, FR59]
 nfrs: [NFR-P2, NFR-P6, NFR-R3, NFR-U3, NFR-U4]
 ---
@@ -183,3 +183,4 @@ La persistence incrémentale : chaque résultat partiel de SFSpeechRecognizer cr
 ## Change Log
 
 - 2026-02-26 : Story 2.2 implémentée — AudioEngine + toggle enregistrement + persistence incrémentale + pulse BigButton + toast + fallback saisie manuelle (FR59). 37 tests unitaires, 0 régressions.
+- 2026-02-26 : Corrections post-review — H1 (boutonVert optimiste avant demarrer, rollback si erreur), H2 (descriptions plist Mode Chantier), H3 (guard isProcessingToggle contre double-tap pendant permission dialog), M1 (MainActor.assumeIsolated + deinit timer), M2 (variable morte supprimée dans AudioEngineTests), M3 (vérification sessionId dans mettreAJourCaptureEnCours).
