@@ -100,7 +100,13 @@ final class AudioEngine: AudioEngineProtocol {
                 }
                 do {
                     let session = AVAudioSession.sharedInstance()
-                    try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+                    // .playAndRecord + .mixWithOthers allows camera to activate without
+                    // interrupting the audio tap (Story 2.3, NFR-P7: interruption < 200 ms).
+                    try session.setCategory(
+                        .playAndRecord,
+                        mode: .default,
+                        options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP]
+                    )
                     try session.setActive(true, options: .notifyOthersOnDeactivation)
 
                     let inputNode = self.avEngine.inputNode
