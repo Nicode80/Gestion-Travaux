@@ -4,11 +4,15 @@
 // Real implementation of AudioEngineProtocol.
 // Uses AVAudioEngine for audio capture + power measurement.
 // Uses SFSpeechRecognizer with requiresOnDeviceRecognition = true (offline, NFR-R3).
-// Audio tap buffers feed the recognition request and power calculation (~60 fps).
+//
+// IMPORTANT: AVAudioEngine.inputNode and start() must run off the main thread on real device
+// hardware — iOS triggers dispatch_assert_queue_not(main_queue) otherwise (same root cause as
+// TaskCreationViewModel fix, commit 69df9b7).
+// Pattern: Task.detached for hardware setup, await MainActor.run for @MainActor SDK calls.
 
 import Foundation
-import AVFoundation
-import Speech
+@preconcurrency import AVFoundation
+@preconcurrency import Speech
 
 @MainActor
 final class AudioEngine: AudioEngineProtocol {
@@ -20,13 +24,15 @@ final class AudioEngine: AudioEngineProtocol {
     private(set) var averagePower: Float = 0.0
     private(set) var permissionMicro: PermissionMicro = .nonDeterminee
 
-    // MARK: - Private internals
+    // MARK: - Private audio internals
+    // nonisolated(unsafe): accessed from Task.detached (audio hardware setup must be off-main-thread).
+    // Thread-safety guarantee: only one recording session at a time, guarded by stopInterne().
 
-    private let avEngine = AVAudioEngine()
-    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    private var recognitionTask: SFSpeechRecognitionTask?
+    nonisolated(unsafe) private let avEngine = AVAudioEngine()
+    nonisolated(unsafe) private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    nonisolated(unsafe) private var recognitionTask: SFSpeechRecognitionTask?
 
-    private let speechRecognizer: SFSpeechRecognizer? = {
+    nonisolated(unsafe) private let speechRecognizer: SFSpeechRecognizer? = {
         let r = SFSpeechRecognizer(locale: Locale(identifier: "fr-FR"))
         r?.defaultTaskHint = .dictation
         return r
@@ -35,20 +41,15 @@ final class AudioEngine: AudioEngineProtocol {
     // MARK: - Permission
 
     func demanderPermission() async -> Bool {
-        // Microphone
-        let microAccorde = await AVAudioApplication.requestRecordPermission()
+        // Both permission requests run via nonisolated helpers — iOS Speech and AVAudio
+        // framework internals assert NOT on main queue (same pattern as TaskCreationViewModel).
+        let microAccorde = await AudioEngine.requestMicroPermission()
         guard microAccorde else {
             permissionMicro = .refusee
             return false
         }
 
-        // Speech recognition
-        let statutRecognition = await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status)
-            }
-        }
-
+        let statutRecognition = await AudioEngine.requestSpeechPermission()
         guard statutRecognition == .authorized else {
             permissionMicro = .refusee
             return false
@@ -58,75 +59,108 @@ final class AudioEngine: AudioEngineProtocol {
         return true
     }
 
+    /// Runs off the main actor — AVAudio internals assert NOT on main queue on device.
+    private nonisolated static func requestMicroPermission() async -> Bool {
+        await AVAudioApplication.requestRecordPermission()
+    }
+
+    /// Runs off the main actor — Speech framework internals assert NOT on main queue on device.
+    /// Pattern from TaskCreationViewModel (commit 69df9b7).
+    private nonisolated static func requestSpeechPermission() async -> SFSpeechRecognizerAuthorizationStatus {
+        await withCheckedContinuation { continuation in
+            SFSpeechRecognizer.requestAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+    }
+
     // MARK: - Recording
 
-    func demarrer(surResultatPartiel: @escaping @MainActor (String) -> Void) throws {
-        // Clean up any previous session
+    func demarrer(surResultatPartiel: @escaping @MainActor (String) -> Void) async throws {
         stopInterne()
 
-        // Configure AVAudioSession
-        let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
-        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-
-        // Validate recognizer availability
-        guard let recognizer = speechRecognizer, recognizer.isAvailable else {
+        // Validate recognizer availability on MainActor before going off-thread
+        guard let _ = speechRecognizer, speechRecognizer?.isAvailable == true else {
             throw AudioEngineErreur.reconnaissanceIndisponible
         }
 
-        // Create recognition request (offline only)
+        // Create recognition request (plain Swift object — safe on any thread)
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.requiresOnDeviceRecognition = true
         request.shouldReportPartialResults = true
         self.recognitionRequest = request
 
-        // Start recognition task
-        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                if let result {
-                    let text = result.bestTranscription.formattedString
-                    self.transcriptionEnCours = text
-                    surResultatPartiel(text)
+        // All audio hardware setup runs off the main thread (required on real device hardware).
+        // AVAudioEngine.inputNode and start() trigger dispatch_assert_queue_not(main_queue) on device.
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            Task.detached { [weak self] in
+                guard let self else {
+                    continuation.resume()
+                    return
                 }
-                if error != nil || result?.isFinal == true {
-                    self.stopInterne()
+                do {
+                    let session = AVAudioSession.sharedInstance()
+                    try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+                    try session.setActive(true, options: .notifyOthersOnDeactivation)
+
+                    let inputNode = self.avEngine.inputNode
+                    let recordingFormat = inputNode.outputFormat(forBus: 0)
+
+                    // installTap fires on the real-time audio thread — capture request directly, not self
+                    inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self, request] buffer, _ in
+                        request.append(buffer)
+
+                        guard
+                            let channelData = buffer.floatChannelData?[0],
+                            buffer.frameLength > 0
+                        else { return }
+
+                        let frameCount = Int(buffer.frameLength)
+                        var rms: Float = 0
+                        for i in 0..<frameCount {
+                            rms += channelData[i] * channelData[i]
+                        }
+                        rms = sqrt(rms / Float(frameCount))
+                        // Scale to 0..1: typical speech RMS ~0.02–0.1, * 20 maps to 0.4–2.0, clamped
+                        let normalise = min(1.0, rms * 20.0)
+
+                        Task { @MainActor [weak self] in
+                            self?.averagePower = normalise
+                        }
+                    }
+
+                    self.avEngine.prepare()
+                    try self.avEngine.start()
+
+                    // SFSpeechRecognizer.recognitionTask(with:) must be called on @MainActor
+                    await MainActor.run { [weak self] in
+                        guard let self, let recognizer = self.speechRecognizer else { return }
+                        self.recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
+                            // Extract Sendable values before Task hop (SFSpeechRecognitionResult is not Sendable)
+                            let text = result?.bestTranscription.formattedString
+                            let isFinal = result?.isFinal ?? false
+                            let hasError = error != nil
+                            Task { @MainActor [weak self] in
+                                guard let self else { return }
+                                if let text {
+                                    self.transcriptionEnCours = text
+                                    surResultatPartiel(text)
+                                }
+                                if hasError || isFinal {
+                                    self.stopInterne()
+                                }
+                            }
+                        }
+                        self.isRecording = true
+                        self.transcriptionEnCours = ""
+                    }
+
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
                 }
             }
         }
-
-        // Install audio tap: feeds recognition + calculates power
-        let inputNode = avEngine.inputNode
-        let recordingFormat = inputNode.outputFormat(forBus: 0)
-
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self, request] buffer, _ in
-            // Feed to speech recognizer (thread-safe on SFSpeechAudioBufferRecognitionRequest)
-            request.append(buffer)
-
-            // Calculate RMS power for BigButton pulse
-            guard
-                let channelData = buffer.floatChannelData?[0],
-                buffer.frameLength > 0
-            else { return }
-
-            let frameCount = Int(buffer.frameLength)
-            var rms: Float = 0
-            for i in 0..<frameCount {
-                rms += channelData[i] * channelData[i]
-            }
-            rms = sqrt(rms / Float(frameCount))
-            // Scale to 0..1: typical speech RMS ~0.02–0.1, * 20 maps to 0.4–2.0, clamped
-            let normalise = min(1.0, rms * 20.0)
-
-            Task { @MainActor [weak self] in
-                self?.averagePower = normalise
-            }
-        }
-
-        avEngine.prepare()
-        try avEngine.start()
-        isRecording = true
-        transcriptionEnCours = ""
     }
 
     func arreter() {
@@ -146,6 +180,10 @@ final class AudioEngine: AudioEngineProtocol {
         recognitionTask = nil
         isRecording = false
         averagePower = 0.0
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            // Audio session deactivation failed — other apps will eventually be notified
+        }
     }
 }

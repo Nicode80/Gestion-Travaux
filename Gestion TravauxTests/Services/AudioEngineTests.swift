@@ -46,48 +46,48 @@ struct AudioEngineTests {
     // MARK: - Recording state
 
     @Test("demarrer() sets isRecording to true")
-    func demarrerActive() throws {
+    func demarrerActive() async throws {
         let engine = MockAudioEngine()
-        try engine.demarrer { _ in }
+        try await engine.demarrer { _ in }
         #expect(engine.isRecording == true)
     }
 
     @Test("arreter() sets isRecording to false and resets power")
-    func arreterInactive() throws {
+    func arreterInactive() async throws {
         let engine = MockAudioEngine()
-        try engine.demarrer { _ in }
+        try await engine.demarrer { _ in }
         engine.arreter()
         #expect(engine.isRecording == false)
         #expect(engine.averagePower == 0.0)
     }
 
     @Test("demarrer() throws when erreurAuDemarrage is set")
-    func demarrerThrows() throws {
+    func demarrerThrows() async throws {
         let engine = MockAudioEngine()
         engine.erreurAuDemarrage = AudioEngineErreur.reconnaissanceIndisponible
-        #expect(throws: AudioEngineErreur.reconnaissanceIndisponible) {
-            try engine.demarrer { _ in }
+        await #expect(throws: AudioEngineErreur.reconnaissanceIndisponible) {
+            try await engine.demarrer { _ in }
         }
         #expect(engine.isRecording == false)
     }
 
     @Test("demarrer() does not start when error is thrown")
-    func demarrerNeCommencePasSiErreur() {
+    func demarrerNeCommencePasSiErreur() async {
         let engine = MockAudioEngine()
         engine.erreurAuDemarrage = AudioEngineErreur.reconnaissanceIndisponible
-        try? engine.demarrer { _ in }
+        try? await engine.demarrer { _ in }
         #expect(engine.isRecording == false)
     }
 
     // MARK: - Partial results
 
     @Test("demarrer() delivers partial results via callback")
-    func resultatsPartielsLivres() throws {
+    func resultatsPartielsLivres() async throws {
         let engine = MockAudioEngine()
         engine.resultatsPartiels = ["Bonjour", "Bonjour le monde"]
 
         var resultatsRecus: [String] = []
-        try engine.demarrer { texte in
+        try await engine.demarrer { texte in
             resultatsRecus.append(texte)
         }
 
@@ -96,10 +96,10 @@ struct AudioEngineTests {
     }
 
     @Test("simulerResultatPartiel() fires callback when recording")
-    func simulerResultat() throws {
+    func simulerResultat() async throws {
         let engine = MockAudioEngine()
         var dernier = ""
-        try engine.demarrer { texte in dernier = texte }
+        try await engine.demarrer { texte in dernier = texte }
         engine.simulerResultatPartiel("Test en cours")
         #expect(dernier == "Test en cours")
         #expect(engine.transcriptionEnCours == "Test en cours")
@@ -115,11 +115,11 @@ struct AudioEngineTests {
     // MARK: - Call counters
 
     @Test("demarrer() and arreter() call counts are tracked")
-    func compteurs() throws {
+    func compteurs() async throws {
         let engine = MockAudioEngine()
-        try engine.demarrer { _ in }
+        try await engine.demarrer { _ in }
         engine.arreter()
-        try engine.demarrer { _ in }
+        try await engine.demarrer { _ in }
         engine.arreter()
         #expect(engine.demarrerAppels == 2)
         #expect(engine.arreterAppels == 2)
@@ -147,4 +147,3 @@ struct AudioEngineTests {
         #expect(accordee != refusee)
     }
 }
-

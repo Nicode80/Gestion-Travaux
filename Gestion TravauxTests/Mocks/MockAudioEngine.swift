@@ -42,7 +42,7 @@ final class MockAudioEngine: AudioEngineProtocol {
         return permissionAAccorder
     }
 
-    func demarrer(surResultatPartiel: @escaping @MainActor (String) -> Void) throws {
+    func demarrer(surResultatPartiel: @escaping @MainActor (String) -> Void) async throws {
         demarrerAppels += 1
         if let erreur = erreurAuDemarrage {
             throw erreur
@@ -69,6 +69,11 @@ final class MockAudioEngine: AudioEngineProtocol {
     func simulerResultatPartiel(_ texte: String) {
         guard isRecording else { return }
         transcriptionEnCours = texte
+        dernierCallback?(texte)
+    }
+
+    /// Simulates a stale callback arriving after recording stopped (tests M3 race condition guard).
+    func simulerResultatPartielForce(_ texte: String) {
         dernierCallback?(texte)
     }
 

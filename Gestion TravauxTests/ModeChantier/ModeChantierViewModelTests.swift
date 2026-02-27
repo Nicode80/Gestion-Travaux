@@ -394,4 +394,57 @@ struct ModeChantierViewModelTests {
         let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
         #expect(captures.isEmpty)
     }
+
+    @Test("toggleEnregistrementAction dispatches to toggleEnregistrement (H2 sync wrapper)")
+    func toggleEnregistrementActionWrapper() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Cuisine")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        vm.toggleEnregistrementAction(chantier: etat)
+        // Yield so the spawned Task executes on the current MainActor executor
+        await Task.yield()
+
+        #expect(mockEngine.isRecording == true)
+        #expect(etat.boutonVert == true)
+    }
+
+    @Test("stale partial-result callback after stop does not create orphan CaptureEntity (M3)")
+    func raceConditionGuardStaleCallback() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Texte initial"]
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Chambre")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start then stop recording — capture is finalized
+        await vm.toggleEnregistrement(chantier: etat)
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let capturesAvant = try context.fetch(FetchDescriptor<CaptureEntity>())
+
+        // Simulate stale SFSpeechRecognizer callback after arreter() (bypasses mock guard)
+        mockEngine.simulerResultatPartielForce("Callback tardif après arrêt")
+
+        let capturesApres = try context.fetch(FetchDescriptor<CaptureEntity>())
+        // Stale callback must NOT create a second CaptureEntity
+        #expect(capturesApres.count == capturesAvant.count)
+    }
 }

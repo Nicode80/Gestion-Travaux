@@ -53,7 +53,7 @@ protocol AudioEngineProtocol: AnyObject {
 
     /// Starts recording and live transcription.
     /// Calls `surResultatPartiel` on the main actor for each incremental result.
-    func demarrer(surResultatPartiel: @escaping @MainActor (String) -> Void) throws
+    func demarrer(surResultatPartiel: @escaping @MainActor (String) -> Void) async throws
 
     /// Stops recording and ends the recognition request.
     func arreter()

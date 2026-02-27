@@ -24,7 +24,9 @@ final class ModeChantierViewModel {
     // MARK: - Dependencies
 
     private let modelContext: ModelContext
-    let audioEngine: AudioEngineProtocol
+    private let audioEngine: AudioEngineProtocol
+    /// Normalised audio power 0.0–1.0 for BigButton pulse and RecordingIndicator.
+    var averagePower: Float { audioEngine.averagePower }
 
     // MARK: - Story 2.1 state
 
@@ -94,7 +96,11 @@ final class ModeChantierViewModel {
     /// Selects a task and starts the Mode Chantier session.
     func demarrerSession(tache: TacheEntity, etat: ModeChantierState) {
         tache.lastSessionDate = Date()
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            // lastSessionDate persistence failed — non-critical, session continues
+        }
         etat.tacheActive = tache
         etat.demarrerSession()
     }
@@ -112,6 +118,13 @@ final class ModeChantierViewModel {
             stopEnregistrement(chantier: chantier)
         } else {
             await startEnregistrement(chantier: chantier)
+        }
+    }
+
+    /// Sync entry point for SwiftUI button actions — spawns Task internally (architecture rule: no Task in View body).
+    func toggleEnregistrementAction(chantier: ModeChantierState) {
+        Task {
+            await toggleEnregistrement(chantier: chantier)
         }
     }
 
@@ -141,8 +154,9 @@ final class ModeChantierViewModel {
         demarrerPulseTimer()
 
         do {
-            try audioEngine.demarrer { [weak self] partialText in
-                guard let self else { return }
+            try await audioEngine.demarrer { [weak self] partialText in
+                // M3: Guard against stale callbacks after recording was stopped
+                guard let self, self.audioEngine.isRecording else { return }
                 self.transcription = partialText
                 // Incremental persistence (NFR-R3): write each partial result immediately
                 if let tache = chantier.tacheActive {
@@ -187,7 +201,11 @@ final class ModeChantierViewModel {
         }
         let block = ContentBlock(type: .text, text: texte, order: 0)
         captureEnCours?.blocksData = [block].toData()
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+        } catch {
+            erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
+        }
     }
 
     /// Finalizes (or discards) the in-progress capture on recording stop.
@@ -200,12 +218,20 @@ final class ModeChantierViewModel {
         if !transcription.isEmpty {
             let block = ContentBlock(type: .text, text: transcription, order: 0)
             capture.blocksData = [block].toData()
-            try? modelContext.save()
-            afficherToastCapture()
+            do {
+                try modelContext.save()
+                afficherToastCapture()
+            } catch {
+                erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
+            }
         } else {
             // Empty recording — delete the placeholder
             modelContext.delete(capture)
-            try? modelContext.save()
+            do {
+                try modelContext.save()
+            } catch {
+                // Orphaned empty capture acceptable — will be cleaned up on next session
+            }
         }
         captureEnCours = nil
     }
@@ -222,9 +248,13 @@ final class ModeChantierViewModel {
         capture.tache = tache
         capture.blocksData = [block].toData()
         modelContext.insert(capture)
-        try? modelContext.save()
-        saisieManuelle = ""
-        afficherToastCapture()
+        do {
+            try modelContext.save()
+            saisieManuelle = ""
+            afficherToastCapture()
+        } catch {
+            erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
+        }
     }
 
     // MARK: - Toast

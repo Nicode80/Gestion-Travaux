@@ -91,16 +91,14 @@ struct ModeChantierView: View {
                 // Recording indicator (hidden when not recording)
                 RecordingIndicator(
                     isRecording: chantier.boutonVert,
-                    averagePower: viewModel.audioEngine.averagePower
+                    averagePower: viewModel.averagePower
                 )
 
                 // BigButton with reactive pulse
                 BigButton(
                     state: chantier.boutonVert ? .active : .inactive,
                     action: {
-                        Task {
-                            await viewModel.toggleEnregistrement(chantier: chantier)
-                        }
+                        viewModel.toggleEnregistrementAction(chantier: chantier)
                     },
                     pulseScale: viewModel.pulseScale
                 )

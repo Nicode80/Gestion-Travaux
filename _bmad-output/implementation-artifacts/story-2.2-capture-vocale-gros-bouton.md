@@ -159,11 +159,11 @@ La persistence incrémentale : chaque résultat partiel de SFSpeechRecognizer cr
 
 - **AudioEngineProtocol** : protocole `@MainActor` avec `PermissionMicro: Equatable` et `AudioEngineErreur: LocalizedError`
 - **AudioEngine** : `@MainActor final class`, AVAudioEngine + SFSpeechRecognizer, power calculé via RMS du tap buffer
-- **ModeChantierViewModel** : étendu avec `toggleEnregistrement()`, `sauvegarderSaisieManuelle()`, pulse timer, toast 2s, et persistence incrémentale
-- **ModeChantierView** : BigButton branché, transcription temps réel, toast overlay, fallback saisie manuelle
+- **ModeChantierViewModel** : étendu avec `toggleEnregistrement()`, `toggleEnregistrementAction()` (sync wrapper), `sauvegarderSaisieManuelle()`, pulse timer, toast 2s, persistence incrémentale. `audioEngine` privé, `averagePower` exposé comme computed property
+- **ModeChantierView** : BigButton branché via `toggleEnregistrementAction()` (plus de Task dans la View), `viewModel.averagePower` passé à RecordingIndicator
 - **DashboardView** : `modelContext` passé à `ModeChantierView(modelContext:)`
 - **RecordingIndicator** : 5 barres waveform animées avec `averagePower`
-- **Tests** : 37 tests ModeChantierViewModelTests (18 Story 2.2) + 14 AudioEngineTests — tous passent
+- **Tests** : 20 tests ModeChantierViewModelTests (10 Story 2.2 dont H2 wrapper + M3 race condition) + 13 AudioEngineTests — tous passent
 
 ## File List
 
@@ -182,5 +182,8 @@ La persistence incrémentale : chaque résultat partiel de SFSpeechRecognizer cr
 
 ## Change Log
 
-- 2026-02-26 : Story 2.2 implémentée — AudioEngine + toggle enregistrement + persistence incrémentale + pulse BigButton + toast + fallback saisie manuelle (FR59). 37 tests unitaires, 0 régressions.
+- 2026-02-26 : Story 2.2 implémentée — AudioEngine + toggle enregistrement + persistence incrémentale + pulse BigButton + toast + fallback saisie manuelle (FR59). 31 tests unitaires, 0 régressions.
 - 2026-02-26 : Corrections post-review — H1 (boutonVert optimiste avant demarrer, rollback si erreur), H2 (descriptions plist Mode Chantier), H3 (guard isProcessingToggle contre double-tap pendant permission dialog), M1 (MainActor.assumeIsolated + deinit timer), M2 (variable morte supprimée dans AudioEngineTests), M3 (vérification sessionId dans mettreAJourCaptureEnCours).
+- 2026-02-27 : Code review adversariale — 5 issues corrigées : H1 (try? modelContext.save() → do/catch explicites ×5), H2 (Task dans View → toggleEnregistrementAction() wrapper sync), M1 (audioEngine → private + var averagePower exposé), M2 (try? AVAudioSession.setActive → do/catch), M3 (guard audioEngine.isRecording contre callbacks tardifs). +2 tests (H2 wrapper + M3 race condition). 20 tests ViewModel + 13 AudioEngine.
+- 2026-02-27 : Crash fix 1/2 (_dispatch_assert_queue_fail sur device réel) — AudioEngine.demarrer() réécrit en async throws avec Task.detached pour tout le setup hardware AVAudioEngine (inputNode, installTap, start()) + await MainActor.run pour recognitionTask. Pattern identique au fix commit 69df9b7 (TaskCreationViewModel). Propriétés audio marquées nonisolated(unsafe). Protocol + Mock + ViewModel + Tests mis à jour (async throws).
+- 2026-02-27 : Crash fix 2/2 (root cause réel) — SFSpeechRecognizer.requestAuthorization et AVAudioApplication.requestRecordPermission dans demanderPermission() causaient le crash en s'exécutant sur le @MainActor. iOS Speech/AVAudio internals assertent NOT on main queue. Fix : deux nonisolated static helpers (requestSpeechPermission + requestMicroPermission), pattern identique à TaskCreationViewModel.startVoiceInput().
