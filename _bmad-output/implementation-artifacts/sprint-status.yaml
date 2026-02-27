@@ -55,7 +55,7 @@ development_status:
   # ─────────────────────────────────────────────────────
   epic-2: in-progress
   2-1-selection-de-tache-et-entree-en-mode-chantier: done
-  2-2-capture-vocale-avec-le-gros-bouton: ready-for-dev
+  2-2-capture-vocale-avec-le-gros-bouton: done
   2-3-photos-intercalees-sans-interruption-audio: ready-for-dev
   2-4-gestion-des-interruptions-ios-et-mode-economie-batterie: ready-for-dev
   2-5-menu-hamburger-changer-de-tache-et-parcourir-lapp: ready-for-dev

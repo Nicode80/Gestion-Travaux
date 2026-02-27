@@ -67,7 +67,7 @@ struct DashboardView: View {
         }
         // fullScreenCover driven by ModeChantierState.sessionActive (Story 2.1)
         .fullScreenCover(isPresented: $chantier.sessionActive) {
-            ModeChantierView()
+            ModeChantierView(modelContext: modelContext)
         }
         // Sheet: task selection before entering Mode Chantier (Story 2.1)
         .sheet(isPresented: $showTaskSelection) {

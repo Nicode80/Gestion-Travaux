@@ -2,9 +2,18 @@
 // Gestion TravauxTests
 //
 // Unit tests for ModeChantierViewModel:
-// - charger() loads only active tasks
-// - tacheProposee returns the most recently created active task
-// - demarrerSession() sets the correct tache and starts the session
+//
+// Story 2.1:
+//   - charger() loads only active tasks
+//   - tacheProposee returns the most recently created active task
+//   - demarrerSession() sets the correct tache and starts the session
+//
+// Story 2.2:
+//   - toggleEnregistrement() starts / stops audio via MockAudioEngine
+//   - boutonVert reflects recording state
+//   - CaptureEntity is created and saved on stop
+//   - permissionRefusee is set when permission is denied
+//   - sauvegarderSaisieManuelle() creates a CaptureEntity from typed text
 
 import Testing
 import Foundation
@@ -197,9 +206,245 @@ struct ModeChantierViewModelTests {
 
     @Test("BigButtonState disabled is the only non-interactive state")
     func bigButtonStateDisabled() {
-        // Disabled is the only state that should block interaction.
-        // Other states (.inactive, .active) must remain interactive.
         #expect(BigButtonState.inactive != .disabled)
         #expect(BigButtonState.active != .disabled)
+    }
+
+    // MARK: Story 2.2 — toggleEnregistrement()
+
+    @Test("toggleEnregistrement starts recording when permission is granted")
+    func toggleEnregistrementDemarre() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Cuisine")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        await vm.toggleEnregistrement(chantier: etat)
+
+        #expect(mockEngine.isRecording == true)
+        #expect(etat.boutonVert == true)
+        #expect(vm.permissionRefusee == false)
+    }
+
+    @Test("toggleEnregistrement stops recording on second call")
+    func toggleEnregistrementArrete() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Peindre le plafond"]
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Salon")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start
+        await vm.toggleEnregistrement(chantier: etat)
+        #expect(etat.boutonVert == true)
+
+        // Stop
+        await vm.toggleEnregistrement(chantier: etat)
+
+        #expect(mockEngine.isRecording == false)
+        #expect(etat.boutonVert == false)
+        #expect(mockEngine.arreterAppels == 1)
+    }
+
+    @Test("toggleEnregistrement sets permissionRefusee when permission is denied")
+    func toggleEnregistrementPermissionRefusee() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = false
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        await vm.toggleEnregistrement(chantier: etat)
+
+        #expect(vm.permissionRefusee == true)
+        #expect(etat.boutonVert == false)
+        #expect(mockEngine.isRecording == false)
+    }
+
+    @Test("toggleEnregistrement sets erreurEnregistrement when engine throws")
+    func toggleEnregistrementErreur() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.erreurAuDemarrage = AudioEngineErreur.reconnaissanceIndisponible
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+        etat.tacheActive = TacheEntity(titre: "Test")
+
+        await vm.toggleEnregistrement(chantier: etat)
+
+        #expect(vm.erreurEnregistrement != nil)
+        #expect(etat.boutonVert == false)
+    }
+
+    @Test("incremental persistence: CaptureEntity is created on first partial result")
+    func persistenceIncrementale() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Premier résultat"]
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Salle de bain")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        await vm.toggleEnregistrement(chantier: etat)
+
+        // A CaptureEntity should have been created
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+        #expect(captures.first?.tache?.titre == "Salle de bain")
+        // Verify transcription was persisted
+        let blocks = captures.first?.blocksData.toContentBlocks() ?? []
+        #expect(blocks.first?.text == "Premier résultat")
+    }
+
+    @Test("CaptureEntity is finalized on recording stop")
+    func captureFinaliseeArret() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Texte final capturé"]
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Garage")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start
+        await vm.toggleEnregistrement(chantier: etat)
+        // Stop
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+        let blocks = captures.first?.blocksData.toContentBlocks() ?? []
+        #expect(blocks.first?.text == "Texte final capturé")
+    }
+
+    @Test("sauvegarderSaisieManuelle() creates a CaptureEntity with typed text")
+    func saisieManuelle() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Entrée")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+        etat.demarrerSession()
+
+        vm.saisieManuelle = "  Vérifier les joints  "
+        vm.sauvegarderSaisieManuelle(chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+        let blocks = captures.first?.blocksData.toContentBlocks() ?? []
+        #expect(blocks.first?.text == "Vérifier les joints")
+        // saisieManuelle should be cleared after save
+        #expect(vm.saisieManuelle.isEmpty)
+    }
+
+    @Test("sauvegarderSaisieManuelle() does nothing when text is empty")
+    func saisieManuelleVide() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Terrasse")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+        etat.demarrerSession()
+
+        vm.saisieManuelle = "   "
+        vm.sauvegarderSaisieManuelle(chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.isEmpty)
+    }
+
+    @Test("toggleEnregistrementAction dispatches to toggleEnregistrement (H2 sync wrapper)")
+    func toggleEnregistrementActionWrapper() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Cuisine")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        vm.toggleEnregistrementAction(chantier: etat)
+        // Yield so the spawned Task executes on the current MainActor executor
+        await Task.yield()
+
+        #expect(mockEngine.isRecording == true)
+        #expect(etat.boutonVert == true)
+    }
+
+    @Test("stale partial-result callback after stop does not create orphan CaptureEntity (M3)")
+    func raceConditionGuardStaleCallback() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Texte initial"]
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Chambre")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start then stop recording — capture is finalized
+        await vm.toggleEnregistrement(chantier: etat)
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let capturesAvant = try context.fetch(FetchDescriptor<CaptureEntity>())
+
+        // Simulate stale SFSpeechRecognizer callback after arreter() (bypasses mock guard)
+        mockEngine.simulerResultatPartielForce("Callback tardif après arrêt")
+
+        let capturesApres = try context.fetch(FetchDescriptor<CaptureEntity>())
+        // Stale callback must NOT create a second CaptureEntity
+        #expect(capturesApres.count == capturesAvant.count)
     }
 }
