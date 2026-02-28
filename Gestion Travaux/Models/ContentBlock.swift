@@ -51,8 +51,9 @@ extension ContentBlock: Codable {
         text           = try c.decodeIfPresent(String.self, forKey: .text)
         photoLocalPath = try c.decodeIfPresent(String.self, forKey: .photoLocalPath)
         order          = try c.decode(Int.self,        forKey: .order)
-        // Pre-2.3 stored blocks lack `timestamp`; default to current date on decode.
-        timestamp      = try c.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date()
+        // Pre-2.3 stored blocks lack `timestamp`; use epoch as a stable sentinel so the value
+        // does not change across repeated decode/encode cycles (M3-fix: avoids drifting timestamps).
+        timestamp      = try c.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date(timeIntervalSince1970: 0)
     }
 
     func encode(to encoder: Encoder) throws {

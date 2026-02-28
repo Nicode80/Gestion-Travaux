@@ -50,7 +50,9 @@ final class PhotoService: PhotoServiceProtocol {
             withIntermediateDirectories: true
         )
 
-        let filename = "\(captureId.uuidString)_\(Int(Date().timeIntervalSince1970)).jpg"
+        // Use a per-photo UUID for guaranteed uniqueness regardless of how fast consecutive photos are taken.
+        // (H1-fix: sessionId + 1-second timestamp granularity caused silent file overwrites.)
+        let filename = "\(UUID().uuidString).jpg"
         let fileURL = capturesURL.appendingPathComponent(filename)
         let relativePath = "\(Constants.Photos.repertoireCaptures)/\(filename)"
 

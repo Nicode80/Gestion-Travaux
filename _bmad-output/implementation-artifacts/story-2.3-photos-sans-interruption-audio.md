@@ -2,7 +2,7 @@
 story: "2.3"
 epic: 2
 title: "Photos intercalées sans interruption audio"
-status: review
+status: done
 frs: [FR5, FR6, FR58]
 nfrs: [NFR-P7, NFR-R4, NFR-U4]
 ---
@@ -148,7 +148,7 @@ Button { viewModel.prendrePotoAction(chantier: chantier) } label: {
 
 ### Completion Notes
 
-✅ 92 tests passés, 0 échec, 0 régression.
+✅ 97 tests passés, 0 échec, 0 régression (5 nouveaux tests post-review).
 ✅ Tous les AC satisfaits.
 ✅ PhotoService injectable via protocole, testé en isolation avec temp directory.
 ✅ ContentBlock.timestamp ajouté avec decode backwards-compatible (pre-2.3 data safe).
@@ -157,6 +157,15 @@ Button { viewModel.prendrePotoAction(chantier: chantier) } label: {
 ✅ Bouton Photo `.disabled(!chantier.boutonVert)` : inactif hors enregistrement, actif pendant.
 ✅ NSCameraUsageDescription ajouté au pbxproj (Debug + Release).
 ✅ Warning `allowBluetooth` deprecated corrigé → `allowBluetoothHFP`.
+
+### Post-Review Fixes (code-review adversarial 2026-02-28)
+
+✅ **H1** — Collision noms de fichiers : `PhotoService` utilise `UUID()` par photo au lieu de `sessionId + timestamp-1s` → plus de risque d'écrasement silencieux.
+✅ **M1** — `prendrePhoto()` désormais testable via closures injectables `cameraAuthStatus` / `cameraRequestAccess` ; 4 tests ajoutés couvrant les 3 branches de permission (`.authorized`, `.notDetermined`×2, `.denied`).
+✅ **M2** — Collision `order: 0` corrigée dans `mettreAJourCaptureEnCours()` : le bloc texte obtient `order = min(existant) - 1` quand des photos précèdent le premier résultat vocal ; 1 test ajouté.
+✅ **M3** — Fallback timestamp pre-2.3 : `Date()` → `Date(timeIntervalSince1970: 0)` — sentinel stable, ne dérive plus à chaque cycle encode/decode.
+✅ **M4** — Typo corrigée : `prendrePoto` → `prendrePhoto` / `prendrePotoAction` → `prendrePhotoAction` dans ViewModel et View.
+✅ **M5** — `UIImpactFeedbackGenerator` stocké en propriété réutilisable ; `prepare()` appelé dans `prendrePhoto()` (avant ouverture caméra), `impactOccurred()` dans `sauvegarderPhoto()` — latence haptique réduite.
 
 ## File List
 
@@ -167,16 +176,19 @@ Button { viewModel.prendrePotoAction(chantier: chantier) } label: {
 - `Gestion TravauxTests/Services/PhotoServiceTests.swift`
 
 ### Modified files
-- `Gestion Travaux/Models/ContentBlock.swift` (ajout champ `timestamp: Date`, Codable manuel)
+- `Gestion Travaux/Models/ContentBlock.swift` (ajout champ `timestamp: Date`, Codable manuel, M3-fix sentinel epoch)
 - `Gestion Travaux/Services/AudioEngine.swift` (AVAudioSession → `.playAndRecord` + `.mixWithOthers`)
-- `Gestion Travaux/ViewModels/ModeChantierViewModel.swift` (Story 2.3 photo, fix text-update preserves photos, fix finalisationCapture)
-- `Gestion Travaux/Views/ModeChantier/ModeChantierView.swift` (bouton Photo câblé, sheet, alert)
+- `Gestion Travaux/Services/PhotoService.swift` (H1-fix: UUID par photo, plus de collision)
+- `Gestion Travaux/ViewModels/ModeChantierViewModel.swift` (Story 2.3 photo, fix text-update preserves photos, fix finalisationCapture, M1/M2/M4/M5-fix)
+- `Gestion Travaux/Views/ModeChantier/ModeChantierView.swift` (bouton Photo câblé, sheet, alert, M4-fix renommage)
 - `Gestion Travaux.xcodeproj/project.pbxproj` (NSCameraUsageDescription Debug + Release)
-- `Gestion TravauxTests/ModeChantier/ModeChantierViewModelTests.swift` (8 nouveaux tests photo)
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` (2-3 → review)
+- `Gestion TravauxTests/ModeChantier/ModeChantierViewModelTests.swift` (8 tests photo initiaux + 5 tests post-review M1/M2)
+- `Gestion TravauxTests/Services/PhotoServiceTests.swift` (H1-fix: suppression Thread.sleep)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (2-3 → review → done)
 
 ## Change Log
 
 | Date | Auteur | Changement |
 |------|--------|------------|
 | 2026-02-27 | Agent | Implémentation Story 2.3 — Photos intercalées sans interruption audio |
+| 2026-02-28 | Agent | Post-review fixes : H1 (collision fichiers), M1 (tests permission caméra), M2 (order collision), M3 (timestamp sentinel), M4 (typo rename), M5 (haptic prepare) |

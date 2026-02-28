@@ -91,16 +91,16 @@ struct PhotoServiceTests {
         #expect(FileManager.default.fileExists(atPath: capturesURL.path))
     }
 
-    @Test("sauvegarder() can save multiple photos with distinct filenames")
+    @Test("sauvegarder() can save multiple photos in rapid succession with distinct filenames")
     func photosDistinctes() throws {
         let tempDir = try makeTempDir()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
+        // Same captureId (same session), called back-to-back with no sleep.
+        // After H1-fix (per-photo UUID in filename), no sleep is needed and no collision occurs.
         let service = PhotoService(baseURL: tempDir)
         let id = UUID()
         let chemin1 = try service.sauvegarder(makeTestImage(color: .red),   captureId: id)
-        // Sleep 1 second to ensure timestamps differ in the filename
-        Thread.sleep(forTimeInterval: 1.1)
         let chemin2 = try service.sauvegarder(makeTestImage(color: .green), captureId: id)
 
         #expect(chemin1 != chemin2)

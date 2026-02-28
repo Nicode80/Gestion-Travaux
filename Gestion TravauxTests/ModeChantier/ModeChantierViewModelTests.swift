@@ -656,6 +656,127 @@ struct ModeChantierViewModelTests {
         #expect(photoBlock!.timestamp <= apres)
     }
 
+    // MARK: - Story 2.3 — prendrePhoto() camera permission (M1-fix: injectable closures)
+
+    @Test("prendrePhoto accorde l'accès quand la permission est déjà autorisée")
+    func prendrePhotoPermissionDejAutorisee() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .authorized },
+            cameraRequestAccess: { true }
+        )
+        let etat = ModeChantierState()
+        etat.boutonVert = true
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == true)
+        #expect(vm.permissionCameraRefusee == false)
+    }
+
+    @Test("prendrePhoto demande la permission si .notDetermined et accorde si l'user accepte")
+    func prendrePhotoDemandeEtAccorde() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .notDetermined },
+            cameraRequestAccess: { true }
+        )
+        let etat = ModeChantierState()
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == true)
+        #expect(vm.permissionCameraRefusee == false)
+    }
+
+    @Test("prendrePhoto définit permissionCameraRefusee si l'user refuse le dialogue système")
+    func prendrePhotoDemandeEtRefuse() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .notDetermined },
+            cameraRequestAccess: { false }
+        )
+        let etat = ModeChantierState()
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == false)
+        #expect(vm.permissionCameraRefusee == true)
+    }
+
+    @Test("prendrePhoto définit permissionCameraRefusee si permission déjà refusée dans les réglages")
+    func prendrePhotoPermissionDejRefusee() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .denied },
+            cameraRequestAccess: { false }
+        )
+        let etat = ModeChantierState()
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == false)
+        #expect(vm.permissionCameraRefusee == true)
+    }
+
+    // MARK: - Story 2.3 — order collision when photo precedes first text (M2-fix)
+
+    @Test("photo prise avant le premier résultat vocal a un order distinct du bloc texte")
+    func photoAvantTexteOrdreDistinct() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        // No resultatsPartiels up-front — text will arrive via simulerResultatPartiel after the photo.
+        let mockPhoto = MockPhotoService()
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Couloir")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start recording (no text yet)
+        await vm.toggleEnregistrement(chantier: etat)
+        #expect(etat.boutonVert == true)
+
+        // Photo taken before first transcription result
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        // First text partial arrives after the photo
+        mockEngine.simulerResultatPartiel("Premier mot")
+
+        // Stop recording — finalizes capture
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+        let blocks = captures.first!.blocksData.toContentBlocks()
+        let textBlocks  = blocks.filter { $0.type == .text }
+        let photoBlocks = blocks.filter { $0.type == .photo }
+        #expect(textBlocks.count == 1)
+        #expect(photoBlocks.count == 1)
+
+        // All order values must be distinct (no duplicate-0 collision)
+        let allOrders = blocks.map(\.order)
+        #expect(Set(allOrders).count == allOrders.count, "Tous les blocs doivent avoir un order distinct")
+
+        // Recording starts before any photo, so text must logically precede the photo
+        guard let textOrder = textBlocks.first?.order, let photoOrder = photoBlocks.first?.order else { return }
+        #expect(textOrder < photoOrder, "Le bloc texte (enregistrement) doit précéder le bloc photo")
+    }
+
     @Test("finaliserCapture keeps photo-only capture (no transcription text)")
     func finalisationGardePhotoSansTexte() async throws {
         let container = try makeContainer()

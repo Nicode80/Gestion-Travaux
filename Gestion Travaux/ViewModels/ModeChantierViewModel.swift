@@ -12,7 +12,7 @@
 //   - pulseScale: driven by a ~60 fps timer reading audioEngine.averagePower.
 //
 // Story 2.3: Interleaved photo capture without interrupting audio.
-//   - prendrePotoAction() checks/requests camera permission, shows camera picker.
+//   - prendrePhotoAction() checks/requests camera permission, shows camera picker.
 //   - sauvegarderPhoto() inserts a PhotoBlock into the active CaptureEntity.
 //   - AVAudioSession uses .mixWithOthers so camera activation never interrupts audio.
 //   - mettreAJourCaptureEnCours() preserves existing photo blocks on each text update.
@@ -34,6 +34,10 @@ final class ModeChantierViewModel {
     private let modelContext: ModelContext
     private let audioEngine: AudioEngineProtocol
     private let photoService: PhotoServiceProtocol
+    /// Injectable camera authorization status — defaults to AVCaptureDevice (overridable in tests, M1-fix).
+    @ObservationIgnored private let cameraAuthStatus: () -> AVAuthorizationStatus
+    /// Injectable camera access request — defaults to AVCaptureDevice (overridable in tests, M1-fix).
+    @ObservationIgnored private let cameraRequestAccess: () async -> Bool
     /// Normalised audio power 0.0–1.0 for BigButton pulse and RecordingIndicator.
     var averagePower: Float { audioEngine.averagePower }
 
@@ -66,6 +70,8 @@ final class ModeChantierViewModel {
     @ObservationIgnored nonisolated(unsafe) private var pulseTimer: Timer? = nil
     /// Guard against concurrent toggleEnregistrement calls during async permission dialog (H3).
     @ObservationIgnored private var isProcessingToggle = false
+    /// Reusable haptic generator for photo confirmation — prepare() when camera opens, impactOccurred() on save (M5-fix).
+    @ObservationIgnored private let haptiquePhoto = UIImpactFeedbackGenerator(style: .medium)
 
     // MARK: - Story 2.3 state
 
@@ -79,11 +85,15 @@ final class ModeChantierViewModel {
     init(
         modelContext: ModelContext,
         audioEngine: AudioEngineProtocol? = nil,
-        photoService: PhotoServiceProtocol? = nil
+        photoService: PhotoServiceProtocol? = nil,
+        cameraAuthStatus: (() -> AVAuthorizationStatus)? = nil,
+        cameraRequestAccess: (() async -> Bool)? = nil
     ) {
         self.modelContext = modelContext
         self.audioEngine = audioEngine ?? AudioEngine()
         self.photoService = photoService ?? PhotoService()
+        self.cameraAuthStatus = cameraAuthStatus ?? { AVCaptureDevice.authorizationStatus(for: .video) }
+        self.cameraRequestAccess = cameraRequestAccess ?? { await AVCaptureDevice.requestAccess(for: .video) }
     }
 
     deinit {
@@ -225,7 +235,10 @@ final class ModeChantierViewModel {
         if let idx = blocks.firstIndex(where: { $0.type == .text }) {
             blocks[idx].text = texte
         } else {
-            blocks.insert(ContentBlock(type: .text, text: texte, order: 0), at: 0)
+            // M2-fix: if photos already exist (taken before first text result), place text at an order
+            // strictly below the minimum photo order to avoid duplicate-0 collisions.
+            let textOrder = blocks.isEmpty ? 0 : (blocks.map(\.order).min() ?? 0) - 1
+            blocks.insert(ContentBlock(type: .text, text: texte, order: textOrder), at: 0)
         }
         captureEnCours!.blocksData = blocks.toData()
         do {
@@ -302,14 +315,17 @@ final class ModeChantierViewModel {
 
     /// Checks/requests camera permission, then shows the camera picker.
     /// Only callable when boutonVert == true (enforced by the disabled state of the button in the View).
-    func prendrePoto(chantier: ModeChantierState) async {
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
+    /// Uses injectable cameraAuthStatus / cameraRequestAccess for testability (M1-fix).
+    func prendrePhoto(chantier: ModeChantierState) async {
+        let status = cameraAuthStatus()
         switch status {
         case .authorized:
+            haptiquePhoto.prepare()  // M5-fix: prime haptic engine while camera opens
             afficherPickerPhoto = true
         case .notDetermined:
-            let granted = await AVCaptureDevice.requestAccess(for: .video)
+            let granted = await cameraRequestAccess()
             if granted {
+                haptiquePhoto.prepare()  // M5-fix
                 afficherPickerPhoto = true
             } else {
                 permissionCameraRefusee = true
@@ -322,9 +338,9 @@ final class ModeChantierViewModel {
     }
 
     /// Sync entry point for SwiftUI button actions (architecture rule: no Task in View body).
-    func prendrePotoAction(chantier: ModeChantierState) {
+    func prendrePhotoAction(chantier: ModeChantierState) {
         Task {
-            await prendrePoto(chantier: chantier)
+            await prendrePhoto(chantier: chantier)
         }
     }
 
@@ -360,8 +376,8 @@ final class ModeChantierViewModel {
 
             try modelContext.save()
 
-            // Haptic feedback — medium (NFR-U4)
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            // Haptic feedback — medium (NFR-U4); uses stored generator (prepare() called in prendrePhoto).
+            haptiquePhoto.impactOccurred()
         } catch {
             erreurEnregistrement = "Échec de la sauvegarde de la photo."
         }

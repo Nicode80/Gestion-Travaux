@@ -223,7 +223,7 @@ struct ModeChantierView: View {
         HStack(spacing: 16) {
             // Photo — Story 2.3: active only when boutonVert
             Button {
-                viewModel.prendrePotoAction(chantier: chantier)
+                viewModel.prendrePhotoAction(chantier: chantier)
             } label: {
                 Label("Photo", systemImage: "camera.fill")
                     .font(.headline)
