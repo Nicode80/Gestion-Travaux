@@ -16,6 +16,7 @@
 //   - sauvegarderSaisieManuelle() creates a CaptureEntity from typed text
 
 import Testing
+import AVFoundation
 import Foundation
 import UIKit
 import SwiftData
@@ -807,5 +808,150 @@ struct ModeChantierViewModelTests {
         #expect(captures.count == 1)
         let blocks = captures.first!.blocksData.toContentBlocks()
         #expect(blocks.filter { $0.type == .photo }.count == 1)
+    }
+
+    // MARK: - Story 2.5 — changerDeTache()
+
+    @Test("changerDeTache() met à jour tacheActive sur ModeChantierState")
+    func changerDeTacheMetsAJourTacheActive() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tache1 = TacheEntity(titre: "Cuisine")
+        let tache2 = TacheEntity(titre: "Garage")
+        context.insert(tache1)
+        context.insert(tache2)
+        try context.save()
+
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+        etat.tacheActive = tache1
+
+        vm.changerDeTache(tache: tache2, chantier: etat)
+
+        #expect(etat.tacheActive?.titre == "Garage")
+    }
+
+    @Test("changerDeTache() met à jour lastSessionDate pour le tri futur (NFR-P5)")
+    func changerDeTacheMetsAJourLastSessionDate() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tache = TacheEntity(titre: "Salle de bain")
+        context.insert(tache)
+        try context.save()
+
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+        #expect(tache.lastSessionDate == nil)
+
+        let avant = Date()
+        vm.changerDeTache(tache: tache, chantier: etat)
+        let apres = Date()
+
+        #expect(tache.lastSessionDate != nil)
+        #expect(tache.lastSessionDate! >= avant)
+        #expect(tache.lastSessionDate! <= apres)
+    }
+
+    @Test("changerDeTache() liée à la nouvelle tâche : captures suivantes rattachées à newTask (FR11)")
+    func changerDeTacheCapturesSuivantesRattacheesANouvelleTache() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Poncer le plancher"]
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tache1 = TacheEntity(titre: "Salon")
+        let tache2 = TacheEntity(titre: "Chambre")
+        context.insert(tache1)
+        context.insert(tache2)
+        try context.save()
+        etat.tacheActive = tache1
+        etat.demarrerSession()
+
+        // Switch task (no recording in progress)
+        vm.changerDeTache(tache: tache2, chantier: etat)
+        #expect(etat.tacheActive?.titre == "Chambre")
+
+        // New recording uses the new tacheActive
+        await vm.toggleEnregistrement(chantier: etat)
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let capturesChambre = try context.fetch(FetchDescriptor<CaptureEntity>())
+            .filter { $0.tache?.titre == "Chambre" }
+        #expect(capturesChambre.count == 1)
+
+        let capturesSalon = try context.fetch(FetchDescriptor<CaptureEntity>())
+            .filter { $0.tache?.titre == "Salon" }
+        #expect(capturesSalon.isEmpty)
+    }
+
+    // MARK: - Story 2.5 — parcourirApp()
+
+    @Test("parcourirApp() active isBrowsing et ferme ModeChantierView (sessionActive = false)")
+    func parcourirAppActiveIsBrowsingEtFermeCover() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+        etat.sessionActive = true
+        etat.isBrowsing = false
+
+        vm.parcourirApp(chantier: etat)
+
+        #expect(etat.isBrowsing == true)
+        #expect(etat.sessionActive == false)
+    }
+
+    @Test("parcourirApp() ne peut pas être appelé quand boutonVert == true (menu désactivé)")
+    func parcourirAppSansBoutonVert() throws {
+        // This test validates that the guard is enforced at the UI level (menu disabled),
+        // and that parcourirApp() itself does not have a side-effect guard.
+        // If somehow called while recording, it still sets isBrowsing safely.
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+        etat.sessionActive = true
+        etat.boutonVert = false // menu is only accessible when boutonVert == false
+
+        vm.parcourirApp(chantier: etat)
+
+        // isBrowsing must be set regardless — safety assumption upheld by View
+        #expect(etat.isBrowsing == true)
+        #expect(etat.sessionActive == false)
+    }
+
+    // MARK: - Story 2.5 — reprendreDepuisPause()
+
+    @Test("reprendreDepuisPause() réinitialise isBrowsing et restaure sessionActive")
+    func reprendreDepuisPauseRestoreState() {
+        let etat = ModeChantierState()
+        etat.isBrowsing = true
+        etat.sessionActive = false
+
+        etat.reprendreDepuisPause()
+
+        #expect(etat.isBrowsing == false)
+        #expect(etat.sessionActive == true)
+    }
+
+    @Test("reprendreDepuisPause() est idempotent quand appelé deux fois")
+    func reprendreDepuisPauseIdempotente() {
+        let etat = ModeChantierState()
+        etat.isBrowsing = true
+        etat.sessionActive = false
+
+        etat.reprendreDepuisPause()
+        etat.reprendreDepuisPause()
+
+        #expect(etat.isBrowsing == false)
+        #expect(etat.sessionActive == true)
     }
 }

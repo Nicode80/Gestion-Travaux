@@ -24,6 +24,11 @@
 //   - Toast "Enregistrement interrompu" (afficherToastInterruption, auto-dismiss 2 s)
 //   - Toast "Reprendre l'enregistrement ?" (proposeReprendre, auto-dismiss 10 s)
 //
+// Story 2.5 additions:
+//   - [☰] wired to confirmationDialog with [Changer de tâche] and [Parcourir l'app]
+//   - Task-switch sheet: lists active tasks, calls viewModel.changerDeTache()
+//   - Browse action: calls viewModel.parcourirApp() → isBrowsing = true, sessionActive = false
+//
 // RULE: boutonVert == true → total navigation lockdown.
 //       [☰] is disabled; BigButton drives all interaction.
 
@@ -38,6 +43,8 @@ struct ModeChantierView: View {
     private let modelContext: ModelContext
     @State private var viewModel: ModeChantierViewModel
     @State private var photoCapturee: UIImage? = nil
+    @State private var showMenu = false
+    @State private var showTaskSwitch = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -75,6 +82,16 @@ struct ModeChantierView: View {
             }
         }
         .preferredColorScheme(.dark)
+        // Story 2.5: hamburger menu options (disabled when boutonVert == true)
+        .confirmationDialog("Options", isPresented: $showMenu) {
+            Button("🔄 Changer de tâche") { showTaskSwitch = true }
+            Button("📖 Parcourir l'app") { viewModel.parcourirApp(chantier: chantier) }
+            Button("Annuler", role: .cancel) {}
+        }
+        // Story 2.5: task-switch sheet
+        .sheet(isPresented: $showTaskSwitch) {
+            taskSwitchSheet
+        }
         .sheet(isPresented: Bindable(viewModel).afficherPickerPhoto) {
             CameraPickerView(image: $photoCapturee)
         }
@@ -123,10 +140,10 @@ struct ModeChantierView: View {
 
             Spacer()
 
-            // Hamburger — actions implemented in Story 2.5
-            // Disabled during recording (boutonVert lockdown)
+            // Hamburger — disabled during recording (boutonVert lockdown, Story 2.5)
             Button {
-                // Story 2.5: open hamburger menu
+                viewModel.charger()
+                showMenu = true
             } label: {
                 Image(systemName: "line.3.horizontal")
                     .font(.title2)
@@ -323,6 +340,66 @@ struct ModeChantierView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: viewModel.afficherToastInterruption)
         .accessibilityLabel("Enregistrement interrompu")
+    }
+
+    // MARK: - Story 2.5: Task-switch sheet
+
+    /// Inline sheet listing all active tasks for switching during a session.
+    /// On selection, calls changerDeTache() — new captures attach to the new task (FR11).
+    private var taskSwitchSheet: some View {
+        NavigationStack {
+            Group {
+                if viewModel.tachesActives.isEmpty {
+                    VStack(spacing: 20) {
+                        Image(systemName: "tray")
+                            .font(.system(size: 48))
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        Text("Aucune autre tâche active")
+                            .font(.headline)
+                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                } else {
+                    List(viewModel.tachesActives, id: \.persistentModelID) { tache in
+                        Button {
+                            viewModel.changerDeTache(tache: tache, chantier: chantier)
+                            showTaskSwitch = false
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(tache.titre)
+                                        .font(.body)
+                                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                    if let action = tache.prochaineAction, !action.isEmpty {
+                                        Text(action)
+                                            .font(.caption)
+                                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                    }
+                                }
+                                Spacer()
+                                if chantier.tacheActive?.persistentModelID == tache.persistentModelID {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                                }
+                            }
+                            .frame(minHeight: 60)
+                        }
+                    }
+                    .listStyle(.insetGrouped)
+                    .scrollContentBackground(.hidden)
+                    .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                }
+            }
+            .navigationTitle("Changer de tâche")
+            .navigationBarTitleDisplayMode(.inline)
+            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Annuler") { showTaskSwitch = false }
+                }
+            }
+        }
     }
 
     // MARK: - Toast: reprendre l'enregistrement ? (Story 2.4)

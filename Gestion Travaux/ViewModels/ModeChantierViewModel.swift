@@ -23,6 +23,10 @@
 //   - arreterEnregistrementInterrompu() called by callback and scenePhase observer.
 //   - Idle timer disabled (isIdleTimerDisabled = true) — managed by ModeChantierView.
 //
+// Story 2.5: Hamburger menu — task switch and browse mode.
+//   - changerDeTache() updates tacheActive; new captures auto-attach to the new task (FR11).
+//   - parcourirApp() sets isBrowsing = true and sessionActive = false to show PauseBannerView.
+//
 // Receives ModelContext via init — no direct SwiftData access from Views.
 
 import AVFoundation
@@ -456,6 +460,29 @@ final class ModeChantierViewModel {
         } catch {
             erreurEnregistrement = "Échec de la sauvegarde de la photo."
         }
+    }
+
+    // MARK: - Story 2.5: Task switch and browse mode
+
+    /// Switches the active task during a session without interrupting it.
+    /// Subsequent captures are automatically attached to the new task (FR11).
+    /// Only callable when boutonVert == false (enforced by the disabled menu in the view).
+    func changerDeTache(tache: TacheEntity, chantier: ModeChantierState) {
+        chantier.tacheActive = tache
+        tache.lastSessionDate = Date()
+        do {
+            try modelContext.save()
+        } catch {
+            // Non-critical: tacheActive is updated; lastSessionDate persistence failure is acceptable
+        }
+    }
+
+    /// Activates browsing mode: hides ModeChantierView and shows PauseBannerView on all screens.
+    /// Sets sessionActive = false so the fullScreenCover dismisses; PauseBannerView becomes visible.
+    /// Only callable when boutonVert == false (enforced by the disabled menu in the view).
+    func parcourirApp(chantier: ModeChantierState) {
+        chantier.isBrowsing = true
+        chantier.sessionActive = false
     }
 
     // MARK: - Toast
