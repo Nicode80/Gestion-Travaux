@@ -18,6 +18,12 @@
 //   - sauvegarderPhoto() called on image selection via onChange
 //   - Alert shown when camera permission is denied ("Caméra requise pour les photos de chantier")
 //
+// Story 2.4 additions:
+//   - scenePhase observer: arreterEnregistrementInterrompu() when app goes to background
+//   - isIdleTimerDisabled = true on appear / false on disappear (keeps screen on, FR60)
+//   - Toast "Enregistrement interrompu" (afficherToastInterruption, auto-dismiss 2 s)
+//   - Toast "Reprendre l'enregistrement ?" (proposeReprendre, auto-dismiss 10 s)
+//
 // RULE: boutonVert == true → total navigation lockdown.
 //       [☰] is disabled; BigButton drives all interaction.
 
@@ -27,6 +33,7 @@ import SwiftData
 struct ModeChantierView: View {
 
     @Environment(ModeChantierState.self) private var chantier
+    @Environment(\.scenePhase) private var scenePhase
 
     private let modelContext: ModelContext
     @State private var viewModel: ModeChantierViewModel
@@ -52,9 +59,19 @@ struct ModeChantierView: View {
                 bottomBar
             }
 
-            // Toast overlay (non-blocking, auto-dismiss 2 s)
+            // Toast overlay — "Capture sauvegardée" (auto-dismiss 2 s)
             if viewModel.afficherToast {
                 toastView
+            }
+
+            // Toast overlay — "Enregistrement interrompu" (auto-dismiss 2 s, Story 2.4)
+            if viewModel.afficherToastInterruption {
+                interruptionToastView
+            }
+
+            // Toast overlay — "Reprendre ?" (auto-dismiss 10 s, Story 2.4)
+            if viewModel.proposeReprendre {
+                repriseToastView
             }
         }
         .preferredColorScheme(.dark)
@@ -66,6 +83,19 @@ struct ModeChantierView: View {
                 viewModel.sauvegarderPhoto(image, chantier: chantier)
                 photoCapturee = nil
             }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            // Story 2.4: stop recording cleanly when app moves to background (NFR-R3)
+            if newPhase == .background {
+                viewModel.arreterEnregistrementInterrompu(chantier: chantier)
+            }
+        }
+        .onAppear {
+            // Story 2.4 / FR60: keep screen on during Mode Chantier to conserve interaction
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            UIApplication.shared.isIdleTimerDisabled = false
         }
         .alert(
             "Caméra requise pour les photos de chantier",
@@ -257,7 +287,7 @@ struct ModeChantierView: View {
         .padding(.bottom, 32)
     }
 
-    // MARK: - Toast
+    // MARK: - Toast: capture sauvegardée
 
     private var toastView: some View {
         VStack {
@@ -274,5 +304,50 @@ struct ModeChantierView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: viewModel.afficherToast)
         .accessibilityLabel("Capture sauvegardée")
+    }
+
+    // MARK: - Toast: enregistrement interrompu (Story 2.4)
+
+    private var interruptionToastView: some View {
+        VStack {
+            Spacer()
+            Text("⏸ Enregistrement interrompu")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color(hex: Constants.Couleurs.alerte).opacity(0.9))
+                .clipShape(Capsule())
+                .padding(.bottom, 100)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+        .animation(.easeInOut(duration: 0.3), value: viewModel.afficherToastInterruption)
+        .accessibilityLabel("Enregistrement interrompu")
+    }
+
+    // MARK: - Toast: reprendre l'enregistrement ? (Story 2.4)
+
+    private var repriseToastView: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 12) {
+                Text("Reprendre l'enregistrement ?")
+                    .font(.subheadline)
+                    .foregroundStyle(.white)
+                Button("Reprendre") {
+                    viewModel.dismisserPropositionReprise()
+                    viewModel.toggleEnregistrementAction(chantier: chantier)
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.bottom, 140)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+        .animation(.easeInOut(duration: 0.3), value: viewModel.proposeReprendre)
+        .accessibilityLabel("Reprendre l'enregistrement")
     }
 }

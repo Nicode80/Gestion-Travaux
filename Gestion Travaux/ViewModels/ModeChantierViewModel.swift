@@ -18,6 +18,11 @@
 //   - mettreAJourCaptureEnCours() preserves existing photo blocks on each text update.
 //   - finaliserCapture() handles photo-only captures (no transcription text).
 //
+// Story 2.4: iOS interruption handling + battery economy.
+//   - startEnregistrement() wires AudioEngine.surInterruptionBegan/Ended callbacks.
+//   - arreterEnregistrementInterrompu() called by callback and scenePhase observer.
+//   - Idle timer disabled (isIdleTimerDisabled = true) — managed by ModeChantierView.
+//
 // Receives ModelContext via init — no direct SwiftData access from Views.
 
 import AVFoundation
@@ -79,6 +84,15 @@ final class ModeChantierViewModel {
     var afficherPickerPhoto: Bool = false
     /// True when camera permission is denied — triggers an alert in the view.
     var permissionCameraRefusee: Bool = false
+
+    // MARK: - Story 2.4 state
+
+    /// True when recording was stopped by a system interruption — shows "Enregistrement interrompu" toast.
+    private(set) var afficherToastInterruption: Bool = false
+    /// True when an interruption ended — shows "Reprendre l'enregistrement ?" toast (auto-dismiss 10 s).
+    private(set) var proposeReprendre: Bool = false
+    /// Weak reference to the active ModeChantierState for use in AudioEngine interruption callbacks.
+    @ObservationIgnored private weak var dernierChantier: ModeChantierState?
 
     // MARK: - Init
 
@@ -179,6 +193,22 @@ final class ModeChantierViewModel {
 
         permissionRefusee = false
         erreurEnregistrement = nil
+        dernierChantier = chantier  // Story 2.4: stored for use in interruption callbacks
+
+        // Wire Story 2.4 interruption callbacks — called by AudioEngine when AVAudioSession is interrupted.
+        audioEngine.surInterruptionBegan = { [weak self] in
+            guard let self, let ch = self.dernierChantier else { return }
+            // audioEngine already stopped internally; arreterEnregistrementInterrompu uses boutonVert guard.
+            self.arreterEnregistrementInterrompu(chantier: ch)
+        }
+        audioEngine.surInterruptionEnded = { [weak self] in
+            guard let self else { return }
+            self.proposeReprendre = true
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(10))
+                self?.proposeReprendre = false
+            }
+        }
 
         // H1: Optimistic UI update for < 100ms visual response (NFR-P2)
         chantier.boutonVert = true
@@ -213,6 +243,30 @@ final class ModeChantierViewModel {
         // Finalize capture if we have one
         finaliserCapture(chantier: chantier)
         transcription = ""
+    }
+
+    // MARK: - Story 2.4: System-initiated stop (interruption / background)
+
+    /// Stops recording when the system interrupts it (incoming call, background transition).
+    /// Guards on `chantier.boutonVert` because AudioEngine may have already stopped itself
+    /// before this is called (interruption case: isRecording is already false).
+    func arreterEnregistrementInterrompu(chantier: ModeChantierState) {
+        guard chantier.boutonVert else { return }
+        audioEngine.arreter()  // no-op if AudioEngine already stopped
+        arreterPulseTimer()
+        chantier.boutonVert = false
+        finaliserCapture(chantier: chantier)
+        transcription = ""
+        afficherToastInterruption = true
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            self?.afficherToastInterruption = false
+        }
+    }
+
+    /// Dismisses the "Reprendre l'enregistrement ?" toast (called by its button or on manual stop).
+    func dismisserPropositionReprise() {
+        proposeReprendre = false
     }
 
     // MARK: - Incremental persistence

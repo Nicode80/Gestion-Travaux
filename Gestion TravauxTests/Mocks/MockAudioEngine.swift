@@ -63,6 +63,11 @@ final class MockAudioEngine: AudioEngineProtocol {
         averagePower = 0.0
     }
 
+    // MARK: - Story 2.4: Interruption callbacks (AudioEngineProtocol)
+
+    var surInterruptionBegan: (@MainActor () -> Void)?
+    var surInterruptionEnded: (@MainActor () -> Void)?
+
     // MARK: Test helpers
 
     /// Simulates a partial transcription result arriving mid-recording.
@@ -82,6 +87,23 @@ final class MockAudioEngine: AudioEngineProtocol {
         averagePower = valeur
     }
 
+    /// Simulates an AVAudioSession interruption beginning (incoming call, Siri, etc.).
+    /// Mirrors AudioEngine: stops internal state first, then fires surInterruptionBegan.
+    func simulerInterruptionAudio() {
+        isRecording = false
+        averagePower = 0.0
+        Task { @MainActor [weak self] in
+            self?.surInterruptionBegan?()
+        }
+    }
+
+    /// Simulates AVAudioSession interruption ending (caller hung up, etc.).
+    func simulerFinInterruption() {
+        Task { @MainActor [weak self] in
+            self?.surInterruptionEnded?()
+        }
+    }
+
     /// Resets all state and counters between tests.
     func reinitialiser() {
         isRecording = false
@@ -94,5 +116,7 @@ final class MockAudioEngine: AudioEngineProtocol {
         demarrerAppels = 0
         arreterAppels = 0
         dernierCallback = nil
+        surInterruptionBegan = nil
+        surInterruptionEnded = nil
     }
 }

@@ -9,6 +9,10 @@
 // hardware — iOS triggers dispatch_assert_queue_not(main_queue) otherwise (same root cause as
 // TaskCreationViewModel fix, commit 69df9b7).
 // Pattern: Task.detached for hardware setup, await MainActor.run for @MainActor SDK calls.
+//
+// Story 2.4: AVAudioSession.interruptionNotification observer registered after demarrer() succeeds.
+// removeInterruptionObserver() called in stopInterne() so it is always cleaned up.
+// surInterruptionBegan / surInterruptionEnded wired by ModeChantierViewModel.
 
 import Foundation
 @preconcurrency import AVFoundation
@@ -37,6 +41,13 @@ final class AudioEngine: AudioEngineProtocol {
         r?.defaultTaskHint = .dictation
         return r
     }()
+
+    // MARK: - Story 2.4: Interruption callbacks + observer token
+
+    var surInterruptionBegan: (@MainActor () -> Void)?
+    var surInterruptionEnded: (@MainActor () -> Void)?
+    /// Token retained to unregister the observer in stopInterne().
+    nonisolated(unsafe) private var interruptionObserver: NSObjectProtocol?
 
     // MARK: - Permission
 
@@ -167,15 +178,55 @@ final class AudioEngine: AudioEngineProtocol {
                 }
             }
         }
+
+        // Register interruption observer after hardware started successfully (Story 2.4).
+        setupInterruptionObserver()
     }
 
     func arreter() {
         stopInterne()
     }
 
+    // MARK: - Story 2.4: Interruption observer
+
+    private func setupInterruptionObserver() {
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: nil  // hop to @MainActor in the handler
+        ) { [weak self] notification in
+            guard
+                let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+                let interruptionType = AVAudioSession.InterruptionType(rawValue: typeValue)
+            else { return }
+
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                switch interruptionType {
+                case .began:
+                    // Stop the engine first, then notify ViewModel to handle persistence + UI.
+                    self.stopInterne()
+                    self.surInterruptionBegan?()
+                case .ended:
+                    self.surInterruptionEnded?()
+                @unknown default:
+                    break
+                }
+            }
+        }
+    }
+
+    private func removeInterruptionObserver() {
+        if let observer = interruptionObserver {
+            NotificationCenter.default.removeObserver(observer)
+            interruptionObserver = nil
+        }
+    }
+
     // MARK: - Internal cleanup
 
     private func stopInterne() {
+        removeInterruptionObserver()
         if avEngine.isRunning {
             avEngine.inputNode.removeTap(onBus: 0)
             avEngine.stop()
