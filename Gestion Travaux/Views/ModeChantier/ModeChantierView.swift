@@ -12,6 +12,12 @@
 //   - Toast "✅ Capture sauvegardée" (auto-dismiss 2 s, non-blocking)
 //   - Manual input fallback when microphone permission is denied (FR59)
 //
+// Story 2.3 additions:
+//   - [📷 Photo] button active only when boutonVert == true
+//   - Camera picker sheet presented via CameraPickerView
+//   - sauvegarderPhoto() called on image selection via onChange
+//   - Alert shown when camera permission is denied ("Caméra requise pour les photos de chantier")
+//
 // RULE: boutonVert == true → total navigation lockdown.
 //       [☰] is disabled; BigButton drives all interaction.
 
@@ -24,6 +30,7 @@ struct ModeChantierView: View {
 
     private let modelContext: ModelContext
     @State private var viewModel: ModeChantierViewModel
+    @State private var photoCapturee: UIImage? = nil
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -51,6 +58,28 @@ struct ModeChantierView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .sheet(isPresented: Bindable(viewModel).afficherPickerPhoto) {
+            CameraPickerView(image: $photoCapturee)
+        }
+        .onChange(of: photoCapturee) { _, image in
+            if let image {
+                viewModel.sauvegarderPhoto(image, chantier: chantier)
+                photoCapturee = nil
+            }
+        }
+        .alert(
+            "Caméra requise pour les photos de chantier",
+            isPresented: Bindable(viewModel).permissionCameraRefusee
+        ) {
+            Button("Annuler", role: .cancel) {}
+            Button("Ouvrir les réglages") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("Autorise l'accès à la caméra dans Réglages > Confidentialité.")
+        }
     }
 
     // MARK: - Top bar
@@ -192,19 +221,23 @@ struct ModeChantierView: View {
 
     private var bottomBar: some View {
         HStack(spacing: 16) {
-            // Photo — implemented in Story 2.3
+            // Photo — Story 2.3: active only when boutonVert
             Button {
-                // Story 2.3
+                viewModel.prendrePhotoAction(chantier: chantier)
             } label: {
                 Label("Photo", systemImage: "camera.fill")
                     .font(.headline)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(chantier.boutonVert ? .white : .white.opacity(0.4))
                     .frame(maxWidth: .infinity, minHeight: 60)
-                    .background(.white.opacity(0.08))
+                    .background(chantier.boutonVert
+                                ? Color(hex: Constants.Couleurs.accent).opacity(0.35)
+                                : .white.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .disabled(true)
-            .accessibilityLabel("Prendre une photo — indisponible dans cette version")
+            .disabled(!chantier.boutonVert)
+            .accessibilityLabel(chantier.boutonVert
+                                ? "Prendre une photo"
+                                : "Prendre une photo — démarrer l'enregistrement d'abord")
 
             // Fin — implemented in Story 2.6
             Button {

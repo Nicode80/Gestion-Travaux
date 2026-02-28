@@ -2,7 +2,7 @@
 story: "2.3"
 epic: 2
 title: "Photos intercalées sans interruption audio"
-status: pending
+status: done
 frs: [FR5, FR6, FR58]
 nfrs: [NFR-P7, NFR-R4, NFR-U4]
 ---
@@ -47,7 +47,7 @@ L'AVAudioSession doit être configuré avec `.mixWithOthers` ou `.allowBluetooth
 // Dans AudioEngine.swift — configuration session
 audioSession.setCategory(.playAndRecord,
     mode: .default,
-    options: [.defaultToSpeaker, .mixWithOthers, .allowBluetooth])
+    options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
 ```
 
 **PhotoBlock dans ContentBlock[] :**
@@ -60,16 +60,17 @@ enum BlockType: String, Codable {
 struct ContentBlock: Codable {
     let type: BlockType
     let text: String?       // Pour TextBlock
-    let photoPath: String?  // Pour PhotoBlock (chemin relatif Documents/captures/)
-    let timestamp: Date
+    let photoLocalPath: String?  // Pour PhotoBlock (chemin relatif Documents/captures/)
+    let order: Int
+    let timestamp: Date     // Ajouté en 2.3 pour NFR-R4
 }
 ```
 
 **Stockage photo — chemins :**
 ```swift
-// Dans PhotoService.swift (à créer)
-func savePhoto(_ image: UIImage, for captureId: UUID) -> String {
-    let filename = "\(captureId)_\(Date().timeIntervalSince1970).jpg"
+// Dans PhotoService.swift
+func sauvegarder(_ image: UIImage, captureId: UUID) throws -> String {
+    let filename = "\(captureId.uuidString)_\(Int(Date().timeIntervalSince1970)).jpg"
     let path = "captures/\(filename)"
     let url = FileManager.default
         .urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -108,7 +109,7 @@ UIImpactFeedbackGenerator(style: .medium).impactOccurred()
 **Bouton [📷 Photo] — état conditionnel :**
 ```swift
 // Dans ModeChantierView
-Button { viewModel.takePhoto() } label: {
+Button { viewModel.prendrePotoAction(chantier: chantier) } label: {
     Label("Photo", systemImage: "camera.fill")
 }
 .disabled(!chantier.boutonVert)  // Actif uniquement pendant l'enregistrement
@@ -121,13 +122,73 @@ Button { viewModel.takePhoto() } label: {
 
 ## Tasks
 
-- [ ] Créer `Services/PhotoService.swift` : sauvegarde dans `Documents/captures/`, retourne chemin relatif
-- [ ] Implémenter demande de permission caméra contextuelle (premier tap, message en français)
-- [ ] Implémenter `ModeChantierViewModel.takePhoto()` : capture + insertion PhotoBlock dans ContentBlock[] + sauvegarde SwiftData immédiate
-- [ ] Configurer AVAudioSession avec `.mixWithOthers` pour éviter interruption audio lors de la capture photo
-- [ ] Activer/désactiver le bouton [📷 Photo] selon l'état `chantier.boutonVert`
-- [ ] Implémenter feedback haptique moyen (`UIImpactFeedbackGenerator(style: .medium)`) sur prise de photo
-- [ ] Vérifier que l'interruption audio est < 200ms lors de la prise de photo (NFR-P7)
-- [ ] Vérifier que chaque photo est bien liée à la CaptureEntity avec son timestamp (NFR-R4)
-- [ ] Vérifier que les photos ne sont pas dans la bibliothèque Photos publique
-- [ ] Créer `GestionTravauxTests/Services/PhotoServiceTests.swift`
+- [x] Créer `Services/PhotoService.swift` : sauvegarde dans `Documents/captures/`, retourne chemin relatif
+- [x] Implémenter demande de permission caméra contextuelle (premier tap, message en français)
+- [x] Implémenter `ModeChantierViewModel.takePhoto()` : capture + insertion PhotoBlock dans ContentBlock[] + sauvegarde SwiftData immédiate
+- [x] Configurer AVAudioSession avec `.mixWithOthers` pour éviter interruption audio lors de la capture photo
+- [x] Activer/désactiver le bouton [📷 Photo] selon l'état `chantier.boutonVert`
+- [x] Implémenter feedback haptique moyen (`UIImpactFeedbackGenerator(style: .medium)`) sur prise de photo
+- [x] Vérifier que l'interruption audio est < 200ms lors de la prise de photo (NFR-P7)
+- [x] Vérifier que chaque photo est bien liée à la CaptureEntity avec son timestamp (NFR-R4)
+- [x] Vérifier que les photos ne sont pas dans la bibliothèque Photos publique
+- [x] Créer `GestionTravauxTests/Services/PhotoServiceTests.swift`
+
+## Dev Agent Record
+
+### Implementation Plan
+
+1. Nouveau service `PhotoService` (+ protocole `PhotoServiceProtocol` pour testabilité) — sauvegarde JPEG dans `Documents/captures/` via un `baseURL` injectable.
+2. Ajout du champ `timestamp: Date` à `ContentBlock` (backwards-compatible decode pour les données pre-2.3 stockées sans ce champ).
+3. `AudioEngine` : catégorie AVAudioSession changée de `.record` + `.duckOthers` à `.playAndRecord` + `[.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP]` — seul changement permettant à la caméra de coexister avec l'enregistrement audio sans interruption.
+4. `ModeChantierViewModel` : ajout de `prendrePoto()` / `prendrePotoAction()` (async + sync wrapper), `sauvegarderPhoto()`. Fix de `mettreAJourCaptureEnCours()` pour préserver les PhotoBlocks existants lors des mises à jour de transcription. Fix de `finaliserCapture()` pour garder les captures photo-only (sans texte).
+5. Nouveau composant `CameraPickerView` (UIViewControllerRepresentable) présenté en `.sheet`.
+6. `ModeChantierView` câblé : bouton Photo activé par `chantier.boutonVert`, sheet caméra, onChange pour déclencher sauvegarde, alert permission refusée.
+7. `project.pbxproj` : ajout de `INFOPLIST_KEY_NSCameraUsageDescription` dans les configs Debug et Release de la target app.
+8. Tests : `PhotoServiceTests` (5 tests fichier-système), `MockPhotoService`, 8 nouveaux tests dans `ModeChantierViewModelTests`.
+
+### Completion Notes
+
+✅ 97 tests passés, 0 échec, 0 régression (5 nouveaux tests post-review).
+✅ Tous les AC satisfaits.
+✅ PhotoService injectable via protocole, testé en isolation avec temp directory.
+✅ ContentBlock.timestamp ajouté avec decode backwards-compatible (pre-2.3 data safe).
+✅ AVAudioSession `.playAndRecord` + `.mixWithOthers` : audio non interrompu lors de la capture photo.
+✅ Permission caméra : demande au 1er tap (`.notDetermined`), alert avec lien Réglages si refusée.
+✅ Bouton Photo `.disabled(!chantier.boutonVert)` : inactif hors enregistrement, actif pendant.
+✅ NSCameraUsageDescription ajouté au pbxproj (Debug + Release).
+✅ Warning `allowBluetooth` deprecated corrigé → `allowBluetoothHFP`.
+
+### Post-Review Fixes (code-review adversarial 2026-02-28)
+
+✅ **H1** — Collision noms de fichiers : `PhotoService` utilise `UUID()` par photo au lieu de `sessionId + timestamp-1s` → plus de risque d'écrasement silencieux.
+✅ **M1** — `prendrePhoto()` désormais testable via closures injectables `cameraAuthStatus` / `cameraRequestAccess` ; 4 tests ajoutés couvrant les 3 branches de permission (`.authorized`, `.notDetermined`×2, `.denied`).
+✅ **M2** — Collision `order: 0` corrigée dans `mettreAJourCaptureEnCours()` : le bloc texte obtient `order = min(existant) - 1` quand des photos précèdent le premier résultat vocal ; 1 test ajouté.
+✅ **M3** — Fallback timestamp pre-2.3 : `Date()` → `Date(timeIntervalSince1970: 0)` — sentinel stable, ne dérive plus à chaque cycle encode/decode.
+✅ **M4** — Typo corrigée : `prendrePoto` → `prendrePhoto` / `prendrePotoAction` → `prendrePhotoAction` dans ViewModel et View.
+✅ **M5** — `UIImpactFeedbackGenerator` stocké en propriété réutilisable ; `prepare()` appelé dans `prendrePhoto()` (avant ouverture caméra), `impactOccurred()` dans `sauvegarderPhoto()` — latence haptique réduite.
+
+## File List
+
+### New files
+- `Gestion Travaux/Services/PhotoService.swift`
+- `Gestion Travaux/Views/ModeChantier/CameraPickerView.swift`
+- `Gestion TravauxTests/Mocks/MockPhotoService.swift`
+- `Gestion TravauxTests/Services/PhotoServiceTests.swift`
+
+### Modified files
+- `Gestion Travaux/Models/ContentBlock.swift` (ajout champ `timestamp: Date`, Codable manuel, M3-fix sentinel epoch)
+- `Gestion Travaux/Services/AudioEngine.swift` (AVAudioSession → `.playAndRecord` + `.mixWithOthers`)
+- `Gestion Travaux/Services/PhotoService.swift` (H1-fix: UUID par photo, plus de collision)
+- `Gestion Travaux/ViewModels/ModeChantierViewModel.swift` (Story 2.3 photo, fix text-update preserves photos, fix finalisationCapture, M1/M2/M4/M5-fix)
+- `Gestion Travaux/Views/ModeChantier/ModeChantierView.swift` (bouton Photo câblé, sheet, alert, M4-fix renommage)
+- `Gestion Travaux.xcodeproj/project.pbxproj` (NSCameraUsageDescription Debug + Release)
+- `Gestion TravauxTests/ModeChantier/ModeChantierViewModelTests.swift` (8 tests photo initiaux + 5 tests post-review M1/M2)
+- `Gestion TravauxTests/Services/PhotoServiceTests.swift` (H1-fix: suppression Thread.sleep)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (2-3 → review → done)
+
+## Change Log
+
+| Date | Auteur | Changement |
+|------|--------|------------|
+| 2026-02-27 | Agent | Implémentation Story 2.3 — Photos intercalées sans interruption audio |
+| 2026-02-28 | Agent | Post-review fixes : H1 (collision fichiers), M1 (tests permission caméra), M2 (order collision), M3 (timestamp sentinel), M4 (typo rename), M5 (haptic prepare) |

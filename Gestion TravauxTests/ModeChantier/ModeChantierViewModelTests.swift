@@ -17,6 +17,7 @@
 
 import Testing
 import Foundation
+import UIKit
 import SwiftData
 @testable import Gestion_Travaux
 
@@ -446,5 +447,365 @@ struct ModeChantierViewModelTests {
         let capturesApres = try context.fetch(FetchDescriptor<CaptureEntity>())
         // Stale callback must NOT create a second CaptureEntity
         #expect(capturesApres.count == capturesAvant.count)
+    }
+
+    // MARK: - Story 2.3 — sauvegarderPhoto()
+
+    @Test("sauvegarderPhoto() inserts a photo block into the active CaptureEntity")
+    func sauvegarderPhotoInserePHotoBlock() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Texte en cours"]
+        let mockPhoto = MockPhotoService()
+        mockPhoto.cheminRetour = "captures/test-photo.jpg"
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Cuisine")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start recording — creates CaptureEntity with a text block
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let image = UIImage()
+        vm.sauvegarderPhoto(image, chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+
+        let blocks = captures.first!.blocksData.toContentBlocks()
+        let photoBlocks = blocks.filter { $0.type == .photo }
+        #expect(photoBlocks.count == 1)
+        #expect(photoBlocks.first?.photoLocalPath == "captures/test-photo.jpg")
+    }
+
+    @Test("sauvegarderPhoto() preserves the existing text block")
+    func sauvegarderPhotoPreserveTexte() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Description vocale"]
+        let mockPhoto = MockPhotoService()
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Salon")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start recording — creates text block
+        await vm.toggleEnregistrement(chantier: etat)
+
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        let blocks = captures.first!.blocksData.toContentBlocks()
+
+        let textBlocks  = blocks.filter { $0.type == .text }
+        let photoBlocks = blocks.filter { $0.type == .photo }
+        #expect(textBlocks.count == 1)
+        #expect(photoBlocks.count == 1)
+        #expect(textBlocks.first?.text == "Description vocale")
+    }
+
+    @Test("sauvegarderPhoto() creates a CaptureEntity when none exists yet")
+    func sauvegarderPhotoCreeCaptureSansEnregistrement() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockPhoto = MockPhotoService()
+        let vm = ModeChantierViewModel(modelContext: context, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Terrasse")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+        etat.demarrerSession()
+        // Manually set boutonVert (simulates recording started elsewhere)
+        etat.boutonVert = true
+
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+        let blocks = captures.first!.blocksData.toContentBlocks()
+        #expect(blocks.filter { $0.type == .photo }.count == 1)
+    }
+
+    @Test("sauvegarderPhoto() inserts multiple photos with incrementing order")
+    func multiplesPhotosDansCapture() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Texte"]
+        let mockPhoto = MockPhotoService()
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Garage")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        await vm.toggleEnregistrement(chantier: etat)
+
+        mockPhoto.cheminRetour = "captures/photo-1.jpg"
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        mockPhoto.cheminRetour = "captures/photo-2.jpg"
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        mockPhoto.cheminRetour = "captures/photo-3.jpg"
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        let blocks = captures.first!.blocksData.toContentBlocks()
+        let photoBlocks = blocks.filter { $0.type == .photo }.sorted { $0.order < $1.order }
+
+        #expect(photoBlocks.count == 3)
+        #expect(photoBlocks[0].photoLocalPath == "captures/photo-1.jpg")
+        #expect(photoBlocks[1].photoLocalPath == "captures/photo-2.jpg")
+        #expect(photoBlocks[2].photoLocalPath == "captures/photo-3.jpg")
+        // Orders must be strictly increasing
+        #expect(photoBlocks[0].order < photoBlocks[1].order)
+        #expect(photoBlocks[1].order < photoBlocks[2].order)
+    }
+
+    @Test("sauvegarderPhoto() does nothing when no tacheActive is set")
+    func sauvegarderPhotoSansTacheNeRienFait() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockPhoto = MockPhotoService()
+        let vm = ModeChantierViewModel(modelContext: context, photoService: mockPhoto)
+        let etat = ModeChantierState() // tacheActive == nil
+
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        #expect(mockPhoto.sauvegarderAppels == 0)
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.isEmpty)
+    }
+
+    @Test("sauvegarderPhoto() sets erreurEnregistrement when PhotoService throws")
+    func sauvegarderPhotoErreur() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        let mockPhoto = MockPhotoService()
+        mockPhoto.erreurASimuler = PhotoServiceErreur.compressionEchouee
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Chambre")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+        etat.demarrerSession()
+        etat.boutonVert = true
+
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        #expect(vm.erreurEnregistrement != nil)
+    }
+
+    @Test("photo blocks are linked to CaptureEntity with a timestamp (NFR-R4)")
+    func photoBlocksOntUnTimestamp() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        let mockPhoto = MockPhotoService()
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Bureau")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+        etat.demarrerSession()
+        etat.boutonVert = true
+
+        let avant = Date()
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+        let apres = Date()
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        let photoBlock = captures.first!.blocksData.toContentBlocks().first { $0.type == .photo }
+        #expect(photoBlock != nil)
+        #expect(photoBlock!.timestamp >= avant)
+        #expect(photoBlock!.timestamp <= apres)
+    }
+
+    // MARK: - Story 2.3 — prendrePhoto() camera permission (M1-fix: injectable closures)
+
+    @Test("prendrePhoto accorde l'accès quand la permission est déjà autorisée")
+    func prendrePhotoPermissionDejAutorisee() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .authorized },
+            cameraRequestAccess: { true }
+        )
+        let etat = ModeChantierState()
+        etat.boutonVert = true
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == true)
+        #expect(vm.permissionCameraRefusee == false)
+    }
+
+    @Test("prendrePhoto demande la permission si .notDetermined et accorde si l'user accepte")
+    func prendrePhotoDemandeEtAccorde() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .notDetermined },
+            cameraRequestAccess: { true }
+        )
+        let etat = ModeChantierState()
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == true)
+        #expect(vm.permissionCameraRefusee == false)
+    }
+
+    @Test("prendrePhoto définit permissionCameraRefusee si l'user refuse le dialogue système")
+    func prendrePhotoDemandeEtRefuse() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .notDetermined },
+            cameraRequestAccess: { false }
+        )
+        let etat = ModeChantierState()
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == false)
+        #expect(vm.permissionCameraRefusee == true)
+    }
+
+    @Test("prendrePhoto définit permissionCameraRefusee si permission déjà refusée dans les réglages")
+    func prendrePhotoPermissionDejRefusee() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let vm = ModeChantierViewModel(
+            modelContext: context,
+            cameraAuthStatus: { .denied },
+            cameraRequestAccess: { false }
+        )
+        let etat = ModeChantierState()
+
+        await vm.prendrePhoto(chantier: etat)
+
+        #expect(vm.afficherPickerPhoto == false)
+        #expect(vm.permissionCameraRefusee == true)
+    }
+
+    // MARK: - Story 2.3 — order collision when photo precedes first text (M2-fix)
+
+    @Test("photo prise avant le premier résultat vocal a un order distinct du bloc texte")
+    func photoAvantTexteOrdreDistinct() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        // No resultatsPartiels up-front — text will arrive via simulerResultatPartiel after the photo.
+        let mockPhoto = MockPhotoService()
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Couloir")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start recording (no text yet)
+        await vm.toggleEnregistrement(chantier: etat)
+        #expect(etat.boutonVert == true)
+
+        // Photo taken before first transcription result
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+
+        // First text partial arrives after the photo
+        mockEngine.simulerResultatPartiel("Premier mot")
+
+        // Stop recording — finalizes capture
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+        let blocks = captures.first!.blocksData.toContentBlocks()
+        let textBlocks  = blocks.filter { $0.type == .text }
+        let photoBlocks = blocks.filter { $0.type == .photo }
+        #expect(textBlocks.count == 1)
+        #expect(photoBlocks.count == 1)
+
+        // All order values must be distinct (no duplicate-0 collision)
+        let allOrders = blocks.map(\.order)
+        #expect(Set(allOrders).count == allOrders.count, "Tous les blocs doivent avoir un order distinct")
+
+        // Recording starts before any photo, so text must logically precede the photo
+        guard let textOrder = textBlocks.first?.order, let photoOrder = photoBlocks.first?.order else { return }
+        #expect(textOrder < photoOrder, "Le bloc texte (enregistrement) doit précéder le bloc photo")
+    }
+
+    @Test("finaliserCapture keeps photo-only capture (no transcription text)")
+    func finalisationGardePhotoSansTexte() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        // No resultatsPartiels — transcription stays empty
+        let mockPhoto = MockPhotoService()
+
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
+        let etat = ModeChantierState()
+
+        let tache = TacheEntity(titre: "Couloir")
+        context.insert(tache)
+        try context.save()
+        etat.tacheActive = tache
+
+        // Start recording (no transcription)
+        await vm.toggleEnregistrement(chantier: etat)
+        // Take a photo
+        vm.sauvegarderPhoto(UIImage(), chantier: etat)
+        // Stop recording
+        await vm.toggleEnregistrement(chantier: etat)
+
+        // Capture must be kept (not deleted) because it has photos
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(captures.count == 1)
+        let blocks = captures.first!.blocksData.toContentBlocks()
+        #expect(blocks.filter { $0.type == .photo }.count == 1)
     }
 }

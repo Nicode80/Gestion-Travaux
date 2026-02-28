@@ -400,6 +400,7 @@
 				DEVELOPMENT_TEAM = KF8L4UPN25;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Appareil photo requis pour documenter le chantier en photos sans interrompre l'enregistrement vocal.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone requis pour capturer vos notes de chantier en Mode Chantier, mains libres.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "La reconnaissance vocale transcrit vos notes de chantier en temps réel, sans connexion internet.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -434,6 +435,7 @@
 				DEVELOPMENT_TEAM = KF8L4UPN25;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Appareil photo requis pour documenter le chantier en photos sans interrompre l'enregistrement vocal.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone requis pour capturer vos notes de chantier en Mode Chantier, mains libres.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "La reconnaissance vocale transcrit vos notes de chantier en temps réel, sans connexion internet.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

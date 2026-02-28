@@ -11,8 +11,16 @@
 //   - permissionRefusee + saisieManuelle: fallback when microphone is denied (FR59).
 //   - pulseScale: driven by a ~60 fps timer reading audioEngine.averagePower.
 //
+// Story 2.3: Interleaved photo capture without interrupting audio.
+//   - prendrePhotoAction() checks/requests camera permission, shows camera picker.
+//   - sauvegarderPhoto() inserts a PhotoBlock into the active CaptureEntity.
+//   - AVAudioSession uses .mixWithOthers so camera activation never interrupts audio.
+//   - mettreAJourCaptureEnCours() preserves existing photo blocks on each text update.
+//   - finaliserCapture() handles photo-only captures (no transcription text).
+//
 // Receives ModelContext via init — no direct SwiftData access from Views.
 
+import AVFoundation
 import Foundation
 import SwiftUI
 import SwiftData
@@ -25,6 +33,11 @@ final class ModeChantierViewModel {
 
     private let modelContext: ModelContext
     private let audioEngine: AudioEngineProtocol
+    private let photoService: PhotoServiceProtocol
+    /// Injectable camera authorization status — defaults to AVCaptureDevice (overridable in tests, M1-fix).
+    @ObservationIgnored private let cameraAuthStatus: () -> AVAuthorizationStatus
+    /// Injectable camera access request — defaults to AVCaptureDevice (overridable in tests, M1-fix).
+    @ObservationIgnored private let cameraRequestAccess: () async -> Bool
     /// Normalised audio power 0.0–1.0 for BigButton pulse and RecordingIndicator.
     var averagePower: Float { audioEngine.averagePower }
 
@@ -57,12 +70,30 @@ final class ModeChantierViewModel {
     @ObservationIgnored nonisolated(unsafe) private var pulseTimer: Timer? = nil
     /// Guard against concurrent toggleEnregistrement calls during async permission dialog (H3).
     @ObservationIgnored private var isProcessingToggle = false
+    /// Reusable haptic generator for photo confirmation — prepare() when camera opens, impactOccurred() on save (M5-fix).
+    @ObservationIgnored private let haptiquePhoto = UIImpactFeedbackGenerator(style: .medium)
+
+    // MARK: - Story 2.3 state
+
+    /// True when the camera picker sheet should be shown.
+    var afficherPickerPhoto: Bool = false
+    /// True when camera permission is denied — triggers an alert in the view.
+    var permissionCameraRefusee: Bool = false
 
     // MARK: - Init
 
-    init(modelContext: ModelContext, audioEngine: AudioEngineProtocol? = nil) {
+    init(
+        modelContext: ModelContext,
+        audioEngine: AudioEngineProtocol? = nil,
+        photoService: PhotoServiceProtocol? = nil,
+        cameraAuthStatus: (() -> AVAuthorizationStatus)? = nil,
+        cameraRequestAccess: (() async -> Bool)? = nil
+    ) {
         self.modelContext = modelContext
         self.audioEngine = audioEngine ?? AudioEngine()
+        self.photoService = photoService ?? PhotoService()
+        self.cameraAuthStatus = cameraAuthStatus ?? { AVCaptureDevice.authorizationStatus(for: .video) }
+        self.cameraRequestAccess = cameraRequestAccess ?? { await AVCaptureDevice.requestAccess(for: .video) }
     }
 
     deinit {
@@ -186,7 +217,7 @@ final class ModeChantierViewModel {
 
     // MARK: - Incremental persistence
 
-    /// Creates or updates CaptureEntity with the latest partial transcription.
+    /// Creates or updates the active CaptureEntity text block, preserving existing photo blocks.
     private func mettreAJourCaptureEnCours(texte: String, tache: TacheEntity, sessionId: UUID) {
         // M3: Discard stale capture if session changed (e.g. force-terminated previous session)
         if captureEnCours?.sessionId != sessionId {
@@ -199,8 +230,17 @@ final class ModeChantierViewModel {
             modelContext.insert(capture)
             captureEnCours = capture
         }
-        let block = ContentBlock(type: .text, text: texte, order: 0)
-        captureEnCours?.blocksData = [block].toData()
+        // Update the text block in-place; keep all photo blocks untouched (Story 2.3).
+        var blocks = captureEnCours!.blocksData.toContentBlocks()
+        if let idx = blocks.firstIndex(where: { $0.type == .text }) {
+            blocks[idx].text = texte
+        } else {
+            // M2-fix: if photos already exist (taken before first text result), place text at an order
+            // strictly below the minimum photo order to avoid duplicate-0 collisions.
+            let textOrder = blocks.isEmpty ? 0 : (blocks.map(\.order).min() ?? 0) - 1
+            blocks.insert(ContentBlock(type: .text, text: texte, order: textOrder), at: 0)
+        }
+        captureEnCours!.blocksData = blocks.toData()
         do {
             try modelContext.save()
         } catch {
@@ -210,14 +250,28 @@ final class ModeChantierViewModel {
 
     /// Finalizes (or discards) the in-progress capture on recording stop.
     private func finaliserCapture(chantier: ModeChantierState) {
-        guard let capture = captureEnCours else {
-            // No transcription at all — nothing to save
-            return
-        }
-        // Ensure final transcription is written
+        guard let capture = captureEnCours else { return }
+
+        let blocks = capture.blocksData.toContentBlocks()
+        let hasPhotos = blocks.contains { $0.type == .photo }
+
         if !transcription.isEmpty {
-            let block = ContentBlock(type: .text, text: transcription, order: 0)
-            capture.blocksData = [block].toData()
+            // Update text block, preserve photo blocks
+            var updatedBlocks = blocks
+            if let idx = updatedBlocks.firstIndex(where: { $0.type == .text }) {
+                updatedBlocks[idx].text = transcription
+            } else {
+                updatedBlocks.insert(ContentBlock(type: .text, text: transcription, order: 0), at: 0)
+            }
+            capture.blocksData = updatedBlocks.toData()
+            do {
+                try modelContext.save()
+                afficherToastCapture()
+            } catch {
+                erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
+            }
+        } else if hasPhotos {
+            // Photos without transcription — keep the capture (photo-only session is valid)
             do {
                 try modelContext.save()
                 afficherToastCapture()
@@ -225,7 +279,7 @@ final class ModeChantierViewModel {
                 erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
             }
         } else {
-            // Empty recording — delete the placeholder
+            // Empty recording with no photos — delete the placeholder
             modelContext.delete(capture)
             do {
                 try modelContext.save()
@@ -254,6 +308,78 @@ final class ModeChantierViewModel {
             afficherToastCapture()
         } catch {
             erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Story 2.3: Photo capture
+
+    /// Checks/requests camera permission, then shows the camera picker.
+    /// Only callable when boutonVert == true (enforced by the disabled state of the button in the View).
+    /// Uses injectable cameraAuthStatus / cameraRequestAccess for testability (M1-fix).
+    func prendrePhoto(chantier: ModeChantierState) async {
+        let status = cameraAuthStatus()
+        switch status {
+        case .authorized:
+            haptiquePhoto.prepare()  // M5-fix: prime haptic engine while camera opens
+            afficherPickerPhoto = true
+        case .notDetermined:
+            let granted = await cameraRequestAccess()
+            if granted {
+                haptiquePhoto.prepare()  // M5-fix
+                afficherPickerPhoto = true
+            } else {
+                permissionCameraRefusee = true
+            }
+        case .denied, .restricted:
+            permissionCameraRefusee = true
+        @unknown default:
+            break
+        }
+    }
+
+    /// Sync entry point for SwiftUI button actions (architecture rule: no Task in View body).
+    func prendrePhotoAction(chantier: ModeChantierState) {
+        Task {
+            await prendrePhoto(chantier: chantier)
+        }
+    }
+
+    /// Saves the photo from the camera picker, inserts a PhotoBlock into the active CaptureEntity.
+    /// Called by the View's onChange(of: photoCapturee) after CameraPickerView delivers an image.
+    func sauvegarderPhoto(_ image: UIImage, chantier: ModeChantierState) {
+        afficherPickerPhoto = false
+        guard let tache = chantier.tacheActive else { return }
+
+        // Ensure we have a capture entity (photo-only capture if no text recorded yet)
+        if captureEnCours == nil {
+            let capture = CaptureEntity()
+            capture.sessionId = chantier.sessionId
+            capture.tache = tache
+            modelContext.insert(capture)
+            captureEnCours = capture
+        }
+
+        do {
+            let chemin = try photoService.sauvegarder(image, captureId: chantier.sessionId)
+
+            // Append photo block at the next order index; existing blocks are preserved
+            var blocks = captureEnCours!.blocksData.toContentBlocks()
+            let nextOrder = (blocks.map(\.order).max() ?? -1) + 1
+            let photoBlock = ContentBlock(
+                type: .photo,
+                photoLocalPath: chemin,
+                order: nextOrder,
+                timestamp: Date()
+            )
+            blocks.append(photoBlock)
+            captureEnCours!.blocksData = blocks.toData()
+
+            try modelContext.save()
+
+            // Haptic feedback — medium (NFR-U4); uses stored generator (prepare() called in prendrePhoto).
+            haptiquePhoto.impactOccurred()
+        } catch {
+            erreurEnregistrement = "Échec de la sauvegarde de la photo."
         }
     }
 
