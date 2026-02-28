@@ -248,11 +248,23 @@ final class ModeChantierViewModel {
     // MARK: - Story 2.4: System-initiated stop (interruption / background)
 
     /// Stops recording when the system interrupts it (incoming call, background transition).
-    /// Guards on `chantier.boutonVert` because AudioEngine may have already stopped itself
-    /// before this is called (interruption case: isRecording is already false).
+    ///
+    /// Two call paths:
+    /// - **Interruption callback** (`surInterruptionBegan`): AudioEngine already stopped itself
+    ///   (`isRecording == false`). We must NOT call `arreter()` here because `arreter()` removes
+    ///   the interruption observer we need to receive `.ended` (which triggers `surInterruptionEnded`
+    ///   → `proposeReprendre = true`).
+    /// - **Background** (`scenePhase == .background`): AudioEngine is still running
+    ///   (`isRecording == true`). We call `arreter()` to stop hardware + remove observer (no `.ended`
+    ///   expected from iOS for background transitions).
     func arreterEnregistrementInterrompu(chantier: ModeChantierState) {
         guard chantier.boutonVert else { return }
-        audioEngine.arreter()  // no-op if AudioEngine already stopped
+        if audioEngine.isRecording {
+            // Background path: engine still running — stop hardware and remove observer.
+            audioEngine.arreter()
+        }
+        // Interruption path: engine already stopped; skip arreter() so the observer survives to
+        // receive .ended → surInterruptionEnded → proposeReprendre = true.
         arreterPulseTimer()
         chantier.boutonVert = false
         finaliserCapture(chantier: chantier)
