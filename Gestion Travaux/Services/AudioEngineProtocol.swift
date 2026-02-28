@@ -57,4 +57,14 @@ protocol AudioEngineProtocol: AnyObject {
 
     /// Stops recording and ends the recognition request.
     func arreter()
+
+    // MARK: - Story 2.4: Interruption callbacks
+
+    /// Called on the main actor when AVAudioSession interruption begins (incoming call, Siri, etc.).
+    /// AudioEngine fires this after stopping internally; ViewModel wires it to persist + toast.
+    var surInterruptionBegan: (@MainActor () -> Void)? { get set }
+
+    /// Called on the main actor when AVAudioSession interruption ends.
+    /// ViewModel wires this to show "Reprendre l'enregistrement ?" toast.
+    var surInterruptionEnded: (@MainActor () -> Void)? { get set }
 }

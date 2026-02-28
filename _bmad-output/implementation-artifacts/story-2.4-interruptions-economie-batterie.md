@@ -2,7 +2,7 @@
 story: "2.4"
 epic: 2
 title: "Gestion des interruptions iOS et mode économie batterie"
-status: pending
+status: review
 frs: [FR60]
 nfrs: [NFR-P10, NFR-R3, NFR-R6, NFR-U8]
 ---
@@ -125,14 +125,36 @@ Activé automatiquement dès l'entrée en Mode Chantier :
 
 ## Tasks
 
-- [ ] Implémenter observer `AVAudioSession.interruptionNotification` dans `AudioEngine.swift`
-- [ ] Implémenter `handleInterruptionBegan()` : arrêt propre + `modelContext.save()` + `boutonVert = false`
-- [ ] Implémenter `handleInterruptionEnded()` : toast non-bloquant "Reprendre l'enregistrement ?"
-- [ ] Implémenter observer `scenePhase == .background` dans `ModeChantierView`
-- [ ] Appeler `stopRecordingOnBackground()` dans le ViewModel lors du passage en arrière-plan
-- [ ] Implémenter `UIApplication.shared.isIdleTimerDisabled = true` à l'entrée en Mode Chantier
-- [ ] Implémenter `isIdleTimerDisabled = false` à la sortie du Mode Chantier
-- [ ] Vérifier qu'aucune donnée n'est perdue lors d'une interruption (NFR-R3)
-- [ ] Vérifier la restauration d'état en ≤ 3 secondes après interruption (NFR-R6)
-- [ ] Vérifier que le BigButton est localisable en ≤ 2s sans regarder l'écran (NFR-U8)
-- [ ] Créer `GestionTravauxTests/ViewModels/ModeChantierViewModelInterruptionTests.swift`
+- [x] Implémenter observer `AVAudioSession.interruptionNotification` dans `AudioEngine.swift`
+- [x] Implémenter `handleInterruptionBegan()` : arrêt propre + `modelContext.save()` + `boutonVert = false`
+- [x] Implémenter `handleInterruptionEnded()` : toast non-bloquant "Reprendre l'enregistrement ?"
+- [x] Implémenter observer `scenePhase == .background` dans `ModeChantierView`
+- [x] Appeler `arreterEnregistrementInterrompu()` dans le ViewModel lors du passage en arrière-plan
+- [x] Implémenter `UIApplication.shared.isIdleTimerDisabled = true` à l'entrée en Mode Chantier
+- [x] Implémenter `isIdleTimerDisabled = false` à la sortie du Mode Chantier
+- [x] Vérifier qu'aucune donnée n'est perdue lors d'une interruption (NFR-R3)
+- [x] Vérifier la restauration d'état en ≤ 3 secondes après interruption (NFR-R6)
+- [x] Vérifier que le BigButton est localisable en ≤ 2s sans regarder l'écran (NFR-U8)
+- [x] Créer `GestionTravauxTests/ModeChantier/ModeChantierViewModelInterruptionTests.swift`
+
+## Dev Agent Record
+
+**Branche :** `feat/story-2.4-interruptions-economie-batterie`
+
+**Date :** 2026-02-28
+
+### Fichiers modifiés
+
+- `Services/AudioEngineProtocol.swift` : ajout de `surInterruptionBegan` et `surInterruptionEnded` au protocole
+- `Services/AudioEngine.swift` : `setupInterruptionObserver()` enregistre `AVAudioSession.interruptionNotification` après `demarrer()` ; `removeInterruptionObserver()` appelé au début de `stopInterne()` ; propriété `nonisolated(unsafe) interruptionObserver` pour accès cross-actor
+- `Mocks/MockAudioEngine.swift` : `surInterruptionBegan`, `surInterruptionEnded`, `simulerInterruptionAudio()`, `simulerFinInterruption()`, `reinitialiser()` mis à jour
+- `ViewModels/ModeChantierViewModel.swift` : état `afficherToastInterruption`, `proposeReprendre`, référence faible `dernierChantier` ; câblage des callbacks dans `startEnregistrement()` ; méthodes `arreterEnregistrementInterrompu()` et `dismisserPropositionReprise()`
+- `Views/ModeChantier/ModeChantierView.swift` : `@Environment(\.scenePhase)`, `.onChange(of: scenePhase)`, `.onAppear { isIdleTimerDisabled = true }`, `.onDisappear { isIdleTimerDisabled = false }`, `interruptionToastView`, `repriseToastView`
+- `GestionTravauxTests/ModeChantier/ModeChantierViewModelInterruptionTests.swift` : nouveau fichier, 8 tests couvrant tous les AC
+
+### Décisions d'implémentation
+
+- **Guard sur `boutonVert`** au lieu de `isRecording` dans `arreterEnregistrementInterrompu()` : quand AudioEngine se stoppe lui-même sur interruption, `isRecording` est déjà `false` avant que le callback ViewModel ne s'exécute. `boutonVert` reste `true` jusqu'à ce que le ViewModel le traite, ce qui en fait la seule source de vérité fiable pour le guard.
+- **Référence faible `dernierChantier`** : `ModeChantierState` est un `@Observable` partagé via `.environment()`. La référence faible dans le ViewModel évite un cycle de rétention tout en permettant aux callbacks AudioEngine de piloter l'UI.
+- **Pattern `Task { @MainActor }` dans MockAudioEngine** : `simulerInterruptionAudio()` et `simulerFinInterruption()` utilisent `Task { @MainActor }` pour reproduire fidèlement le comportement de `AudioEngine` (notification queue → main actor hop). Nécessite deux `await Task.yield()` dans les tests.
+- **`isIdleTimerDisabled`** géré dans la Vue (pas dans le ViewModel) : c'est un effet de bord UIKit lié au cycle de vie de l'écran — appartient légitimement à la couche Vue.
