@@ -11,7 +11,9 @@
 // Pattern: Task.detached for hardware setup, await MainActor.run for @MainActor SDK calls.
 //
 // Story 2.4: AVAudioSession.interruptionNotification observer registered after demarrer() succeeds.
-// removeInterruptionObserver() called in stopInterne() so it is always cleaned up.
+// Observer lifecycle: registered in demarrer() → survives .began (so .ended can fire) → removed
+// in .ended handler, or in arreter() / demarrer() (user-initiated stops).
+// stopInterne() does NOT remove the observer — caller is responsible.
 // surInterruptionBegan / surInterruptionEnded wired by ModeChantierViewModel.
 
 import Foundation
@@ -46,7 +48,7 @@ final class AudioEngine: AudioEngineProtocol {
 
     var surInterruptionBegan: (@MainActor () -> Void)?
     var surInterruptionEnded: (@MainActor () -> Void)?
-    /// Token retained to unregister the observer in stopInterne().
+    /// Token retained to unregister the observer (removed in arreter(), demarrer(), or .ended handler).
     nonisolated(unsafe) private var interruptionObserver: NSObjectProtocol?
 
     // MARK: - Permission
@@ -88,6 +90,9 @@ final class AudioEngine: AudioEngineProtocol {
     // MARK: - Recording
 
     func demarrer(surResultatPartiel: @escaping @MainActor (String) -> Void) async throws {
+        // Remove any observer from a previous session before cleaning up hardware.
+        // Prevents a dangling observer from a session that ended mid-interruption cycle.
+        removeInterruptionObserver()
         stopInterne()
 
         // Validate recognizer availability on MainActor before going off-thread
@@ -184,6 +189,8 @@ final class AudioEngine: AudioEngineProtocol {
     }
 
     func arreter() {
+        // User-initiated stop: remove observer immediately (no .ended expected from AVAudioSession).
+        removeInterruptionObserver()
         stopInterne()
     }
 
@@ -204,10 +211,13 @@ final class AudioEngine: AudioEngineProtocol {
                 guard let self else { return }
                 switch interruptionType {
                 case .began:
-                    // Stop the engine first, then notify ViewModel to handle persistence + UI.
+                    // Stop hardware but DO NOT remove the observer — it must survive to receive .ended
+                    // when the call finishes. Observer removal happens in the .ended case below.
                     self.stopInterne()
                     self.surInterruptionBegan?()
                 case .ended:
+                    // Full interruption cycle complete: remove observer, then notify ViewModel.
+                    self.removeInterruptionObserver()
                     self.surInterruptionEnded?()
                 @unknown default:
                     break
@@ -226,7 +236,8 @@ final class AudioEngine: AudioEngineProtocol {
     // MARK: - Internal cleanup
 
     private func stopInterne() {
-        removeInterruptionObserver()
+        // NOTE: does NOT remove the interruption observer — caller is responsible.
+        // Keeping the observer alive through .began lets us receive .ended when a call finishes.
         if avEngine.isRunning {
             avEngine.inputNode.removeTap(onBus: 0)
             avEngine.stop()
