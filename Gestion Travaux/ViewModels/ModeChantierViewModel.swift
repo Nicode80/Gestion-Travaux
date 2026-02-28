@@ -91,6 +91,9 @@ final class ModeChantierViewModel {
     private(set) var afficherToastInterruption: Bool = false
     /// True when an interruption ended — shows "Reprendre l'enregistrement ?" toast (auto-dismiss 10 s).
     private(set) var proposeReprendre: Bool = false
+    /// Stored auto-dismiss task for proposeReprendre — cancellable so a second .ended within 10 s
+    /// restarts the timer rather than leaving the old one to prematurely clear the new toast (M2-fix).
+    @ObservationIgnored private var proposeReprendreTask: Task<Void, Never>?
     /// Weak reference to the active ModeChantierState for use in AudioEngine interruption callbacks.
     @ObservationIgnored private weak var dernierChantier: ModeChantierState?
 
@@ -203,8 +206,11 @@ final class ModeChantierViewModel {
         }
         audioEngine.surInterruptionEnded = { [weak self] in
             guard let self else { return }
+            // M2-fix: cancel any in-flight auto-dismiss before setting proposeReprendre again,
+            // so a second .ended within 10 s restarts the timer cleanly.
+            self.proposeReprendreTask?.cancel()
             self.proposeReprendre = true
-            Task { [weak self] in
+            self.proposeReprendreTask = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(10))
                 self?.proposeReprendre = false
             }
@@ -278,6 +284,9 @@ final class ModeChantierViewModel {
 
     /// Dismisses the "Reprendre l'enregistrement ?" toast (called by its button or on manual stop).
     func dismisserPropositionReprise() {
+        // M2-fix: cancel the auto-dismiss timer so it doesn't fire after a new toast is shown.
+        proposeReprendreTask?.cancel()
+        proposeReprendreTask = nil
         proposeReprendre = false
     }
 

@@ -198,6 +198,10 @@ struct ModeChantierViewModelInterruptionTests {
 
         #expect(etat.boutonVert == false)
         #expect(vm.afficherToastInterruption == true)
+        // M3-fix: verify arreter() was NOT called — engine stopped itself before the callback fired.
+        // If this fails, someone removed the audioEngine.isRecording guard in arreterEnregistrementInterrompu(),
+        // which would also remove the interruption observer and break the .ended → proposeReprendre flow.
+        #expect(mockEngine.arreterAppels == 0)
 
         let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
         #expect(captures.count == 1)
