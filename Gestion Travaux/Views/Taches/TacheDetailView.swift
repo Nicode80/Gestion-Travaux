@@ -74,8 +74,9 @@ struct TacheDetailView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        // .inline keeps the nav bar compact; full title is shown in the content header above.
         .navigationTitle(tache.titre)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .alert("Marquer comme terminée ?", isPresented: $viewModel.showTerminaisonAlert) {
             Button("Terminer", role: .destructive) {
                 viewModel.terminer()

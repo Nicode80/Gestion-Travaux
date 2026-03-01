@@ -18,7 +18,7 @@ final class DashboardViewModel {
     private(set) var pieces: [PieceEntity] = []
     private(set) var activites: [ActiviteEntity] = []
 
-    var tacheDerniereActive: TacheEntity? { tachesActives.first }
+    var tacheHero: TacheEntity? { tachesActives.first }
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -30,12 +30,19 @@ final class DashboardViewModel {
         // existing data visible to prevent a ProgressView flicker.
         if case .idle = viewState { viewState = .loading }
         do {
-            let toutes = try modelContext.fetch(
-                FetchDescriptor<TacheEntity>(
-                    sortBy: [SortDescriptor(\TacheEntity.createdAt, order: .reverse)]
-                )
-            )
-            tachesActives = toutes.filter { $0.statut == .active }
+            // Fetch without SwiftData sort: lastSessionDate is optional and nil ordering
+            // is unreliable via SortDescriptor — sort Swift-side instead.
+            let toutes = try modelContext.fetch(FetchDescriptor<TacheEntity>())
+            tachesActives = toutes
+                .filter { $0.statut == .active }
+                .sorted {
+                    switch ($0.lastSessionDate, $1.lastSessionDate) {
+                    case let (l?, r?): return l > r
+                    case (.some, nil): return true
+                    case (nil, .some): return false
+                    case (nil, nil):   return $0.createdAt > $1.createdAt
+                    }
+                }
 
             pieces = try modelContext.fetch(
                 FetchDescriptor<PieceEntity>(

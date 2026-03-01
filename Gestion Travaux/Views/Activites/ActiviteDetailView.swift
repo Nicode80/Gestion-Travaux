@@ -47,13 +47,25 @@ struct ActiviteDetailView: View {
                         .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
                         .font(.subheadline)
                 } else {
-                    TacheListView(taches: tachesActives, modelContext: modelContext)
+                    ForEach(tachesActives) { tache in
+                        NavigationLink {
+                            TacheDetailView(tache: tache, modelContext: modelContext)
+                        } label: {
+                            TaskRowView(tache: tache)
+                        }
+                    }
                 }
             }
 
             if !tachesTerminees.isEmpty {
                 Section("Terminées") {
-                    TacheListView(taches: tachesTerminees, modelContext: modelContext)
+                    ForEach(tachesTerminees) { tache in
+                        NavigationLink {
+                            TacheDetailView(tache: tache, modelContext: modelContext)
+                        } label: {
+                            TaskRowView(tache: tache)
+                        }
+                    }
                 }
             }
         }
@@ -61,6 +73,6 @@ struct ActiviteDetailView: View {
         .scrollContentBackground(.hidden)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle(activite.nom)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

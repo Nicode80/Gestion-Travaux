@@ -4,8 +4,10 @@
 // Central navigation hub: MAISON → PIÈCES → TÂCHES → ACTIVITÉS.
 // Hosts the unique NavigationStack for the app.
 // PauseBannerView lives ABOVE the NavigationStack in an outer VStack so the banner
-// always appears above the navigation bar (title + toolbar buttons) on every screen,
-// including all views pushed onto the NavigationStack.
+// always appears above the navigation bar on every screen including all pushed views.
+//
+// Story 2.7: Dashboard refonte — HeroTaskCard + Explorer enrichi (Tâches, Pièces, Activités).
+// TaskSelectionView is preserved but no longer referenced from here.
 
 import SwiftUI
 import SwiftData
@@ -17,9 +19,10 @@ struct DashboardView: View {
     private let modelContext: ModelContext
     @State private var viewModel: DashboardViewModel
     @State private var navigationPath = NavigationPath()
-    @State private var showCreation = false
-    @State private var showTaskSelection = false
+    @State private var showChangerTache = false
     @State private var showClassification = false
+    // Sheet for task creation from empty HeroTaskCard — closes back to Dashboard on success.
+    @State private var showCreation = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -42,37 +45,30 @@ struct DashboardView: View {
                     .navigationTitle("Gestion Travaux")
                     .navigationBarTitleDisplayMode(.large)
                     .background(Color(hex: Constants.Couleurs.backgroundBureau))
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            // Buttons hidden only during active recording (boutonVert lockdown).
-                            if !chantier.boutonVert {
-                                HStack(spacing: 4) {
-                                    // [🏗️ Mode Chantier] — Story 2.1
-                                    Button {
-                                        showTaskSelection = true
-                                    } label: {
-                                        Image(systemName: "hammer.circle.fill")
-                                            .accessibilityLabel("Mode Chantier")
-                                    }
-
-                                    // Create task
-                                    Button {
-                                        showCreation = true
-                                    } label: {
-                                        Image(systemName: "plus")
-                                            .accessibilityLabel("Créer une tâche")
-                                    }
-                                }
+                    // "Changer de tâche" → TacheListView en mode sélection (actives uniquement)
+                    .navigationDestination(isPresented: $showChangerTache) {
+                        TacheListView(
+                            modelContext: modelContext,
+                            onSelect: { tache in
+                                tache.lastSessionDate = Date()
+                                try? modelContext.save()
+                                viewModel.charger()
+                                showChangerTache = false
                             }
-                        }
+                        )
                     }
                     // Story 2.6: navigate to ClassificationView after session ends with captures
                     .navigationDestination(isPresented: $showClassification) {
                         ClassificationView()
                     }
-            }
-            .onAppear {
-                viewModel.charger()
+                    // Used by onReprendreExistante in TaskCreationView (task already exists)
+                    .navigationDestination(for: TacheEntity.self) { tache in
+                        TacheDetailView(tache: tache, modelContext: modelContext)
+                    }
+                    // IMPORTANT: onAppear inside the NavigationStack content (not on the stack
+                    // itself) so that charger() re-fires every time the user navigates back to
+                    // the dashboard — keeping tacheHero up to date after task creation/changes.
+                    .onAppear { viewModel.charger() }
             }
             // fullScreenCover driven by ModeChantierState.sessionActive (Story 2.1)
             // onDismiss fires after the animation completes — ensures ClassificationView is pushed
@@ -82,17 +78,12 @@ struct DashboardView: View {
                     showClassification = true
                     chantier.pendingClassification = false
                 }
+                viewModel.charger()
             }) {
                 ModeChantierView(modelContext: modelContext)
             }
-            // Sheet: task selection before entering Mode Chantier (Story 2.1)
-            .sheet(isPresented: $showTaskSelection) {
-                TaskSelectionView(modelContext: modelContext)
-            }
-            // Dismiss TaskSelectionView automatically when session starts
-            .onChange(of: chantier.sessionActive) { _, isActive in
-                if isActive { showTaskSelection = false }
-            }
+            // Task creation from empty HeroTaskCard — on success, returns directly to Dashboard
+            // and updates the Hero (no intermediate TacheListView step).
             .sheet(isPresented: $showCreation) {
                 TaskCreationView(
                     modelContext: modelContext,
@@ -134,14 +125,36 @@ struct DashboardView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
         case .success:
-            taskListView
+            dashboardList
         }
     }
 
-    // MARK: - Task list
+    // MARK: - Dashboard list
 
-    private var taskListView: some View {
+    private var dashboardList: some View {
         List {
+            // Hero Task Card
+            Section {
+                HeroTaskCard(
+                    tache: viewModel.tacheHero,
+                    onLancer: {
+                        if let tache = viewModel.tacheHero {
+                            lancerChantier(tache: tache)
+                        }
+                    },
+                    onChanger: {
+                        showChangerTache = true
+                    },
+                    onCreer: {
+                        // Open TaskCreationView directly — on success, Hero updates
+                        // and user stays on Dashboard (no TacheListView intermediary).
+                        showCreation = true
+                    }
+                )
+            }
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
+            .listRowBackground(Color.clear)
+
             // Briefing card (shell — Story 4.1)
             Section {
                 BriefingCard()
@@ -149,23 +162,15 @@ struct DashboardView: View {
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
 
-            // Active tasks section
-            Section("Tâches actives") {
-                if viewModel.tachesActives.isEmpty {
-                    emptyTasksRow
-                } else {
-                    ForEach(viewModel.tachesActives) { tache in
-                        NavigationLink {
-                            TacheDetailView(tache: tache, modelContext: modelContext)
-                        } label: {
-                            TaskRowView(tache: tache)
-                        }
-                    }
-                }
-            }
-
-            // Browse section
+            // Browse section — enrichi Story 2.7 avec Tâches
             Section("Explorer") {
+                NavigationLink {
+                    TacheListView(modelContext: modelContext)
+                } label: {
+                    Label("Tâches", systemImage: "checkmark.circle")
+                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                }
+
                 NavigationLink {
                     PieceListView(pieces: viewModel.pieces)
                 } label: {
@@ -184,41 +189,19 @@ struct DashboardView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .listSectionSpacing(.compact)
+        // Hide nav bar at root — Hero is the first thing visible.
+        // navigationTitle("Gestion Travaux") is still set on the NavigationStack content
+        // so child views get a "< Gestion Travaux" back button.
+        .toolbarVisibility(.hidden, for: .navigationBar)
     }
 
-    // MARK: - Empty state (no tasks created yet)
+    // MARK: - Actions
 
-    private var emptyTasksRow: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "house.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(Color(hex: Constants.Couleurs.accent).opacity(0.6))
-
-            Text("Aucune tâche active")
-                .font(.headline)
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-
-            Text("Créez votre première tâche pour commencer à suivre vos travaux.")
-                .font(.subheadline)
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                .multilineTextAlignment(.center)
-
-            Button {
-                showCreation = true
-            } label: {
-                Label("Créer ma première tâche", systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .background(Color(hex: Constants.Couleurs.accent))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .frame(minWidth: 60, minHeight: 60)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
-        .listRowBackground(Color.clear)
-        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+    private func lancerChantier(tache: TacheEntity) {
+        tache.lastSessionDate = Date()
+        try? modelContext.save()
+        chantier.tacheActive = tache
+        chantier.demarrerSession()
     }
 }
