@@ -55,7 +55,6 @@ private extension StatutTache {
         switch self {
         case .active:   Color(hex: Constants.Couleurs.accent)
         case .terminee: Color(hex: Constants.Couleurs.texteSecondaire)
-        case .archivee: Color(hex: Constants.Couleurs.texteSecondaire)
         }
     }
 
@@ -63,7 +62,6 @@ private extension StatutTache {
         switch self {
         case .active:   Color(hex: Constants.Couleurs.accent).opacity(0.12)
         case .terminee: Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.12)
-        case .archivee: Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.08)
         }
     }
 }

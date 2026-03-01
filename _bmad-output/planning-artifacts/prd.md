@@ -1237,7 +1237,7 @@ Atteindre **3 des 4 critères Go/No-Go** après **3 mois d'usage réel** (sessio
 
 **FR23:** Le système peut créer automatiquement les entités Pièce et Activité si elles n'existent pas encore
 
-**FR24:** L'utilisateur peut voir la liste de toutes ses tâches avec leurs statuts (Active/Terminée/Archivée)
+**FR24:** L'utilisateur peut voir la liste de toutes ses tâches avec leurs statuts (Active/Terminée), filtrables par statut
 
 **FR25:** Le système peut détecter et prévenir la création de doublons pour les tâches actives
 
@@ -1245,9 +1245,9 @@ Atteindre **3 des 4 critères Go/No-Go** après **3 mois d'usage réel** (sessio
 
 **FR27:** L'utilisateur peut consulter le briefing complet d'une tâche (prochaine action, alertes, astuces critiques)
 
-**FR28:** L'utilisateur peut archiver une tâche terminée
+**FR28:** L'utilisateur peut marquer une tâche comme terminée (cycle de vie : Active → Terminée)
 
-**FR29:** Le système peut proposer automatiquement la dernière tâche active à l'ouverture de l'app
+**FR29:** Le système peut proposer automatiquement la dernière tâche active à l'ouverture de l'app (via la Hero Task Card du Dashboard)
 
 ### Système d'Information (ALERTES, ASTUCES, Notes)
 

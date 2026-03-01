@@ -1,7 +1,7 @@
 // TacheDetailViewModel.swift
 // Gestion Travaux
 //
-// Business logic for TacheDetailView: archive action with alert auto-resolution (FR31).
+// Business logic for TacheDetailView: mark task as terminée (Story 1.4).
 //
 // RULE: all modelContext writes must call try modelContext.save() explicitly.
 
@@ -14,8 +14,8 @@ final class TacheDetailViewModel {
 
     // MARK: - Outputs
 
-    /// Controls the archive confirmation .alert
-    var showArchiveAlert: Bool = false
+    /// Controls the termination confirmation .alert
+    var showTerminaisonAlert: Bool = false
     private(set) var errorMessage: String? = nil
 
     // MARK: - Private
@@ -32,33 +32,27 @@ final class TacheDetailViewModel {
 
     // MARK: - Actions
 
-    func demanderArchivage() {
-        showArchiveAlert = true
+    func demanderTerminaison() {
+        showTerminaisonAlert = true
     }
 
-    /// Archives the task: resolves all linked alerts (FR31), sets statut → .archivee, saves.
-    /// Rolls back in-memory mutations if save() fails so the archive button remains available for retry.
-    func archiver() {
-        showArchiveAlert = false
+    /// Marks the task as terminée and saves.
+    /// Rolls back in-memory mutation if save() fails so the button remains available for retry.
+    func terminer() {
+        showTerminaisonAlert = false
         errorMessage = nil
 
-        // Capture state before mutation for rollback on failure
-        let previousStatut = tache.statut
-        let alertesNonResolues = tache.alertes.filter { !$0.resolue }
-
-        for alerte in tache.alertes { alerte.resolue = true }
-        tache.statut = .archivee
+        let ancienStatut = tache.statut
+        tache.statut = .terminee
 
         do {
             try modelContext.save()
         } catch {
-            // Rollback so user can retry (archive button reappears)
-            tache.statut = previousStatut
-            for alerte in alertesNonResolues { alerte.resolue = false }
+            tache.statut = ancienStatut
             #if DEBUG
-            print("[TacheDetailViewModel] archiver() failed: \(error)")
+            print("[TacheDetailViewModel] terminer() failed: \(error)")
             #endif
-            errorMessage = "Impossible d'archiver la tâche. Réessayez."
+            errorMessage = "Impossible de terminer la tâche. Réessayer."
         }
     }
 }

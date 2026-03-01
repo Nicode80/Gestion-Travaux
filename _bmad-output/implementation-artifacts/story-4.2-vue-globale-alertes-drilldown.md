@@ -22,10 +22,10 @@ afin de ne jamais perdre le contexte d'un point critique, quelle que soit la tâ
 **Then** toutes les AlerteEntities avec statut actif de toute la maison sont visibles, regroupées par tâche (FR32)
 **And** chaque alerte affiche : texte, tâche parente, date de création
 
-**Given** une TacheEntity passe au statut .archivee
-**When** l'archivage est confirmé
-**Then** toutes les AlerteEntities liées à cette tâche sont automatiquement résolues (FR31)
-**And** elles disparaissent de la vue globale des alertes actives
+**Given** une TacheEntity passe au statut .terminee
+**When** la tâche est marquée terminée (depuis TacheDetailView ou CheckoutView)
+**Then** les AlerteEntities liées à cette tâche restent consultables dans la vue globale (elles ne disparaissent pas automatiquement)
+**And** un badge "Tâche terminée" indique le statut de la tâche parente (FR31)
 
 **Given** Nico tape sur une AlerteEntity dans le briefing ou la vue globale
 **When** CaptureDetailView s'affiche en sheet
@@ -134,18 +134,16 @@ struct CaptureDetailView: View {
 }
 ```
 
-**Résolution automatique alertes lors de l'archivage (FR31) :**
-Cette logique est déjà définie en Story 1.4 (archivage tâches). L'implémentation est dans le ViewModel d'archivage :
+**Alertes et tâches terminées (FR31) :**
+Le cycle de vie simplifié (`.active` → `.terminee`) ne supprime pas les AlerteEntities. Quand une tâche passe en `.terminee`, ses alertes restent consultables. La vue globale doit afficher le statut de la tâche parente à côté de chaque alerte.
+
 ```swift
-func archiveTask(_ tache: TacheEntity) throws {
-    tache.statut = .archivee
-    // Résoudre toutes les alertes liées
-    for alerte in tache.alertes {
-        alerte.resolue = true
-    }
-    try modelContext.save()
-}
+// Filtrage optionnel : montrer ou masquer les alertes des tâches terminées
+// Par défaut, toutes les alertes sont visibles (actives et terminées)
+// Option filtre : "Actives uniquement" → filter { $0.tache?.statut == .active }
 ```
+
+> ⚠️ Suppression : la propriété `AlerteEntity.resolue` a été supprimée en story 1.4 révisée. Ne pas utiliser `alerte.resolue`.
 
 **PhotoView — chargement depuis Documents/ :**
 ```swift

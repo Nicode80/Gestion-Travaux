@@ -49,9 +49,9 @@ _Ce document se construit collaborativement étape par étape. Les sections sont
 |--------|-----------|-------|
 | Capture | `transcriptionText` (éditable, écrase l'original) + `contentBlocks[]` ordonnés | Audio supprimé après classification validée |
 | ContentBlock | `TextBlock(text: String)` ou `PhotoBlock(ref: URL)` | Blocs hétérogènes ordonnés dans un tableau |
-| Alerte | Bloc de contenu éditable, lié à une Tâche | Résolution automatique à l'archivage de la tâche |
+| Alerte | Bloc de contenu éditable, lié à une Tâche | Visible tant que la tâche est active ou terminée |
 | Astuce | Bloc de contenu éditable, lié à une Activité, permanent | 3 niveaux de criticité (Critique / Importante / Utile) |
-| Tâche | Pièce × Activité, statuts Active/Terminée/Archivée, prochaine action | Anti-doublon actif via fuzzy matching |
+| Tâche | Pièce × Activité, statuts Active/Terminée, prochaine action | Anti-doublon actif via fuzzy matching |
 | Note de Saison | Texte libre au niveau Maison | Déclenchée par action explicite + absence ≥2 mois |
 
 **Opérations sur le modèle de contenu en Mode Édition :**
@@ -159,9 +159,9 @@ iOS native — Swift 6.2 + SwiftUI + iOS 18+ minimum
 |--------|-----------|-------|
 | `MaisonEntity` | → `[PieceEntity]`, → `NoteSaisonEntity?` | Singleton (1 maison) |
 | `PieceEntity` | → `MaisonEntity`, → `[TacheEntity]` | |
-| `TacheEntity` | → `PieceEntity`, → `ActiviteEntity`, → `[AlerteEntity]`, → `[NoteEntity]`, → `[CaptureEntity]` | Statut : enum `.active / .terminee / .archivee` · `prochaineAction: String?` |
+| `TacheEntity` | → `PieceEntity`, → `ActiviteEntity`, → `[AlerteEntity]`, → `[NoteEntity]`, → `[CaptureEntity]` | Statut : enum `.active / .terminee` · `prochaineAction: String?` |
 | `ActiviteEntity` | → `[TacheEntity]`, → `[AstuceEntity]` | Transversal toutes pièces |
-| `AlerteEntity` | → `TacheEntity` | Temporelle, résolue automatiquement à l'archivage de la tâche |
+| `AlerteEntity` | → `TacheEntity` | Temporelle, consultable tant que la tâche existe |
 | `AstuceEntity` | → `ActiviteEntity` | Permanente · niveaux `.critique / .importante / .utile` |
 | `NoteEntity` | → `TacheEntity` | Contexte situationnel de la tâche |
 | `AchatEntity` | → `ListeDeCoursesEntity` | |

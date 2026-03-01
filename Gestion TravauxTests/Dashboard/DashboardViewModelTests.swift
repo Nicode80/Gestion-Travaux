@@ -60,12 +60,9 @@ struct DashboardViewModelTests {
         let tacheActive = TacheEntity(titre: "Peindre le salon")
         let tacheTerminee = TacheEntity(titre: "Poser le carrelage")
         tacheTerminee.statut = .terminee
-        let tacheArchivee = TacheEntity(titre: "Repeindre couloir")
-        tacheArchivee.statut = .archivee
 
         context.insert(tacheActive)
         context.insert(tacheTerminee)
-        context.insert(tacheArchivee)
         try context.save()
 
         let viewModel = DashboardViewModel(modelContext: context)

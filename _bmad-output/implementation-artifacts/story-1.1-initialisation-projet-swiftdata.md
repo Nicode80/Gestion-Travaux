@@ -70,7 +70,7 @@ struct ContentBlock: Codable {
     var order: Int
 }
 
-enum StatutTache: String, Codable { case active, terminee, archivee }
+enum StatutTache: String, Codable { case active, terminee }  // 2 états uniquement (révisé story 1.4)
 enum AstuceLevel: String, Codable { case critique, importante, utile }
 enum BlockType: String, Codable { case text, photo }
 

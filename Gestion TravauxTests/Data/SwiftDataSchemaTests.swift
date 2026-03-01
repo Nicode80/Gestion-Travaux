@@ -198,6 +198,5 @@ struct SwiftDataSchemaTests {
     func statutTacheRawValues() {
         #expect(StatutTache.active.rawValue == "active")
         #expect(StatutTache.terminee.rawValue == "terminee")
-        #expect(StatutTache.archivee.rawValue == "archivee")
     }
 }

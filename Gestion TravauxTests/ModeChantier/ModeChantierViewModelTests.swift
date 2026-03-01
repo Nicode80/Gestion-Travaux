@@ -65,7 +65,7 @@ struct ModeChantierViewModelTests {
         #expect(vm.tacheProposee == nil)
     }
 
-    @Test("charger() loads only active tasks, ignores terminee and archivee")
+    @Test("charger() loads only active tasks, ignores terminee")
     func chargerActiveTasksOnly() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
@@ -73,12 +73,9 @@ struct ModeChantierViewModelTests {
         let active = TacheEntity(titre: "Peindre le salon")
         let terminee = TacheEntity(titre: "Poser le carrelage")
         terminee.statut = .terminee
-        let archivee = TacheEntity(titre: "Repeindre couloir")
-        archivee.statut = .archivee
 
         context.insert(active)
         context.insert(terminee)
-        context.insert(archivee)
         try context.save()
 
         let vm = ModeChantierViewModel(modelContext: context)

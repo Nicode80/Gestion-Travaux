@@ -45,10 +45,15 @@ afin que tout soit bien organisé avant de fermer l'app pour la nuit.
 **And** l'app revient au dashboard
 
 **Given** Nico choisit [✅ Cette tâche est TERMINÉE] (FR21)
-**When** l'action est confirmée
+**When** il appuie sur le bouton
+**Then** une `.alert` de confirmation s'affiche : "Marquer cette tâche comme terminée ?"
+**And** les options sont [Terminer] et [Annuler]
+
+**Given** Nico confirme la terminaison
+**When** l'action est exécutée
 **Then** TacheEntity.statut passe à .terminee
-**And** l'app propose immédiatement d'archiver la tâche via `.alert`
 **And** l'app revient au dashboard
+**And** la Hero Task Card se met à jour (la tâche n'y apparaît plus)
 
 ## Technical Notes
 
@@ -133,29 +138,37 @@ struct CheckoutView: View {
 }
 ```
 
-**Marquer tâche terminée (FR21) :**
+**Marquer tâche terminée (FR21) — confirmation avant action :**
 ```swift
+// Dans CheckoutView : bouton déclenche l'alerte de confirmation
+Button("✅ Cette tâche est TERMINÉE") {
+    showTerminaisonAlert = true
+}
+.foregroundColor(.red)
+
+.alert("Marquer comme terminée ?", isPresented: $showTerminaisonAlert) {
+    Button("Terminer", role: .destructive) {
+        viewModel.markTaskAsTerminee()
+    }
+    Button("Annuler", role: .cancel) {}
+} message: {
+    Text("La tâche disparaîtra de ta liste active. Son historique reste consultable.")
+}
+
+// Dans ViewModel
 func markTaskAsTerminee() {
     tache.statut = .terminee
-    try? modelContext.save()
-    showArchiveAlert = true  // Proposer d'archiver immédiatement
+    do {
+        try modelContext.save()
+        navigateToDashboard = true
+    } catch {
+        tache.statut = .active  // rollback
+        errorMessage = "Impossible de terminer la tâche. Réessayer."
+    }
 }
 ```
 
-**Alert d'archivage post-terminée :**
-```swift
-.alert("Archiver cette tâche ?", isPresented: $showArchiveAlert) {
-    Button("Archiver", role: .destructive) {
-        viewModel.archiveTask()
-        navigateToDashboard = true
-    }
-    Button("Plus tard", role: .cancel) {
-        navigateToDashboard = true
-    }
-} message: {
-    Text("Elle disparaîtra de ta liste active.")
-}
-```
+> **Note :** Pas d'étape d'archivage. Le cycle de vie est `.active` → `.terminee` uniquement (story 1.4 révisée).
 
 **Saisie vocale prochaine action (même pattern qu'en Story 1.3) :**
 `SFSpeechRecognizer` en mode one-shot (écoute jusqu'au silence, remplit le TextField).
@@ -172,8 +185,8 @@ func markTaskAsTerminee() {
 - [ ] Implémenter bouton [Valider] (FR19) : vérification 0 capture non classée + navigation CheckoutView
 - [ ] Créer `Views/Classification/CheckoutView.swift` : prochaine action ou terminée
 - [ ] Implémenter saisie prochaine action (vocal one-shot + texte) → `TacheEntity.prochaineAction` (FR20)
-- [ ] Implémenter "Cette tâche est TERMINÉE" → `TacheEntity.statut = .terminee` + `.alert` archivage (FR21)
-- [ ] Implémenter archivage depuis CheckoutView (déléguer à la logique de Story 1.4)
+- [ ] Implémenter "Cette tâche est TERMINÉE" → `.alert` confirmation → `TacheEntity.statut = .terminee` + retour dashboard (FR21)
+- [ ] Implémenter `.alert` de confirmation "Marquer comme terminée ?" avant d'appeler `markTaskAsTerminee()`
 - [ ] Vérifier que la correction s'applique avant la validation finale (FR18)
 - [ ] Vérifier qu'aucune CaptureEntity non classée ne subsiste après validation (FR19)
 - [ ] Créer `GestionTravauxTests/ViewModels/CheckoutViewModelTests.swift`

@@ -28,7 +28,7 @@ afin d'avoir une vue d'ensemble claire de tous mes chantiers en cours.
 
 **Given** Nico navigue vers la liste des pièces
 **When** il sélectionne une pièce
-**Then** les tâches liées à cette pièce s'affichent avec leur statut (Active / Terminée / Archivée) et leur prochaine action
+**Then** les tâches liées à cette pièce s'affichent avec leur statut (Active / Terminée) et leur prochaine action
 
 **Given** Nico navigue vers la liste des Activités
 **When** il sélectionne une activité

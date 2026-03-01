@@ -1,8 +1,7 @@
 // TacheDetailViewModelTests.swift
 // Gestion TravauxTests
 //
-// Tests for TacheDetailViewModel: archive action, alert auto-resolution (FR31),
-// duplicate-creation guard on archived tasks.
+// Tests for TacheDetailViewModel: termination action (Story 1.4).
 
 import Testing
 import Foundation
@@ -21,10 +20,10 @@ struct TacheDetailViewModelTests {
         )
     }
 
-    // MARK: - demanderArchivage
+    // MARK: - demanderTerminaison
 
-    @Test("demanderArchivage() sets showArchiveAlert to true")
-    func demanderArchivageSetsAlert() throws {
+    @Test("demanderTerminaison() sets showTerminaisonAlert to true")
+    func demanderTerminaisonSetsAlert() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
         let tache = TacheEntity(titre: "Chambre 1 — Peinture")
@@ -32,31 +31,59 @@ struct TacheDetailViewModelTests {
         try ctx.save()
 
         let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
-        #expect(!vm.showArchiveAlert)
-        vm.demanderArchivage()
-        #expect(vm.showArchiveAlert)
+        #expect(!vm.showTerminaisonAlert)
+        vm.demanderTerminaison()
+        #expect(vm.showTerminaisonAlert)
     }
 
-    // MARK: - archiver()
+    // MARK: - terminer()
 
-    @Test("archiver() changes statut to .archivee")
-    func archiverChangesStatut() throws {
+    @Test("terminer() changes statut to .terminee")
+    func terminerChangesStatut() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
         let tache = TacheEntity(titre: "Chambre 1 — Peinture")
-        tache.statut = .terminee
         ctx.insert(tache)
         try ctx.save()
 
         let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
-        vm.archiver()
+        vm.terminer()
 
-        #expect(tache.statut == .archivee)
+        #expect(tache.statut == .terminee)
         #expect(vm.errorMessage == nil)
     }
 
-    @Test("archiver() sets showArchiveAlert to false")
-    func archiverDismissesAlert() throws {
+    @Test("terminer() resets showTerminaisonAlert to false")
+    func terminerDismissesAlert() throws {
+        let container = try makeContainer()
+        let ctx = container.mainContext
+        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
+        ctx.insert(tache)
+        try ctx.save()
+
+        let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
+        vm.demanderTerminaison()
+        vm.terminer()
+
+        #expect(!vm.showTerminaisonAlert)
+    }
+
+    @Test("terminer() clears errorMessage on success")
+    func terminerClearsError() throws {
+        let container = try makeContainer()
+        let ctx = container.mainContext
+        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
+        ctx.insert(tache)
+        try ctx.save()
+
+        let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
+        vm.terminer()
+
+        #expect(vm.errorMessage == nil)
+    }
+
+    @Test("terminer() on already .terminee task keeps statut .terminee")
+    func terminerIdempotent() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
         let tache = TacheEntity(titre: "Chambre 1 — Peinture")
@@ -65,91 +92,26 @@ struct TacheDetailViewModelTests {
         try ctx.save()
 
         let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
-        vm.demanderArchivage()
-        vm.archiver()
+        vm.terminer()
 
-        #expect(!vm.showArchiveAlert)
+        #expect(tache.statut == .terminee)
+        #expect(vm.errorMessage == nil)
     }
 
-    // MARK: - FR31 — alert auto-resolution
-
-    @Test("archiver() resolves all linked alerts (FR31)")
-    func archiverResolvesAlertes() throws {
+    @Test("bouton absent si déjà .terminee — statut .active est requis pour afficher le bouton")
+    func boutonAbsentSiTerminee() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
-        tache.statut = .terminee
-        ctx.insert(tache)
-        let alerte1 = AlerteEntity()
-        alerte1.tache = tache
-        ctx.insert(alerte1)
-        let alerte2 = AlerteEntity()
-        alerte2.tache = tache
-        ctx.insert(alerte2)
+        let tacheActive = TacheEntity(titre: "Active")
+        let tacheTerminee = TacheEntity(titre: "Terminée")
+        tacheTerminee.statut = .terminee
+        ctx.insert(tacheActive)
+        ctx.insert(tacheTerminee)
         try ctx.save()
 
-        let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
-        vm.archiver()
-
-        #expect(alerte1.resolue == true)
-        #expect(alerte2.resolue == true)
-    }
-
-    @Test("archiver() does not affect alerts from other tasks")
-    func archiverDoesNotTouchOtherAlertes() throws {
-        let container = try makeContainer()
-        let ctx = container.mainContext
-
-        let tache1 = TacheEntity(titre: "Chambre 1 — Peinture")
-        tache1.statut = .terminee
-        ctx.insert(tache1)
-
-        let tache2 = TacheEntity(titre: "Salon — Placo")
-        tache2.statut = .active
-        ctx.insert(tache2)
-
-        let alerte = AlerteEntity()
-        alerte.tache = tache2
-        ctx.insert(alerte)
-        try ctx.save()
-
-        let vm = TacheDetailViewModel(tache: tache1, modelContext: ctx)
-        vm.archiver()
-
-        #expect(alerte.resolue == false)
-    }
-
-    // MARK: - Rollback on save failure
-
-    @Test("archiver() rolls back statut and alertes if save fails, restoring archive button")
-    func archiverRollsBackOnSaveFailure() throws {
-        // This is validated by the happy-path tests:
-        // If save() succeeds → statut == .archivee (archiverChangesStatut).
-        // If save() fails the rollback restores previousStatut so tache.statut == .terminee
-        // and the archive button reappears. The rollback path cannot be triggered via
-        // in-memory ModelContainer (which never fails on save), so we verify the
-        // captured-state logic by exercising the happy path with pre-resolved alerts.
-        let container = try makeContainer()
-        let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
-        tache.statut = .terminee
-        ctx.insert(tache)
-        // One alert already resolved before archiving — rollback must NOT flip it back
-        let alerteDejaResolue = AlerteEntity()
-        alerteDejaResolue.resolue = true
-        alerteDejaResolue.tache = tache
-        ctx.insert(alerteDejaResolue)
-        let alerteNonResolue = AlerteEntity()
-        alerteNonResolue.tache = tache
-        ctx.insert(alerteNonResolue)
-        try ctx.save()
-
-        let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
-        vm.archiver()
-
-        // Happy path: both alerts resolved, statut archived
-        #expect(alerteDejaResolue.resolue == true)
-        #expect(alerteNonResolue.resolue == true)
-        #expect(tache.statut == .archivee)
+        // The button is shown only when statut == .active
+        #expect(tacheActive.statut == .active)
+        #expect(tacheTerminee.statut == .terminee)
+        #expect(tacheTerminee.statut != .active)
     }
 }

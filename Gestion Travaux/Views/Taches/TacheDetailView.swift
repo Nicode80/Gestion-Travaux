@@ -3,7 +3,7 @@
 //
 // Shows full details for a task: status, next action, linked activity, and note/capture counts.
 // Receives the TacheEntity from a NavigationLink.
-// Story 1.4: archive button (visible when .terminee) + confirmation .alert + TacheDetailViewModel.
+// Story 1.4: [Marquer comme terminée] button (visible when .active) + confirmation .alert.
 
 import SwiftUI
 import SwiftData
@@ -50,13 +50,13 @@ struct TacheDetailView: View {
                 LabeledContent("Notes", value: "\(tache.notes.count)")
             }
 
-            // Archive action — only visible when task is finished (Story 1.4)
-            if tache.statut == .terminee {
+            // Termination action — only visible when task is still active (Story 1.4)
+            if tache.statut == .active {
                 Section {
                     Button(role: .destructive) {
-                        viewModel.demanderArchivage()
+                        viewModel.demanderTerminaison()
                     } label: {
-                        Label("Archiver cette tâche", systemImage: "archivebox")
+                        Label("Marquer comme terminée", systemImage: "checkmark.circle")
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -76,14 +76,14 @@ struct TacheDetailView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle(tache.titre)
         .navigationBarTitleDisplayMode(.large)
-        .alert("Archiver cette tâche ?", isPresented: $viewModel.showArchiveAlert) {
-            Button("Archiver", role: .destructive) {
-                viewModel.archiver()
+        .alert("Marquer comme terminée ?", isPresented: $viewModel.showTerminaisonAlert) {
+            Button("Terminer", role: .destructive) {
+                viewModel.terminer()
                 if viewModel.errorMessage == nil { dismiss() }
             }
             Button("Annuler", role: .cancel) {}
         } message: {
-            Text("Elle disparaîtra de ta liste active.")
+            Text("La tâche disparaîtra de ta liste active. Son historique reste consultable.")
         }
     }
 }

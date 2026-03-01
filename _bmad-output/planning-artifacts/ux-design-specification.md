@@ -488,21 +488,21 @@ flowchart TD
 
 ### Journey 2 — Session de Travail Complète
 
-**Contexte :** Session complète matin → terrain → soir bureau. Inclut choix de tâche en entrée et archivage en sortie.
+**Contexte :** Session complète matin → terrain → soir bureau. Inclut choix de tâche en entrée et terminaison éventuelle en sortie.
 
 ```mermaid
 flowchart TD
-    A([📱 Ouverture — matin]) --> B[Dashboard\nDernière tâche + Prochaine action]
+    A([📱 Ouverture — matin]) --> B[Dashboard\nHero Task Card — dernière tâche + Prochaine action]
     B --> C{Quelle tâche aujourd'hui ?}
 
-    C -->|Continuer dernière tâche| BRF
-    C -->|Autre tâche| E[Liste des tâches actives\n+ Créer nouvelle tâche]
+    C -->|Continuer la tâche affichée| BRF
+    C -->|Autre tâche| E[⇄ Changer de tâche\nTacheListView — filtre Actives\n+ Créer nouvelle tâche]
 
     E --> F{Choix}
     F -->|Tâche active existante| BRF
     F -->|Créer nouvelle| G{Nom déjà utilisé ?}
     G -->|Oui — tâche active| BRF
-    G -->|Non ou archivée| H[Créer nouvelle instance\nPièce + Activité]
+    G -->|Non| H[Créer nouvelle instance\nPièce + Activité]
     H --> BRF
 
     BRF[Briefing d'entrée\nAlertes + Astuces critiques] --> I[Mode Chantier — bouton ROUGE]
@@ -528,7 +528,7 @@ flowchart TD
 
     V --> W{Tâche terminée ?}
     W -->|Non — Prochaine action| X[Dicter prochaine action\nReste active]
-    W -->|Oui — Terminée| Y[Archivée ✓\nDisparaît de la liste active]
+    W -->|Oui — Terminée| Y[Confirmation .alert\nStatut → Terminée\nDisparaît de la liste active]
     X --> Z([✅ Session complète])
     Y --> Z
 ```
@@ -543,13 +543,16 @@ flowchart TD
     B --> C{Action sur la note}
     C -->|Lire + Archiver| D[Archivée — reste consultable]
     C -->|Garder visible| D2[Reste en haut du dashboard]
-    D & D2 --> E[Liste des tâches actives\nAvec dernière action de chaque]
+    D & D2 --> E[Dashboard\nHero Task Card — dernière tâche mémorisée]
 
     E --> F{Quelle tâche reprendre ?}
-    F -->|Tâche active existante| BRF
-    F -->|Créer nouvelle| G{Nom déjà utilisé ?}
+    F -->|Tâche affichée dans le Hero| BRF
+    F -->|Autre tâche| E2[⇄ Changer de tâche\nTacheListView — filtre Actives]
+    E2 --> F2{Choix}
+    F2 -->|Tâche active existante| BRF
+    F2 -->|Créer nouvelle| G{Nom déjà utilisé ?}
     G -->|Oui — active| BRF
-    G -->|Non ou archivée| H[Nouvelle instance\nPièce + Activité]
+    G -->|Non| H[Nouvelle instance\nPièce + Activité]
     H --> BRF
 
     BRF[Briefing tâche choisie\nAlertes + Astuces + Prochaine action] --> I[Mode Chantier]
@@ -563,12 +566,12 @@ flowchart TD
 ```mermaid
 flowchart TD
     A([Mode Chantier actif — bouton ROUGE]) --> B[☰ → Changer de tâche]
-    B --> C[Liste des tâches actives\n+ Créer nouvelle tâche]
+    B --> C[TacheListView — filtre Actives\n+ Créer nouvelle tâche]
     C --> D{Choix}
     D -->|Tâche active existante| E[Briefing tâche choisie]
     D -->|Créer nouvelle| F{Nom déjà utilisé ?}
     F -->|Oui — active| E
-    F -->|Non ou archivée| G[Nouvelle instance\nPièce + Activité]
+    F -->|Non| G[Nouvelle instance\nPièce + Activité]
     G --> E
     E --> H([Mode Chantier\nNouvelle tâche — captures séparées])
 ```
@@ -597,18 +600,18 @@ flowchart TD
 | Cas | Comportement |
 |-----|-------------|
 | Nom existant + tâche **active** | Réouvrir cette instance directement |
-| Nom existant + tâche **archivée** | Créer une nouvelle instance (table rase) |
+| Nom existant + tâche **terminée** | Créer une nouvelle instance (table rase) |
 | Nom nouveau | Créer une nouvelle instance |
 
 **Cycle de vie d'une tâche :**
 
-`Création → Active → [sessions multiples] → Archivée (irréversible depuis la liste active)`
+`Création → Active → [sessions multiples] → Terminée (irréversible, depuis TacheDetailView ou CheckoutView)`
 
 ### Flow Optimization Principles
 
 - **Zéro modal bloquant** pendant le chantier — toast non-bloquant uniquement
 - **Contexte persistant** — tâche active toujours visible en haut de l'écran Chantier
-- **Décision binaire en fin de débrief** — Prochaine action (reste active) OU Terminée (archivage)
+- **Décision binaire en fin de débrief** — Prochaine action (reste active) OU Terminée (alerte confirmation)
 - **Anti-doublon actif** — l'app vérifie avant de créer, jamais deux instances actives du même nom
 - **Note de Saison garantie** — toujours premier élément à la reprise, sans action de l'utilisateur
 - **Erreurs impossibles > gestion d'erreurs** — offline-first élimine les erreurs de sauvegarde
@@ -622,14 +625,44 @@ flowchart TD
 | `NavigationStack` + `NavigationLink` | Hiérarchie Maison → Pièces → Tâches |
 | `List` / `LazyVStack` | Listes tâches, captures, alertes |
 | `TextField` + `Form` | Saisie texte (noms pièce/activité) |
-| `Button` | CTA standard (Démarrer, Archiver…) |
+| `Button` | CTA standard (Démarrer, Terminer…) |
 | `Sheet` / `.overlay` | Menus hamburger, bottom sheets, récap classification |
 | `ProgressView` | Barre progression classification |
 | `ScrollView` | Briefing, listes longues |
-| `.alert` | Confirmations destructives (archiver tâche) |
+| `.alert` | Confirmations destructives (terminer une tâche) |
 | `Text` + Dynamic Type | Toute la typographie SF Pro |
 
 ### Custom Components
+
+#### HeroTaskCard
+
+**Purpose :** Point d'entrée principal du Dashboard — affiche la tâche en cours et permet de lancer immédiatement le Mode Chantier.
+
+**Anatomy :** Fond card `#EFEEED` · Titre de la tâche (bold) · Prochaine action (gris secondaire) · Bouton [▶ Lancer le mode chantier] (prominent, accent `#1B3D6F`) · Lien discret "⇄ Changer de tâche".
+
+**États :**
+
+| État | Condition | Contenu |
+|------|-----------|---------|
+| `actif` | Au moins une tâche `.active` | Dernière tâche travaillée (`lastSessionDate` desc) + bouton Lancer + lien Changer |
+| `vide` | Aucune tâche `.active` | Illustration maison · "Aucune tâche active" · Bouton [+ Créer une tâche] |
+
+**Flux "⇄ Changer de tâche" :**
+- Ouvre `TacheListView` en mode sélection (filtre Actives par défaut)
+- Sélection → retour Dashboard → HeroTaskCard affiche la nouvelle tâche
+- Création depuis TacheListView → retour Dashboard → HeroTaskCard affiche la nouvelle tâche
+
+**Flux [▶ Lancer le mode chantier] :**
+- Définit `ModeChantierState.tacheActive` = tâche du Hero
+- Appelle `ModeChantierState.demarrerSession()` → `sessionActive = true`
+- `fullScreenCover` ouvre `ModeChantierView` — pas de Sheet intermédiaire
+
+**Règle d'affichage dans le Dashboard :**
+- La `HeroTaskCard` remplace la section "Tâches actives" de l'ancien dashboard
+- La liste inline des tâches n'existe plus sur le Dashboard
+- L'accès à la liste complète se fait via Explorer → Tâches
+
+---
 
 #### BigButton
 
@@ -724,6 +757,38 @@ flowchart TD
 
 ---
 
+### Dashboard Layout (Design Validé — 2026-03-01)
+
+Structure du Dashboard refactorisé, issue d'une révision post-Epic 2 :
+
+```
+DashboardView
+├── PauseBannerView (si ModeChantierState.isBrowsing == true)
+└── NavigationStack
+    ├── HeroTaskCard           ← tâche en cours + [▶ Lancer] + [⇄ Changer de tâche]
+    │   └── État vide          ← "Aucune tâche active" + [+ Créer une tâche]
+    ├── BriefingCard (compact, shell — données réelles Story 4.1)
+    └── Section "Explorer"
+        ├── NavigationLink → TacheListView    (filtre Actives par défaut, [+] en toolbar)
+        ├── NavigationLink → PieceListView    ([+] en toolbar)
+        └── NavigationLink → ActiviteListView ([+] en toolbar)
+```
+
+**Principes du Dashboard refactorisé :**
+- **Zéro liste inline de tâches** — avec des dizaines de tâches simultanées, la liste inline est illisible
+- **Un seul point d'entrée Mode Chantier** — le bouton [▶ Lancer] dans le Hero, pas dans la toolbar
+- **Création toujours depuis les list views** — le Dashboard n'a plus de bouton [+] global
+- **Explorer = accès à tout** — Tâches, Pièces, Activités accessibles depuis le même endroit
+- **La toolbar du Dashboard est vide** — suppression des boutons 🏗️ et ➕
+
+**TacheListView — enrichie :**
+- Picker [Actives] [Terminées] en haut de la vue
+- Filtre par défaut : Actives
+- Bouton [+] en toolbar → création d'une nouvelle tâche
+- Mode sélection (callback optionnel) → utilisé par "Changer de tâche" depuis le Hero
+
+---
+
 ### Implementation Roadmap
 
 **Phase 1 — Core MVP** *(bloquants pour J1, J2, J3)*
@@ -739,7 +804,7 @@ flowchart TD
 
 **Phase 3 — Polissage**
 
-6. Indicateurs visuels cycle de vie (badges active/archivée)
+6. Indicateurs visuels cycle de vie (badges active/terminée)
 7. Sous-menu criticité ASTUCE (extension SwipeClassifier)
 
 ## UX Consistency Patterns
@@ -750,7 +815,7 @@ flowchart TD
 |--------|-------|-------|
 | **Primaire** | Fond plein `#1B3D6F`, texte blanc, border-radius 14pt | Action principale unique par écran |
 | **Secondaire** | Fond blanc, border `#1B3D6F`, texte `#1B3D6F` | Actions alternatives |
-| **Destructif** | Fond blanc, texte `#FF3B30` | Archiver — toujours précédé d'une `.alert` |
+| **Destructif** | Fond blanc, texte `#FF3B30` | Terminer une tâche — toujours précédé d'une `.alert` |
 | **Ghost / Texte** | Pas de fond, texte `#1B3D6F` | Navigation tertiaire |
 | **BigButton** | Composant custom rouge/vert | Unique dans tout le Mode Chantier |
 
@@ -762,7 +827,7 @@ Règle absolue : **un seul bouton primaire par écran**.
 |-----------|---------|-------|
 | Capture sauvegardée | Toast non-bloquant "✅ Capture sauvegardée" + haptic fort | 2s auto-dismiss |
 | Classification confirmée | Animation disparition carte + carte suivante | 300ms |
-| Tâche archivée | `.alert` confirmation → animation retrait liste | Jusqu'à confirmation |
+| Tâche terminée | `.alert` confirmation → animation retrait liste active | Jusqu'à confirmation |
 | Enregistrement actif | BigButton vert pulsant réactif à la voix + RecordingIndicator | Continu |
 | Enregistrement silencieux | BigButton vert, lueur statique — pas de pulse | Continu |
 
@@ -773,7 +838,7 @@ Règle absolue : **un seul bouton primaire par écran**.
 | **Mode Chantier pause** | Bandeau persistant en haut de tout écran pendant session active — tap = retour immédiat |
 | **Hamburger** | Actif uniquement bouton rouge (inactif) — grisé pendant enregistrement |
 | **Drill-down** | Tap sur alerte/astuce → sheet (pas NavigationLink) — retour par swipe down |
-| **Archivage** | Toujours via `.alert` confirmation — jamais swipe-to-delete sans confirmation |
+| **Termination** | Toujours via `.alert` confirmation — jamais action silencieuse |
 | **Retour** | Bouton "‹ Retour" SwiftUI natif — jamais remplacé par bouton custom |
 
 *Drill-down : navigation en profondeur depuis un élément de liste (ex : tap sur une ALERTE dans le briefing → sheet avec transcription complète + photo originale).*
@@ -817,7 +882,7 @@ La création de tâche opère sur deux entités séparées : **Pièce** et **Act
 
 | Type | Usage | Règle |
 |------|-------|-------|
-| `.alert` système | Confirmation destructive uniquement (archiver) | Max 2 options : Confirmer / Annuler |
+| `.alert` système | Confirmation destructive uniquement (terminer une tâche) | Max 2 options : Confirmer / Annuler |
 | `Sheet` (bottom) | Drill-down notes · Sous-menu criticité ASTUCE | Swipe down pour fermer |
 | Toast overlay | Feedback non-bloquant (capture sauvegardée) | Auto-dismiss 2s, jamais bloquant |
 | Bandeau pause | Mode Chantier en pause | Persistant, non-dismissable |

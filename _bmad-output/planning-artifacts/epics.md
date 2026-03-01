@@ -64,7 +64,7 @@ Ce document fournit la décomposition complète en epics et stories pour Gestion
 
 **FR23:** Le système peut créer automatiquement les entités Pièce et Activité si elles n'existent pas encore
 
-**FR24:** L'utilisateur peut voir la liste de toutes ses tâches avec leurs statuts (Active/Terminée/Archivée)
+**FR24:** L'utilisateur peut voir la liste de toutes ses tâches avec leurs statuts (Active/Terminée), filtrables par statut
 
 **FR25:** Le système peut détecter et prévenir la création de doublons pour les tâches actives
 
@@ -72,13 +72,13 @@ Ce document fournit la décomposition complète en epics et stories pour Gestion
 
 **FR27:** L'utilisateur peut consulter le briefing complet d'une tâche (prochaine action, alertes, astuces critiques)
 
-**FR28:** L'utilisateur peut archiver une tâche terminée
+**FR28:** L'utilisateur peut marquer une tâche comme terminée (cycle de vie : Active → Terminée)
 
-**FR29:** Le système peut proposer automatiquement la dernière tâche active à l'ouverture de l'app
+**FR29:** Le système peut proposer automatiquement la dernière tâche active à l'ouverture de l'app (via la Hero Task Card)
 
 **FR30:** Le système peut stocker des ALERTES temporelles liées à une tâche spécifique
 
-**FR31:** Le système peut résoudre automatiquement les ALERTES d'une tâche quand celle-ci est marquée terminée
+**FR31:** Le système conserve les ALERTES d'une tâche après qu'elle est marquée terminée (consultables dans la vue globale)
 
 **FR32:** L'utilisateur peut voir la liste exhaustive de toutes les ALERTES actives de toute la maison
 
@@ -442,7 +442,7 @@ afin d'avoir une vue d'ensemble claire de tous mes chantiers en cours.
 
 **Given** Nico navigue vers la liste des pièces
 **When** il sélectionne une pièce
-**Then** les tâches liées à cette pièce s'affichent avec leur statut (Active / Terminée / Archivée) et leur prochaine action
+**Then** les tâches liées à cette pièce s'affichent avec leur statut (Active / Terminée) et leur prochaine action
 
 **Given** Nico navigue vers la liste des Activités
 **When** il sélectionne une activité
@@ -490,32 +490,32 @@ afin que ma liste de tâches reste propre et que je ne crée pas accidentellemen
 
 ---
 
-### Story 1.4 : Archivage des tâches terminées
+### Story 1.4 : Marquer une tâche comme terminée *(révisée 2026-03-01)*
 
 En tant que Nico,
-je veux archiver une tâche terminée pour que ma liste active reste centrée sur ce qui reste à faire,
-afin de distinguer clairement ce qui est fini de ce qui est en cours.
+je veux marquer une tâche comme terminée quand le travail est fini,
+afin de la retirer de ma vue active tout en gardant son historique consultable.
 
 **Critères d'acceptation :**
 
-**Given** Nico est sur la liste des tâches avec une tâche dont le statut est .terminee
-**When** il ouvre cette tâche
-**Then** un bouton [Archiver cette tâche] est disponible
+**Given** Nico est sur TacheDetailView d'une tâche active
+**When** il voit l'écran
+**Then** un bouton [Marquer comme terminée] est disponible en bas de l'écran
 
-**Given** Nico appuie sur [Archiver cette tâche]
+**Given** Nico appuie sur [Marquer comme terminée]
 **When** la confirmation s'affiche
-**Then** une `.alert` système demande : "Archiver cette tâche ? Elle disparaîtra de ta liste active."
-**And** les options sont [Archiver] et [Annuler] — jamais d'archivage silencieux sans confirmation
+**Then** une `.alert` système demande : "Marquer cette tâche comme terminée ?"
+**And** les options sont [Terminer] et [Annuler] — jamais d'action silencieuse
 
-**Given** Nico confirme l'archivage
+**Given** Nico confirme
 **When** l'action est exécutée
-**Then** TacheEntity.statut passe à .archivee
-**And** la tâche disparaît de la liste des tâches actives
-**And** les ALERTES liées à cette tâche sont résolues automatiquement (FR31)
+**Then** TacheEntity.statut passe à .terminee
+**And** la tâche disparaît de la Hero Task Card et du filtre "Actives" de TacheListView
+**And** la tâche reste consultable via le filtre "Terminées"
 
-**Given** une tâche est archivée
+**Given** une tâche est terminée
 **When** Nico tente de créer une tâche avec le même nom (Pièce × Activité)
-**Then** l'app crée une nouvelle instance (table rase) — pas de reprise d'une tâche archivée
+**Then** l'app crée une nouvelle instance (table rase) — pas de reprise d'une tâche terminée
 
 ---
 
@@ -824,10 +824,14 @@ afin que tout soit bien organisé avant de fermer l'app pour la nuit.
 **And** l'app revient au dashboard
 
 **Given** Nico choisit [✅ Cette tâche est TERMINÉE] (FR21)
-**When** l'action est confirmée
+**When** il appuie sur le bouton
+**Then** une `.alert` de confirmation s'affiche : "Marquer cette tâche comme terminée ?"
+**And** les options sont [Terminer] et [Annuler]
+
+**Given** Nico confirme la terminaison
+**When** l'action est exécutée
 **Then** TacheEntity.statut passe à .terminee
-**And** l'app propose immédiatement d'archiver la tâche via `.alert`
-**And** l'app revient au dashboard
+**And** l'app revient au dashboard (pas d'étape d'archivage)
 
 ---
 
@@ -887,10 +891,10 @@ afin de ne jamais perdre le contexte d'un point critique, quelle que soit la tâ
 **Then** toutes les AlerteEntities avec statut actif de toute la maison sont visibles, regroupées par tâche (FR32)
 **And** chaque alerte affiche : texte, tâche parente, date de création
 
-**Given** une TacheEntity passe au statut .archivee
-**When** l'archivage est confirmé
-**Then** toutes les AlerteEntities liées à cette tâche sont automatiquement résolues (FR31)
-**And** elles disparaissent de la vue globale des alertes actives
+**Given** une TacheEntity passe au statut .terminee
+**When** la tâche est marquée terminée
+**Then** les AlerteEntities liées restent consultables dans la vue globale (FR31)
+**And** le statut de la tâche parente est affiché à côté de chaque alerte
 
 **Given** Nico tape sur une AlerteEntity dans le briefing ou la vue globale
 **When** CaptureDetailView s'affiche en sheet

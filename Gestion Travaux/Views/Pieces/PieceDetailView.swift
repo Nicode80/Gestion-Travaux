@@ -24,12 +24,6 @@ struct PieceDetailView: View {
             .sorted { $0.createdAt > $1.createdAt }
     }
 
-    private var tachesArchivees: [TacheEntity] {
-        piece.taches
-            .filter { $0.statut == .archivee }
-            .sorted { $0.createdAt > $1.createdAt }
-    }
-
     var body: some View {
         List {
             if piece.taches.isEmpty {
@@ -64,17 +58,6 @@ struct PieceDetailView: View {
                     }
                 }
 
-                if !tachesArchivees.isEmpty {
-                    Section("Archivées") {
-                        ForEach(tachesArchivees) { tache in
-                            NavigationLink {
-                                TacheDetailView(tache: tache, modelContext: modelContext)
-                            } label: {
-                                TaskRowView(tache: tache)
-                            }
-                        }
-                    }
-                }
             }
         }
         .listStyle(.insetGrouped)
