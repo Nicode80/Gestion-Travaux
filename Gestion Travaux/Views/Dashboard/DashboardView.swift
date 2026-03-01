@@ -3,7 +3,8 @@
 //
 // Central navigation hub: MAISON → PIÈCES → TÂCHES → ACTIVITÉS.
 // Hosts the unique NavigationStack for the app.
-// PauseBannerView is injected via .safeAreaInset when isBrowsing == true.
+// PauseBannerView is injected via .safeAreaInset on the root content (below the nav bar)
+// so it never overlaps the navigation bar or its toolbar buttons.
 
 import SwiftUI
 import SwiftData
@@ -29,14 +30,22 @@ struct DashboardView: View {
 
         NavigationStack(path: $navigationPath) {
             content
+                // Banner placed here — inside NavigationStack, below the nav bar — so it never
+                // overlaps the navigation bar or its toolbar buttons (fix: banneau-pause-position).
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    if chantier.isBrowsing {
+                        PauseBannerView()
+                    }
+                }
                 .navigationTitle("Gestion Travaux")
                 .navigationBarTitleDisplayMode(.large)
                 .background(Color(hex: Constants.Couleurs.backgroundBureau))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        // Both buttons hidden during active recording (boutonVert lockdown) and during
-                        // browse mode (M3-fix: prevents opening modal sheets that would hide PauseBannerView).
-                        if !chantier.boutonVert && !chantier.isBrowsing {
+                        // Buttons hidden only during active recording (boutonVert lockdown).
+                        // Intentionally visible during browse mode: banner is below the nav bar,
+                        // so [+] and [🏗️] remain fully tappable even when isBrowsing == true.
+                        if !chantier.boutonVert {
                             HStack(spacing: 4) {
                                 // [🏗️ Mode Chantier] — Story 2.1
                                 Button {
@@ -57,11 +66,6 @@ struct DashboardView: View {
                         }
                     }
                 }
-        }
-        .safeAreaInset(edge: .top) {
-            if chantier.isBrowsing {
-                PauseBannerView()
-            }
         }
         .onAppear {
             viewModel.charger()
