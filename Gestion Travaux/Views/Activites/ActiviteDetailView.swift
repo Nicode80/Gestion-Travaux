@@ -18,6 +18,12 @@ struct ActiviteDetailView: View {
             .sorted { $0.createdAt > $1.createdAt }
     }
 
+    private var tachesTerminees: [TacheEntity] {
+        activite.taches
+            .filter { $0.statut == .terminee }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
     var body: some View {
         List {
             // Astuce count (shell — full list in Story 4.3)
@@ -42,6 +48,12 @@ struct ActiviteDetailView: View {
                         .font(.subheadline)
                 } else {
                     TacheListView(taches: tachesActives, modelContext: modelContext)
+                }
+            }
+
+            if !tachesTerminees.isEmpty {
+                Section("Terminées") {
+                    TacheListView(taches: tachesTerminees, modelContext: modelContext)
                 }
             }
         }

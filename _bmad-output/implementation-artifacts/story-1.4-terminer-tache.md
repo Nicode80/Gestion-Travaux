@@ -2,7 +2,7 @@
 story: "1.4"
 epic: 1
 title: "Marquer une tâche comme terminée"
-status: review
+status: done
 frs: [FR28]
 nfrs: []
 revision: "2026-03-01 — Redesign : suppression du statut .archivee. Cycle de vie simplifié : .active → .terminee uniquement. L'ancienne implémentation (.archivee + résolution auto des AlerteEntity) doit être supprimée et remplacée."
@@ -115,6 +115,11 @@ Implémentation complète — 2026-03-01.
 - Grep exhaustif : 0 référence résiduelle à `.archivee` dans le code Swift applicatif
 - `PhotoServiceTests/filenameContientCaptureId` en échec pré-existant (story 2.3, hors périmètre)
 - Build : ✅ TEST BUILD SUCCEEDED — tous les tests de régression passent
+
+**Post-review adversariale — 2026-03-01 (3 fixes) :**
+- (H1) `TacheDetailViewModelTests` : `boutonAbsentSiTerminee` remplacé par `demanderTerminaisonIgnoreeSiTerminee` — vérifie le guard ViewModel via `showTerminaisonAlert`. Test rollback AC5 ajouté en `.disabled` avec documentation de la limitation SwiftData (ModelContext final non mockable).
+- (M1) `TacheDetailViewModel.demanderTerminaison()` : guard `tache.statut == .active` ajouté — double protection ViewModel au-delà de la guard View.
+- (M2) `ActiviteDetailView` : section "Terminées" ajoutée (même pattern que PieceDetailView) — les tâches terminées sont maintenant accessibles depuis les deux chemins de navigation (Pièces et Activités).
 
 ### File List
 

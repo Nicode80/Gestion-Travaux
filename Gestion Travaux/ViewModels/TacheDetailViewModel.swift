@@ -33,6 +33,7 @@ final class TacheDetailViewModel {
     // MARK: - Actions
 
     func demanderTerminaison() {
+        guard tache.statut == .active else { return }
         showTerminaisonAlert = true
     }
 

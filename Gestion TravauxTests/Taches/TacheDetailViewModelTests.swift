@@ -98,20 +98,39 @@ struct TacheDetailViewModelTests {
         #expect(vm.errorMessage == nil)
     }
 
-    @Test("bouton absent si déjà .terminee — statut .active est requis pour afficher le bouton")
-    func boutonAbsentSiTerminee() throws {
+    @Test("demanderTerminaison() ignorée si tâche déjà .terminee (double-guard ViewModel)")
+    func demanderTerminaisonIgnoreeSiTerminee() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tacheActive = TacheEntity(titre: "Active")
-        let tacheTerminee = TacheEntity(titre: "Terminée")
-        tacheTerminee.statut = .terminee
-        ctx.insert(tacheActive)
-        ctx.insert(tacheTerminee)
+        let tache = TacheEntity(titre: "Déjà terminée")
+        tache.statut = .terminee
+        ctx.insert(tache)
         try ctx.save()
 
-        // The button is shown only when statut == .active
-        #expect(tacheActive.statut == .active)
-        #expect(tacheTerminee.statut == .terminee)
-        #expect(tacheTerminee.statut != .active)
+        let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
+        vm.demanderTerminaison()
+
+        // ViewModel guard must absorb the call — alert must NOT show
+        #expect(!vm.showTerminaisonAlert)
+    }
+
+    // MARK: - Rollback (AC5)
+
+    @Test("terminer() rollback statut à .active si save() échoue", .disabled("""
+        ModelContext est une classe final non mockable avec SwiftData in-memory.
+        Le rollback (tache.statut = ancienStatut) est implémenté dans terminer():51
+        mais ne peut être déclenché de façon fiable sans proxy ModelContext.
+        Piste future : extraire un protocole `ModelSaving { func save() throws }`
+        et injecter un stub qui lève une erreur contrôlée.
+        """))
+    func terminerRollbackSiSaveEchoue() throws {
+        // Skeleton — décommenté quand ModelSaving protocol est introduit.
+        // let stub = FailingSaveContext()
+        // let tache = TacheEntity(titre: "Test rollback")
+        // tache.statut = .active
+        // let vm = TacheDetailViewModel(tache: tache, modelContext: stub)
+        // vm.terminer()
+        // #expect(tache.statut == .active)          // rollback
+        // #expect(vm.errorMessage != nil)            // message affiché
     }
 }
