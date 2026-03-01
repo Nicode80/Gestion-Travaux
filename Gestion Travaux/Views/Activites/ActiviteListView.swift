@@ -5,10 +5,12 @@
 // Navigates to ActiviteDetailView on selection.
 
 import SwiftUI
+import SwiftData
 
 struct ActiviteListView: View {
 
     let activites: [ActiviteEntity]
+    let modelContext: ModelContext
 
     var body: some View {
         Group {
@@ -21,7 +23,7 @@ struct ActiviteListView: View {
             } else {
                 List(activites) { activite in
                     NavigationLink {
-                        ActiviteDetailView(activite: activite)
+                        ActiviteDetailView(activite: activite, modelContext: modelContext)
                     } label: {
                         HStack {
                             Image(systemName: "wrench.and.screwdriver")

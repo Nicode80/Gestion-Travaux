@@ -10,7 +10,12 @@ import SwiftData
 struct PieceDetailView: View {
 
     let piece: PieceEntity
-    @Environment(\.modelContext) private var modelContext
+    private let modelContext: ModelContext
+
+    init(piece: PieceEntity, modelContext: ModelContext) {
+        self.piece = piece
+        self.modelContext = modelContext
+    }
 
     private var tachesActives: [TacheEntity] {
         piece.taches

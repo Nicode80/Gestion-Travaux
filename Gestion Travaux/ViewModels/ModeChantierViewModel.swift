@@ -136,11 +136,7 @@ final class ModeChantierViewModel {
             let toutes = try modelContext.fetch(FetchDescriptor<TacheEntity>())
             tachesActives = toutes
                 .filter { $0.statut == .active }
-                .sorted { lhs, rhs in
-                    let l = lhs.lastSessionDate ?? lhs.createdAt
-                    let r = rhs.lastSessionDate ?? rhs.createdAt
-                    return l > r
-                }
+                .trieeParSession()
             viewState = .success(())
         } catch {
             viewState = .failure("Impossible de charger les tâches.")
@@ -443,7 +439,7 @@ final class ModeChantierViewModel {
         }
 
         do {
-            let chemin = try photoService.sauvegarder(image, captureId: chantier.sessionId)
+            let chemin = try photoService.sauvegarder(image)
 
             // Append photo block at the next order index; existing blocks are preserved
             var blocks = captureEnCours!.blocksData.toContentBlocks()

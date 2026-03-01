@@ -41,22 +41,10 @@ struct PhotoServiceTests {
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let service = PhotoService(baseURL: tempDir)
-        let chemin = try service.sauvegarder(makeTestImage(), captureId: UUID())
+        let chemin = try service.sauvegarder(makeTestImage())
 
         #expect(chemin.hasPrefix("captures/"))
         #expect(chemin.hasSuffix(".jpg"))
-    }
-
-    @Test("sauvegarder() includes the captureId in the filename")
-    func filenameContientCaptureId() throws {
-        let tempDir = try makeTempDir()
-        defer { try? FileManager.default.removeItem(at: tempDir) }
-
-        let service = PhotoService(baseURL: tempDir)
-        let captureId = UUID()
-        let chemin = try service.sauvegarder(makeTestImage(), captureId: captureId)
-
-        #expect(chemin.contains(captureId.uuidString))
     }
 
     // MARK: File system
@@ -67,7 +55,7 @@ struct PhotoServiceTests {
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let service = PhotoService(baseURL: tempDir)
-        let chemin = try service.sauvegarder(makeTestImage(), captureId: UUID())
+        let chemin = try service.sauvegarder(makeTestImage())
 
         let fileURL = tempDir.appendingPathComponent(chemin)
         #expect(FileManager.default.fileExists(atPath: fileURL.path))
@@ -86,7 +74,7 @@ struct PhotoServiceTests {
         #expect(!FileManager.default.fileExists(atPath: capturesURL.path))
 
         let service = PhotoService(baseURL: tempDir)
-        _ = try service.sauvegarder(makeTestImage(), captureId: UUID())
+        _ = try service.sauvegarder(makeTestImage())
 
         #expect(FileManager.default.fileExists(atPath: capturesURL.path))
     }
@@ -96,12 +84,10 @@ struct PhotoServiceTests {
         let tempDir = try makeTempDir()
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        // Same captureId (same session), called back-to-back with no sleep.
-        // After H1-fix (per-photo UUID in filename), no sleep is needed and no collision occurs.
+        // Per-photo UUID in filename (H1-fix): no collision even with back-to-back calls.
         let service = PhotoService(baseURL: tempDir)
-        let id = UUID()
-        let chemin1 = try service.sauvegarder(makeTestImage(color: .red),   captureId: id)
-        let chemin2 = try service.sauvegarder(makeTestImage(color: .green), captureId: id)
+        let chemin1 = try service.sauvegarder(makeTestImage(color: .red))
+        let chemin2 = try service.sauvegarder(makeTestImage(color: .green))
 
         #expect(chemin1 != chemin2)
 
@@ -117,7 +103,7 @@ struct PhotoServiceTests {
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         let service = PhotoService(baseURL: tempDir)
-        let chemin = try service.sauvegarder(makeTestImage(), captureId: UUID())
+        let chemin = try service.sauvegarder(makeTestImage())
 
         // File must be under the injected baseURL, never under ~/Pictures or PHPhotoLibrary
         let fileURL = tempDir.appendingPathComponent(chemin)

@@ -5,10 +5,12 @@
 // Navigates to PieceDetailView on selection.
 
 import SwiftUI
+import SwiftData
 
 struct PieceListView: View {
 
     let pieces: [PieceEntity]
+    let modelContext: ModelContext
 
     var body: some View {
         Group {
@@ -21,7 +23,7 @@ struct PieceListView: View {
             } else {
                 List(pieces) { piece in
                     NavigationLink {
-                        PieceDetailView(piece: piece)
+                        PieceDetailView(piece: piece, modelContext: modelContext)
                     } label: {
                         HStack {
                             Image(systemName: "door.left.hand.open")

@@ -3,6 +3,9 @@
 //
 // Loads active tasks, pieces and activities for the Dashboard.
 // Receives ModelContext via init — no direct SwiftData access from Views.
+//
+// lancerChantier(tache:chantier:) — sets lastSessionDate and starts the Mode Chantier session.
+// mettreAJourHero(tache:) — sets lastSessionDate and reloads the hero (used by "Changer de tâche").
 
 import Foundation
 import SwiftData
@@ -53,5 +56,30 @@ final class DashboardViewModel {
         } catch {
             viewState = .failure("Impossible de charger les données.")
         }
+    }
+
+    /// Starts a Mode Chantier session on the given task.
+    /// Sets lastSessionDate, persists it, then activates the session via ModeChantierState.
+    func lancerChantier(tache: TacheEntity, chantier: ModeChantierState) {
+        tache.lastSessionDate = Date()
+        do {
+            try modelContext.save()
+        } catch {
+            // lastSessionDate non persisté — session lancée quand même, ordre Hero approximatif
+        }
+        chantier.tacheActive = tache
+        chantier.demarrerSession()
+    }
+
+    /// Updates lastSessionDate so the given task becomes the Hero on next charger() call.
+    /// Used by the "Changer de tâche" flow in DashboardView.
+    func mettreAJourHero(tache: TacheEntity) {
+        tache.lastSessionDate = Date()
+        do {
+            try modelContext.save()
+        } catch {
+            // lastSessionDate non persisté — Hero order approximatif
+        }
+        charger()
     }
 }

@@ -27,7 +27,7 @@ enum PhotoServiceErreur: LocalizedError {
 protocol PhotoServiceProtocol: AnyObject {
     /// Saves `image` to Documents/captures/ and returns the relative path (e.g. "captures/xxx.jpg").
     /// Throws `PhotoServiceErreur` on failure.
-    func sauvegarder(_ image: UIImage, captureId: UUID) throws -> String
+    func sauvegarder(_ image: UIImage) throws -> String
 }
 
 // MARK: - Implementation
@@ -42,7 +42,7 @@ final class PhotoService: PhotoServiceProtocol {
         self.baseURL = baseURL
     }
 
-    func sauvegarder(_ image: UIImage, captureId: UUID) throws -> String {
+    func sauvegarder(_ image: UIImage) throws -> String {
         let capturesURL = baseURL.appendingPathComponent(Constants.Photos.repertoireCaptures)
 
         try FileManager.default.createDirectory(

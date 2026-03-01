@@ -15,7 +15,6 @@ final class MockPhotoService: PhotoServiceProtocol {
     // MARK: Call tracking
 
     private(set) var sauvegarderAppels: Int = 0
-    private(set) var dernierCaptureId: UUID? = nil
     private(set) var derniereImage: UIImage? = nil
 
     // MARK: Test configuration
@@ -27,9 +26,8 @@ final class MockPhotoService: PhotoServiceProtocol {
 
     // MARK: Protocol implementation
 
-    func sauvegarder(_ image: UIImage, captureId: UUID) throws -> String {
+    func sauvegarder(_ image: UIImage) throws -> String {
         sauvegarderAppels += 1
-        dernierCaptureId = captureId
         derniereImage = image
         if let erreur = erreurASimuler { throw erreur }
         return cheminRetour
@@ -39,7 +37,6 @@ final class MockPhotoService: PhotoServiceProtocol {
 
     func reinitialiser() {
         sauvegarderAppels = 0
-        dernierCaptureId = nil
         derniereImage = nil
         cheminRetour = "captures/mock-photo.jpg"
         erreurASimuler = nil

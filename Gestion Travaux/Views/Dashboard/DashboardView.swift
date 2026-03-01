@@ -7,7 +7,6 @@
 // always appears above the navigation bar on every screen including all pushed views.
 //
 // Story 2.7: Dashboard refonte — HeroTaskCard + Explorer enrichi (Tâches, Pièces, Activités).
-// TaskSelectionView is preserved but no longer referenced from here.
 
 import SwiftUI
 import SwiftData
@@ -50,11 +49,7 @@ struct DashboardView: View {
                         TacheListView(
                             modelContext: modelContext,
                             onSelect: { tache in
-                                tache.lastSessionDate = Date()
-                                do { try modelContext.save() } catch {
-                                    // lastSessionDate non persisté — Hero order approximatif but not critical
-                                }
-                                viewModel.charger()
+                                viewModel.mettreAJourHero(tache: tache)
                                 showChangerTache = false
                             }
                         )
@@ -174,14 +169,14 @@ struct DashboardView: View {
                 }
 
                 NavigationLink {
-                    PieceListView(pieces: viewModel.pieces)
+                    PieceListView(pieces: viewModel.pieces, modelContext: modelContext)
                 } label: {
                     Label("Pièces", systemImage: "door.left.hand.open")
                         .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                 }
 
                 NavigationLink {
-                    ActiviteListView(activites: viewModel.activites)
+                    ActiviteListView(activites: viewModel.activites, modelContext: modelContext)
                 } label: {
                     Label("Activités", systemImage: "wrench.and.screwdriver")
                         .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
@@ -201,11 +196,6 @@ struct DashboardView: View {
     // MARK: - Actions
 
     private func lancerChantier(tache: TacheEntity) {
-        tache.lastSessionDate = Date()
-        do { try modelContext.save() } catch {
-            // lastSessionDate non persisté — session lancée quand même, ordre Hero approximatif
-        }
-        chantier.tacheActive = tache
-        chantier.demarrerSession()
+        viewModel.lancerChantier(tache: tache, chantier: chantier)
     }
 }
