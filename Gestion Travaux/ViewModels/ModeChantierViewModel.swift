@@ -27,6 +27,10 @@
 //   - changerDeTache() updates tacheActive; new captures auto-attach to the new task (FR11).
 //   - parcourirApp() sets isBrowsing = true and sessionActive = false to show PauseBannerView.
 //
+// Story 2.6: End session.
+//   - sessionCaptureCount(for:) counts captures for the current sessionId via fetchCount.
+//   - endSession(chantier:) resets all state; sets pendingClassification = true when captures exist.
+//
 // Receives ModelContext via init — no direct SwiftData access from Views.
 
 import AVFoundation
@@ -483,6 +487,30 @@ final class ModeChantierViewModel {
     func parcourirApp(chantier: ModeChantierState) {
         chantier.isBrowsing = true
         chantier.sessionActive = false
+    }
+
+    // MARK: - Story 2.6: End session
+
+    /// Number of captures created during the current session.
+    /// Used in the end-session alert message and to decide whether to navigate to ClassificationView.
+    func sessionCaptureCount(for chantier: ModeChantierState) -> Int {
+        let sid = chantier.sessionId
+        let descriptor = FetchDescriptor<CaptureEntity>(
+            predicate: #Predicate { $0.sessionId == sid }
+        )
+        return (try? modelContext.fetchCount(descriptor)) ?? 0
+    }
+
+    /// Ends the session: resets all state and triggers ClassificationView navigation if captures exist.
+    func endSession(chantier: ModeChantierState) {
+        let hasCaptures = sessionCaptureCount(for: chantier) > 0
+        chantier.boutonVert = false
+        chantier.isBrowsing = false
+        chantier.tacheActive = nil
+        chantier.sessionActive = false          // dismisses the fullScreenCover
+        if hasCaptures {
+            chantier.pendingClassification = true
+        }
     }
 
     // MARK: - Toast

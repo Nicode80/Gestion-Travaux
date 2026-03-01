@@ -29,8 +29,13 @@
 //   - Task-switch sheet: lists active tasks, calls viewModel.changerDeTache()
 //   - Browse action: calls viewModel.parcourirApp() → isBrowsing = true, sessionActive = false
 //
+// Story 2.6 additions:
+//   - [■ Fin] button enabled when boutonVert == false; shows confirmation alert
+//   - Alert displays sessionCaptureCount and calls viewModel.endSession() on confirm
+//   - endSession() resets state and sets pendingClassification for DashboardView navigation
+//
 // RULE: boutonVert == true → total navigation lockdown.
-//       [☰] is disabled; BigButton drives all interaction.
+//       [☰] and [■ Fin] are disabled; BigButton drives all interaction.
 
 import SwiftUI
 import SwiftData
@@ -45,6 +50,7 @@ struct ModeChantierView: View {
     @State private var photoCapturee: UIImage? = nil
     @State private var showMenu = false
     @State private var showTaskSwitch = false
+    @State private var showEndAlert = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -126,6 +132,15 @@ struct ModeChantierView: View {
             }
         } message: {
             Text("Autorise l'accès à la caméra dans Réglages > Confidentialité.")
+        }
+        // Story 2.6: end-session confirmation
+        .alert("Terminer la session ?", isPresented: $showEndAlert) {
+            Button("Oui, Débrief", role: .destructive) {
+                viewModel.endSession(chantier: chantier)
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Tu as capturé \(viewModel.sessionCaptureCount(for: chantier)) ligne(s).")
         }
     }
 
@@ -286,19 +301,19 @@ struct ModeChantierView: View {
                                 ? "Prendre une photo"
                                 : "Prendre une photo — démarrer l'enregistrement d'abord")
 
-            // Fin — implemented in Story 2.6
+            // Fin — Story 2.6: disabled during recording (boutonVert lockdown)
             Button {
-                // Story 2.6
+                showEndAlert = true
             } label: {
                 Label("Fin", systemImage: "stop.fill")
                     .font(.headline)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(chantier.boutonVert ? .white.opacity(0.3) : .white)
                     .frame(maxWidth: .infinity, minHeight: 60)
                     .background(.white.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            .disabled(true)
-            .accessibilityLabel("Terminer la session — indisponible dans cette version")
+            .disabled(chantier.boutonVert)
+            .accessibilityLabel("Terminer la session")
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 32)
