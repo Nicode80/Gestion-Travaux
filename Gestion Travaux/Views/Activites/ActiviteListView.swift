@@ -51,7 +51,7 @@ struct ActiviteListView: View {
             }
         }
         .navigationTitle("Activités")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
     }
 }

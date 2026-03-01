@@ -47,7 +47,7 @@ struct PieceListView: View {
             }
         }
         .navigationTitle("Pièces")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
     }
 }

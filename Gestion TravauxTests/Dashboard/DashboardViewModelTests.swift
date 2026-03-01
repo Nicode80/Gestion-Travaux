@@ -49,7 +49,7 @@ struct DashboardViewModelTests {
         #expect(viewModel.tachesActives.isEmpty)
         #expect(viewModel.pieces.isEmpty)
         #expect(viewModel.activites.isEmpty)
-        #expect(viewModel.tacheDerniereActive == nil)
+        #expect(viewModel.tacheHero == nil)
     }
 
     @Test("charger() loads only active tasks")
@@ -110,13 +110,63 @@ struct DashboardViewModelTests {
         #expect(viewModel.activites.last?.nom == "Plomberie")
     }
 
-    @Test("tacheDerniereActive returns the most recently created active task")
-    func tacheDerniereActive() throws {
+    @Test("tacheHero returns nil when no active tasks exist")
+    func tacheHeroNilWhenEmpty() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let viewModel = DashboardViewModel(modelContext: context)
+        viewModel.charger()
+        #expect(viewModel.tacheHero == nil)
+    }
+
+    @Test("tacheHero returns task with most recent lastSessionDate")
+    func tacheHeroMostRecentSession() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tacheAncienne = TacheEntity(titre: "Ancienne session")
+        tacheAncienne.lastSessionDate = Date().addingTimeInterval(-3600)
+
+        let tacheRecente = TacheEntity(titre: "Session récente")
+        tacheRecente.lastSessionDate = Date()
+
+        context.insert(tacheAncienne)
+        context.insert(tacheRecente)
+        try context.save()
+
+        let viewModel = DashboardViewModel(modelContext: context)
+        viewModel.charger()
+
+        #expect(viewModel.tacheHero?.titre == "Session récente")
+    }
+
+    @Test("tacheHero places task with lastSessionDate before task without")
+    func tacheHeroSessionBeforeNil() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let sansSession = TacheEntity(titre: "Sans session")
+        sansSession.createdAt = Date().addingTimeInterval(-60) // older
+
+        let avecSession = TacheEntity(titre: "Avec session")
+        avecSession.lastSessionDate = Date().addingTimeInterval(-3600) // any date is enough
+
+        context.insert(sansSession)
+        context.insert(avecSession)
+        try context.save()
+
+        let viewModel = DashboardViewModel(modelContext: context)
+        viewModel.charger()
+
+        #expect(viewModel.tacheHero?.titre == "Avec session")
+    }
+
+    @Test("tacheHero falls back to createdAt desc when both lastSessionDate are nil")
+    func tacheHeroFallbackCreatedAt() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
 
         let tacheAncienne = TacheEntity(titre: "Ancienne tâche")
-        // Ensure distinct createdAt to avoid race
         let tacheRecente = TacheEntity(titre: "Tâche récente")
         tacheRecente.createdAt = Date().addingTimeInterval(1)
 
@@ -127,7 +177,27 @@ struct DashboardViewModelTests {
         let viewModel = DashboardViewModel(modelContext: context)
         viewModel.charger()
 
-        #expect(viewModel.tacheDerniereActive?.titre == "Tâche récente")
+        #expect(viewModel.tacheHero?.titre == "Tâche récente")
+    }
+
+    @Test("tacheHero returns nil after all active tasks are marked terminee")
+    func tacheHeroNilAfterAllTerminee() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tache = TacheEntity(titre: "Tâche à terminer")
+        context.insert(tache)
+        try context.save()
+
+        let viewModel = DashboardViewModel(modelContext: context)
+        viewModel.charger()
+        #expect(viewModel.tacheHero != nil)
+
+        tache.statut = .terminee
+        try context.save()
+        viewModel.charger()
+
+        #expect(viewModel.tacheHero == nil)
     }
 
     @Test("ModeChantierState initial values are correct")

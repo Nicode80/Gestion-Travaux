@@ -64,6 +64,6 @@ struct PieceDetailView: View {
         .scrollContentBackground(.hidden)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle(piece.nom)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
