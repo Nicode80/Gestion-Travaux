@@ -3,9 +3,9 @@
 //
 // Central navigation hub: MAISON → PIÈCES → TÂCHES → ACTIVITÉS.
 // Hosts the unique NavigationStack for the app.
-// PauseBannerView is injected via .withPauseBanner() on every navigable screen's body.
-// The modifier wraps content in a VStack (banner above, content below) so the banner
-// always appears below the navigation bar — never overlapping it or its toolbar buttons.
+// PauseBannerView lives ABOVE the NavigationStack in an outer VStack so the banner
+// always appears above the navigation bar (title + toolbar buttons) on every screen,
+// including all views pushed onto the NavigationStack.
 
 import SwiftUI
 import SwiftData
@@ -29,66 +29,71 @@ struct DashboardView: View {
         // @Bindable enables $chantier.sessionActive binding for fullScreenCover.
         @Bindable var chantier = chantier
 
-        NavigationStack(path: $navigationPath) {
-            content
-                .navigationTitle("Gestion Travaux")
-                .navigationBarTitleDisplayMode(.large)
-                .background(Color(hex: Constants.Couleurs.backgroundBureau))
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        // Buttons hidden only during active recording (boutonVert lockdown).
-                        // Visible during browse mode: withPauseBanner() places the banner in a
-                        // VStack below the nav bar, so [+] and [🏗️] remain fully tappable.
-                        if !chantier.boutonVert {
-                            HStack(spacing: 4) {
-                                // [🏗️ Mode Chantier] — Story 2.1
-                                Button {
-                                    showTaskSelection = true
-                                } label: {
-                                    Image(systemName: "hammer.circle.fill")
-                                        .accessibilityLabel("Mode Chantier")
-                                }
+        // PauseBannerView sits ABOVE the NavigationStack so it always appears above
+        // the navigation bar (title + toolbar buttons) on every navigable screen.
+        VStack(spacing: 0) {
+            if chantier.isBrowsing {
+                PauseBannerView()
+            }
 
-                                // Create task
-                                Button {
-                                    showCreation = true
-                                } label: {
-                                    Image(systemName: "plus")
-                                        .accessibilityLabel("Créer une tâche")
+            NavigationStack(path: $navigationPath) {
+                content
+                    .navigationTitle("Gestion Travaux")
+                    .navigationBarTitleDisplayMode(.large)
+                    .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            // Buttons hidden only during active recording (boutonVert lockdown).
+                            if !chantier.boutonVert {
+                                HStack(spacing: 4) {
+                                    // [🏗️ Mode Chantier] — Story 2.1
+                                    Button {
+                                        showTaskSelection = true
+                                    } label: {
+                                        Image(systemName: "hammer.circle.fill")
+                                            .accessibilityLabel("Mode Chantier")
+                                    }
+
+                                    // Create task
+                                    Button {
+                                        showCreation = true
+                                    } label: {
+                                        Image(systemName: "plus")
+                                            .accessibilityLabel("Créer une tâche")
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                .withPauseBanner()  // VStack: banner below nav bar, above content
-        }
-        .onAppear {
-            viewModel.charger()
-        }
-        // fullScreenCover driven by ModeChantierState.sessionActive (Story 2.1)
-        .fullScreenCover(isPresented: $chantier.sessionActive) {
-            ModeChantierView(modelContext: modelContext)
-        }
-        // Sheet: task selection before entering Mode Chantier (Story 2.1)
-        .sheet(isPresented: $showTaskSelection) {
-            TaskSelectionView(modelContext: modelContext)
-        }
-        // Dismiss TaskSelectionView automatically when session starts
-        .onChange(of: chantier.sessionActive) { _, isActive in
-            if isActive { showTaskSelection = false }
-        }
-        .sheet(isPresented: $showCreation) {
-            TaskCreationView(
-                modelContext: modelContext,
-                onSuccess: { _ in
-                    showCreation = false
-                    viewModel.charger()
-                },
-                onReprendreExistante: { tache in
-                    showCreation = false
-                    navigationPath.append(tache)
-                }
-            )
+            }
+            .onAppear {
+                viewModel.charger()
+            }
+            // fullScreenCover driven by ModeChantierState.sessionActive (Story 2.1)
+            .fullScreenCover(isPresented: $chantier.sessionActive) {
+                ModeChantierView(modelContext: modelContext)
+            }
+            // Sheet: task selection before entering Mode Chantier (Story 2.1)
+            .sheet(isPresented: $showTaskSelection) {
+                TaskSelectionView(modelContext: modelContext)
+            }
+            // Dismiss TaskSelectionView automatically when session starts
+            .onChange(of: chantier.sessionActive) { _, isActive in
+                if isActive { showTaskSelection = false }
+            }
+            .sheet(isPresented: $showCreation) {
+                TaskCreationView(
+                    modelContext: modelContext,
+                    onSuccess: { _ in
+                        showCreation = false
+                        viewModel.charger()
+                    },
+                    onReprendreExistante: { tache in
+                        showCreation = false
+                        navigationPath.append(tache)
+                    }
+                )
+            }
         }
     }
 

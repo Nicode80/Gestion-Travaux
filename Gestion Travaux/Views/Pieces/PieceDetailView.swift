@@ -82,6 +82,5 @@ struct PieceDetailView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle(piece.nom)
         .navigationBarTitleDisplayMode(.large)
-        .withPauseBanner()
     }
 }

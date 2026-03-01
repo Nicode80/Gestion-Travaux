@@ -85,6 +85,5 @@ struct TacheDetailView: View {
         } message: {
             Text("Elle disparaîtra de ta liste active.")
         }
-        .withPauseBanner()
     }
 }
