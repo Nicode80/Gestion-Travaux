@@ -34,8 +34,9 @@ struct DashboardView: View {
                 .background(Color(hex: Constants.Couleurs.backgroundBureau))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        // Both buttons hidden during active recording (boutonVert lockdown).
-                        if !chantier.boutonVert {
+                        // Both buttons hidden during active recording (boutonVert lockdown) and during
+                        // browse mode (M3-fix: prevents opening modal sheets that would hide PauseBannerView).
+                        if !chantier.boutonVert && !chantier.isBrowsing {
                             HStack(spacing: 4) {
                                 // [🏗️ Mode Chantier] — Story 2.1
                                 Button {
