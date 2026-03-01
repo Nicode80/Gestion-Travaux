@@ -34,7 +34,7 @@ struct ActiviteListView: View {
                                 let nbAstuces = activite.astuces.count
                                 if nbTaches > 0 || nbAstuces > 0 {
                                     Text([
-                                        nbTaches > 0 ? "\(nbTaches) tâche\(nbTaches > 1 ? "s" : "")" : nil,
+                                        nbTaches > 0 ? "\(nbTaches) tâche\(nbTaches > 1 ? "s" : "") active\(nbTaches > 1 ? "s" : "")" : nil,
                                         nbAstuces > 0 ? "\(nbAstuces) astuce\(nbAstuces > 1 ? "s" : "")" : nil
                                     ].compactMap { $0 }.joined(separator: " · "))
                                     .font(.caption)

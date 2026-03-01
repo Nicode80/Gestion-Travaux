@@ -709,6 +709,72 @@ afin de savoir que tout est bien sauvegardé et d'être guidé vers la classific
 
 ---
 
+### Story 2.7 : Refonte du Dashboard — Hero Task Card et Explorer enrichi
+
+En tant que Nico,
+je veux ouvrir l'app et voir immédiatement la tâche sur laquelle je travaille avec un bouton évident pour lancer le Mode Chantier,
+afin de démarrer une session de capture en moins de 2 secondes sans friction.
+
+**Critères d'acceptation :**
+
+**Given** Nico ouvre l'app et a une tâche active mémorisée
+**When** le dashboard s'affiche
+**Then** une Hero Task Card est visible en haut avec le titre de la tâche, sa prochaine action (si définie), un bouton [▶ Lancer le mode chantier] et un lien "⇄ Changer de tâche"
+
+**Given** Nico appuie sur [▶ Lancer le mode chantier]
+**When** l'action est déclenchée
+**Then** ModeChantierState.tacheActive est défini et ModeChantierView s'ouvre en fullScreenCover sans Sheet intermédiaire
+
+**Given** Nico appuie sur "⇄ Changer de tâche" dans le Hero
+**When** TacheListView s'ouvre en mode sélection
+**Then** Nico peut choisir une autre tâche active — la Hero Task Card se met à jour au retour
+
+**Given** aucune tâche active n'existe
+**When** le dashboard s'affiche
+**Then** la Hero Task Card affiche un état vide avec un bouton [+ Créer une tâche]
+
+**Given** Nico est sur le dashboard
+**When** il regarde la section Explorer
+**Then** trois NavigationLinks sont visibles : Tâches → TacheListView, Pièces → PieceListView, Activités → ActiviteListView
+**And** il n'y a plus de section "Tâches actives" inline ni de boutons toolbar (🏗️, ➕) sur le Dashboard
+
+---
+
+### Story 2.8 : Création rapide de tâche depuis le Mode Chantier
+
+En tant que Nico,
+je veux pouvoir créer une nouvelle tâche directement depuis l'écran "Changer de tâche" du Mode Chantier,
+afin de démarrer immédiatement la capture sur la nouvelle tâche qui vient d'émerger, sans quitter le Mode Chantier.
+
+**Critères d'acceptation :**
+
+**Given** Nico est en Mode Chantier (boutonVert = false) et a ouvert [🔄 Changer de tâche]
+**When** le sheet de sélection de tâche s'affiche
+**Then** un bouton [+] est visible dans la toolbar du sheet, accessible aussi bien quand la liste est vide que peuplée
+
+**Given** Nico appuie sur [+]
+**When** l'action est déclenchée
+**Then** TaskCreationView s'ouvre par-dessus le sheet courant (sheet-on-sheet)
+**And** le formulaire est identique à Story 1.3 : Pièce + Activité, saisie vocale et texte, détection doublons
+
+**Given** Nico crée une tâche avec succès
+**When** la création est confirmée
+**Then** ModeChantierState.tacheActive bascule automatiquement sur la nouvelle tâche
+**And** ModeChantierState.sessionActive reste true
+**And** tous les sheets sont dismissés et la topBar affiche le titre de la nouvelle tâche
+
+**Given** Nico annule la création
+**When** TaskCreationView est dismissée sans créer
+**Then** le sheet "Changer de tâche" réapparaît — la tâche active est inchangée
+
+**Given** Nico tente de créer une tâche identique à la tâche active courante (doublon détecté) et choisit [Reprendre]
+**Then** tous les sheets sont dismissés sans changer de tâche
+
+**Given** Nico tente de créer une tâche identique à une autre tâche active (doublon) et choisit [Reprendre]
+**Then** cette tâche existante devient ModeChantierState.tacheActive et les sheets sont dismissés
+
+---
+
 ## Epic 3 : Mode Bureau — Classification et Check-out
 
 L'utilisateur peut classifier toutes ses captures de la journée en 4 types (Alerte, Astuce, Note, Achat) via swipe game fluide, valider, corriger si besoin, et clôturer sa session avec une prochaine action définie ou la tâche marquée terminée.

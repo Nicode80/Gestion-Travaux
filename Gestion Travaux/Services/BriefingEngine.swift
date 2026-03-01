@@ -19,12 +19,16 @@ final class BriefingEngine {
 
     // MARK: - Init
 
-    /// Production init: uses NLEmbedding(french) when available, falls back to Jaro-Winkler.
+    /// Production init: combines NLEmbedding(french) and Jaro-Winkler by taking the max.
+    /// NLEmbedding catches semantic near-duplicates; Jaro-Winkler catches typos and short-word
+    /// variants (e.g. "placo" vs "paco") that embeddings miss for rare/slang terms.
+    /// Falls back to Jaro-Winkler alone when NLEmbedding is unavailable.
     convenience init() {
         if let embedding = NLEmbedding.wordEmbedding(for: .french) {
             self.init { s1, s2 in
-                // Cosine distance in [0, 2]: 0 = identical, 2 = opposite → similarity in [0, 1]
-                max(0.0, (2.0 - embedding.distance(between: s1, and: s2, distanceType: .cosine)) / 2.0)
+                let embeddingSimilarity = max(0.0, (2.0 - embedding.distance(between: s1, and: s2, distanceType: .cosine)) / 2.0)
+                let jwSimilarity = BriefingEngine.jaroWinklerSimilarity(s1, s2)
+                return max(embeddingSimilarity, jwSimilarity)
             }
         } else {
             self.init(similarityFn: BriefingEngine.jaroWinklerSimilarity)
