@@ -942,6 +942,27 @@ struct ModeChantierViewModelTests {
         #expect(etat.sessionActive == true)
     }
 
+    @Test("demarrerSession() réinitialise isBrowsing si une session est démarrée depuis le mode navigation libre (M2-fix)")
+    func demarrerSessionReinitialiseBrowsing() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tache = TacheEntity(titre: "Peinture façade")
+        context.insert(tache)
+        try context.save()
+
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+        // Simulate browse mode active (user browsed app without resuming first)
+        etat.isBrowsing = true
+        etat.sessionActive = false
+
+        vm.demarrerSession(tache: tache, etat: etat)
+
+        #expect(etat.sessionActive == true)
+        #expect(etat.isBrowsing == false, "demarrerSession() doit réinitialiser isBrowsing pour éviter un bandeau orphelin")
+    }
+
     @Test("reprendreDepuisPause() est idempotent quand appelé deux fois")
     func reprendreDepuisPauseIdempotente() {
         let etat = ModeChantierState()

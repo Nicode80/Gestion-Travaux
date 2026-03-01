@@ -25,6 +25,7 @@ final class ModeChantierState {
     func demarrerSession() {
         sessionId = UUID()
         sessionActive = true
+        isBrowsing = false  // M2-fix: reset browse mode so a new session never starts with an orphan pause banner
     }
 
     func reinitialiser() {

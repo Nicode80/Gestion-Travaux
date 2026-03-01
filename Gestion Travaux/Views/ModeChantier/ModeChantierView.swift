@@ -344,12 +344,19 @@ struct ModeChantierView: View {
 
     // MARK: - Story 2.5: Task-switch sheet
 
-    /// Inline sheet listing all active tasks for switching during a session.
-    /// On selection, calls changerDeTache() — new captures attach to the new task (FR11).
+    /// Active tasks excluding the current one — prevents a no-op switch and keeps the empty state reachable.
+    private var autresTachesActives: [TacheEntity] {
+        viewModel.tachesActives.filter {
+            $0.persistentModelID != chantier.tacheActive?.persistentModelID
+        }
+    }
+
+    /// Inline sheet listing other active tasks for switching during a session.
+    /// Current task is excluded (M1-fix). On selection, calls changerDeTache() — new captures attach to the new task (FR11).
     private var taskSwitchSheet: some View {
         NavigationStack {
             Group {
-                if viewModel.tachesActives.isEmpty {
+                if autresTachesActives.isEmpty {
                     VStack(spacing: 20) {
                         Image(systemName: "tray")
                             .font(.system(size: 48))
@@ -361,7 +368,7 @@ struct ModeChantierView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(hex: Constants.Couleurs.backgroundBureau))
                 } else {
-                    List(viewModel.tachesActives, id: \.persistentModelID) { tache in
+                    List(autresTachesActives, id: \.persistentModelID) { tache in
                         Button {
                             viewModel.changerDeTache(tache: tache, chantier: chantier)
                             showTaskSwitch = false
@@ -378,10 +385,6 @@ struct ModeChantierView: View {
                                     }
                                 }
                                 Spacer()
-                                if chantier.tacheActive?.persistentModelID == tache.persistentModelID {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(Color(hex: Constants.Couleurs.accent))
-                                }
                             }
                             .frame(minHeight: 60)
                         }
