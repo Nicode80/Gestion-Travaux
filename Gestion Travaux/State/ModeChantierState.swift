@@ -36,6 +36,7 @@ final class ModeChantierState {
         tacheActive = nil
         boutonVert = false
         isBrowsing = false
+        pendingClassification = false
     }
 
     /// Called by PauseBannerView to resume the active session after the user was browsing the app.

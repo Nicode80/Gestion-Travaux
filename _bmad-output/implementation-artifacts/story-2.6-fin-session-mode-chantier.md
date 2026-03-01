@@ -2,7 +2,7 @@
 story: "2.6"
 epic: 2
 title: "Fin de session Mode Chantier"
-status: pending
+status: done
 frs: [FR10]
 nfrs: []
 ---
@@ -114,12 +114,27 @@ Button { showEndAlert = true } label: {
 
 ## Tasks
 
-- [ ] Ajouter `sessionId: UUID` à `ModeChantierState`, renouvelé à chaque entrée en Mode Chantier
-- [ ] Désactiver [■ Fin] quand `chantier.boutonVert == true`
-- [ ] Implémenter `.alert` avec compteur de captures : "Tu as capturé N ligne(s)."
-- [ ] Implémenter `endSession()` : reset `sessionActive`, `tacheActive`, `boutonVert`, `isBrowsing`
-- [ ] Implémenter navigation vers `ClassificationView` si captures non classées existent
-- [ ] Implémenter retour direct au dashboard si 0 capture
-- [ ] Vérifier que `ModeChantierView` se ferme proprement (fullScreenCover via `sessionActive = false`)
-- [ ] Vérifier que toutes les captures sont bien rattachées à leurs tâches respectives (FR11)
-- [ ] Créer `GestionTravauxTests/ViewModels/ModeChantierViewModelEndSessionTests.swift`
+- [x] Ajouter `sessionId: UUID` à `ModeChantierState`, renouvelé à chaque entrée en Mode Chantier
+- [x] Désactiver [■ Fin] quand `chantier.boutonVert == true`
+- [x] Implémenter `.alert` avec compteur de captures : "Tu as capturé N ligne(s)."
+- [x] Implémenter `endSession()` : reset `sessionActive`, `tacheActive`, `boutonVert`, `isBrowsing`
+- [x] Implémenter navigation vers `ClassificationView` si captures non classées existent
+- [x] Implémenter retour direct au dashboard si 0 capture
+- [x] Vérifier que `ModeChantierView` se ferme proprement (fullScreenCover via `sessionActive = false`)
+- [x] Vérifier que toutes les captures sont bien rattachées à leurs tâches respectives (FR11)
+- [x] Créer `Gestion TravauxTests/ModeChantier/ModeChantierViewModelEndSessionTests.swift`
+
+## Dev Agent Record
+
+### Files Changed
+- `Gestion Travaux/State/ModeChantierState.swift` — ajout `sessionId: UUID`, `pendingClassification: Bool`, reset dans `demarrerSession()` et `reinitialiser()` (C2-fix)
+- `Gestion Travaux/ViewModels/ModeChantierViewModel.swift` — ajout `sessionCaptureCount(for:)` et `endSession(chantier:)`
+- `Gestion Travaux/Views/ModeChantier/ModeChantierView.swift` — bouton [■ Fin] activé, `.alert` confirmation, bouton sans `role: .destructive` (M3-fix)
+- `Gestion Travaux/Views/Dashboard/DashboardView.swift` — `navigationDestination` + navigation via `onDismiss` du `fullScreenCover` (C3-fix)
+- `Gestion Travaux/Views/Bureau/ClassificationView.swift` — nouveau : shell placeholder Epic 3
+- `Gestion TravauxTests/ModeChantier/ModeChantierViewModelEndSessionTests.swift` — nouveau : 4 cas de tests (reset state, pendingClassification avec/sans captures, filtre sessionId)
+
+### Post-Review Fixes (code review adversarial)
+- **C2** : `reinitialiser()` — ajout `pendingClassification = false` (navigation fantôme impossible)
+- **C3** : navigation vers `ClassificationView` déplacée dans `onDismiss` du `fullScreenCover` — élimine la race condition animation modale + push NavigationStack
+- **M3** : bouton "Oui, Débrief" — suppression `role: .destructive` (rendu rouge non justifié)

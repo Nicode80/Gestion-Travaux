@@ -75,7 +75,14 @@ struct DashboardView: View {
                 viewModel.charger()
             }
             // fullScreenCover driven by ModeChantierState.sessionActive (Story 2.1)
-            .fullScreenCover(isPresented: $chantier.sessionActive) {
+            // onDismiss fires after the animation completes — ensures ClassificationView is pushed
+            // only once ModeChantierView is fully gone (C3-fix: eliminates race condition).
+            .fullScreenCover(isPresented: $chantier.sessionActive, onDismiss: {
+                if chantier.pendingClassification {
+                    showClassification = true
+                    chantier.pendingClassification = false
+                }
+            }) {
                 ModeChantierView(modelContext: modelContext)
             }
             // Sheet: task selection before entering Mode Chantier (Story 2.1)
@@ -85,13 +92,6 @@ struct DashboardView: View {
             // Dismiss TaskSelectionView automatically when session starts
             .onChange(of: chantier.sessionActive) { _, isActive in
                 if isActive { showTaskSelection = false }
-            }
-            // Story 2.6: navigate to ClassificationView when session ends with captures
-            .onChange(of: chantier.pendingClassification) { _, isPending in
-                if isPending {
-                    showClassification = true
-                    chantier.pendingClassification = false
-                }
             }
             .sheet(isPresented: $showCreation) {
                 TaskCreationView(

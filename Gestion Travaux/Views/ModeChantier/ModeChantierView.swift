@@ -135,7 +135,7 @@ struct ModeChantierView: View {
         }
         // Story 2.6: end-session confirmation
         .alert("Terminer la session ?", isPresented: $showEndAlert) {
-            Button("Oui, Débrief", role: .destructive) {
+            Button("Oui, Débrief") {
                 viewModel.endSession(chantier: chantier)
             }
             Button("Annuler", role: .cancel) {}
