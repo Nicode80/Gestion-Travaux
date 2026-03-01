@@ -19,6 +19,7 @@ struct DashboardView: View {
     @State private var navigationPath = NavigationPath()
     @State private var showCreation = false
     @State private var showTaskSelection = false
+    @State private var showClassification = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -65,6 +66,10 @@ struct DashboardView: View {
                             }
                         }
                     }
+                    // Story 2.6: navigate to ClassificationView after session ends with captures
+                    .navigationDestination(isPresented: $showClassification) {
+                        ClassificationView()
+                    }
             }
             .onAppear {
                 viewModel.charger()
@@ -80,6 +85,13 @@ struct DashboardView: View {
             // Dismiss TaskSelectionView automatically when session starts
             .onChange(of: chantier.sessionActive) { _, isActive in
                 if isActive { showTaskSelection = false }
+            }
+            // Story 2.6: navigate to ClassificationView when session ends with captures
+            .onChange(of: chantier.pendingClassification) { _, isPending in
+                if isPending {
+                    showClassification = true
+                    chantier.pendingClassification = false
+                }
             }
             .sheet(isPresented: $showCreation) {
                 TaskCreationView(

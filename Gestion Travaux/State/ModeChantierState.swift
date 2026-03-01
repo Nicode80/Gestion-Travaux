@@ -21,11 +21,14 @@ final class ModeChantierState {
     var isBrowsing: Bool = false
     /// Renewed at each session start to uniquely identify captures within a session
     var sessionId: UUID = UUID()
+    /// true after endSession() when captures exist — triggers navigation to ClassificationView (Story 2.6)
+    var pendingClassification: Bool = false
 
     func demarrerSession() {
         sessionId = UUID()
         sessionActive = true
         isBrowsing = false  // M2-fix: reset browse mode so a new session never starts with an orphan pause banner
+        pendingClassification = false
     }
 
     func reinitialiser() {
