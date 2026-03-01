@@ -1,12 +1,17 @@
 // PauseBannerView.swift
 // Gestion Travaux
 //
-// Persistent banner displayed on ALL screens when the user browses the app
-// while a Mode Chantier session is paused (chantier.isBrowsing == true).
-// Integrated at the root NavigationStack via .safeAreaInset(edge: .top).
+// Persistent banner displayed when the user browses the app while a Mode Chantier
+// session is paused (chantier.isBrowsing == true).
+//
+// Integration pattern: DashboardView places PauseBannerView in a VStack ABOVE the
+// NavigationStack so the banner appears above the navigation bar and its toolbar
+// buttons on every navigable screen.
 // Calls chantier.reprendreDepuisPause() — never writes state properties directly.
 
 import SwiftUI
+
+// MARK: - Banner view
 
 struct PauseBannerView: View {
 

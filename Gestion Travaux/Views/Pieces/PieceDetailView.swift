@@ -41,7 +41,7 @@ struct PieceDetailView: View {
                 .listRowBackground(Color.clear)
             } else {
                 if !tachesActives.isEmpty {
-                    Section("Actives") {
+                    Section("Tâches liées") {
                         ForEach(tachesActives) { tache in
                             NavigationLink {
                                 TacheDetailView(tache: tache, modelContext: modelContext)
