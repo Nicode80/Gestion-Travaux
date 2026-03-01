@@ -50,5 +50,6 @@ struct ActiviteDetailView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle(activite.nom)
         .navigationBarTitleDisplayMode(.large)
+        .withPauseBanner()
     }
 }

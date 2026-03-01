@@ -3,10 +3,40 @@
 //
 // Persistent banner displayed on ALL screens when the user browses the app
 // while a Mode Chantier session is paused (chantier.isBrowsing == true).
-// Integrated at the root NavigationStack via .safeAreaInset(edge: .top).
+//
+// Integration pattern: apply .withPauseBanner() on every navigable view's body.
+// The modifier wraps content in a VStack placing the banner directly below the
+// navigation bar — never overlapping it or its toolbar buttons.
 // Calls chantier.reprendreDepuisPause() — never writes state properties directly.
 
 import SwiftUI
+
+// MARK: - Modifier
+
+/// Wraps any view in a VStack that conditionally inserts PauseBannerView at the top.
+/// The banner appears below the navigation bar (not overlapping it).
+/// Apply on every screen reachable during browse mode.
+private struct PauseBannerModifier: ViewModifier {
+    @Environment(ModeChantierState.self) private var chantier
+
+    func body(content: Content) -> some View {
+        VStack(spacing: 0) {
+            if chantier.isBrowsing {
+                PauseBannerView()
+            }
+            content
+        }
+    }
+}
+
+extension View {
+    /// Injects the pause banner below the navigation bar on any navigable screen.
+    func withPauseBanner() -> some View {
+        modifier(PauseBannerModifier())
+    }
+}
+
+// MARK: - Banner view
 
 struct PauseBannerView: View {
 

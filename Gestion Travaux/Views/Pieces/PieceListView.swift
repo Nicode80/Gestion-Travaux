@@ -49,5 +49,6 @@ struct PieceListView: View {
         .navigationTitle("Pièces")
         .navigationBarTitleDisplayMode(.large)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .withPauseBanner()
     }
 }

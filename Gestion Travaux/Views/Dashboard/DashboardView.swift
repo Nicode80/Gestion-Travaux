@@ -3,8 +3,9 @@
 //
 // Central navigation hub: MAISON → PIÈCES → TÂCHES → ACTIVITÉS.
 // Hosts the unique NavigationStack for the app.
-// PauseBannerView is injected via .safeAreaInset on the root content (below the nav bar)
-// so it never overlaps the navigation bar or its toolbar buttons.
+// PauseBannerView is injected via .withPauseBanner() on every navigable screen's body.
+// The modifier wraps content in a VStack (banner above, content below) so the banner
+// always appears below the navigation bar — never overlapping it or its toolbar buttons.
 
 import SwiftUI
 import SwiftData
@@ -30,21 +31,14 @@ struct DashboardView: View {
 
         NavigationStack(path: $navigationPath) {
             content
-                // Banner placed here — inside NavigationStack, below the nav bar — so it never
-                // overlaps the navigation bar or its toolbar buttons (fix: banneau-pause-position).
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    if chantier.isBrowsing {
-                        PauseBannerView()
-                    }
-                }
                 .navigationTitle("Gestion Travaux")
                 .navigationBarTitleDisplayMode(.large)
                 .background(Color(hex: Constants.Couleurs.backgroundBureau))
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
                         // Buttons hidden only during active recording (boutonVert lockdown).
-                        // Intentionally visible during browse mode: banner is below the nav bar,
-                        // so [+] and [🏗️] remain fully tappable even when isBrowsing == true.
+                        // Visible during browse mode: withPauseBanner() places the banner in a
+                        // VStack below the nav bar, so [+] and [🏗️] remain fully tappable.
                         if !chantier.boutonVert {
                             HStack(spacing: 4) {
                                 // [🏗️ Mode Chantier] — Story 2.1
@@ -66,6 +60,7 @@ struct DashboardView: View {
                         }
                     }
                 }
+                .withPauseBanner()  // VStack: banner below nav bar, above content
         }
         .onAppear {
             viewModel.charger()
