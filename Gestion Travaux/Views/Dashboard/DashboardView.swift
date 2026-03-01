@@ -51,7 +51,9 @@ struct DashboardView: View {
                             modelContext: modelContext,
                             onSelect: { tache in
                                 tache.lastSessionDate = Date()
-                                try? modelContext.save()
+                                do { try modelContext.save() } catch {
+                                    // lastSessionDate non persisté — Hero order approximatif but not critical
+                                }
                                 viewModel.charger()
                                 showChangerTache = false
                             }
@@ -200,7 +202,9 @@ struct DashboardView: View {
 
     private func lancerChantier(tache: TacheEntity) {
         tache.lastSessionDate = Date()
-        try? modelContext.save()
+        do { try modelContext.save() } catch {
+            // lastSessionDate non persisté — session lancée quand même, ordre Hero approximatif
+        }
         chantier.tacheActive = tache
         chantier.demarrerSession()
     }

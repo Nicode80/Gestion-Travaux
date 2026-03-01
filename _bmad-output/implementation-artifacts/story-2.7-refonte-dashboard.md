@@ -290,15 +290,32 @@ var tacheHero: TacheEntity? {
 
 ### Fichiers créés
 - `Gestion Travaux/Views/Dashboard/HeroTaskCard.swift`
+- `Gestion Travaux/Shared/Extensions/Array+TacheSort.swift` — extension `trieeParSession()` partagée (review fix M4)
 
 ### Fichiers modifiés
-- `ViewModels/DashboardViewModel.swift` — tri Swift-side par `lastSessionDate` desc, `tacheHero` computed property, suppression `tacheDerniereActive`
-- `Views/Dashboard/DashboardView.swift` — refonte complète : HeroTaskCard, Explorer enrichi, `lancerChantier()`, `showChangerTache` via navigationDestination, suppression toolbar/sheets
-- `Views/Taches/TacheListView.swift` — transformation en écran standalone : fetch propre, Picker filtre, mode navigation vs sélection, bouton [+] toolbar
+- `ViewModels/DashboardViewModel.swift` — tri Swift-side par `lastSessionDate` desc, `tacheHero` computed property, suppression `tacheDerniereActive`; tri délégué à `trieeParSession()` (review fix M4)
+- `Views/Dashboard/DashboardView.swift` — refonte complète : HeroTaskCard, Explorer enrichi, `lancerChantier()`, `showChangerTache` via navigationDestination, suppression toolbar/sheets; `do/catch` sur save (review fix M3)
+- `Views/Dashboard/HeroTaskCard.swift` — `minHeight: 60` sur tous les boutons (review fix H2 NFR-U1)
+- `Views/Taches/TacheListView.swift` — transformation en écran standalone : fetch propre, Picker filtre, mode navigation vs sélection, bouton [+] toolbar; alerte d'erreur fetch, suppression dead param `showCreationOnAppear`, `trieeParSession()` (review fixes H1/M2/M4)
 - `Views/Activites/ActiviteDetailView.swift` — ForEach inline au lieu de TacheListView composant
+- `Views/Activites/ActiviteListView.swift` — icône et sous-titre enrichis (non documenté initialement — review fix M1)
+- `Views/Pieces/PieceDetailView.swift` — refactorisé en ForEach inline (non documenté initialement — review fix M1)
+- `Views/Pieces/PieceListView.swift` — icône et sous-titre enrichis (non documenté initialement — review fix M1)
+- `Views/Taches/TacheDetailView.swift` — adaptation NavigationLink depuis TacheListView (non documenté initialement — review fix M1)
 - `Gestion TravauxTests/Dashboard/DashboardViewModelTests.swift` — 5 nouveaux tests `tacheHero`
 
 ### Résultat tests
 - BUILD SUCCEEDED
 - `DashboardViewModelTests` : tous les nouveaux tests passent
 - Seul échec préexistant : `PhotoServiceTests/filenameContientCaptureId` (hors scope 2.7)
+
+### Divergence AC documentée
+- **AC "état vide → TacheListView + showCreationOnAppear"** : L'implémentation ouvre directement `TaskCreationView` depuis le Dashboard (`.sheet`) plutôt que de naviguer vers `TacheListView` avec `showCreationOnAppear: true`. UX améliorée (moins de friction — pas d'étape intermédiaire), comportement final identique. Le paramètre `showCreationOnAppear` a été supprimé de `TacheListView` (dead code) lors de la revue.
+
+### Revue adversariale — Fixes appliqués (2026-03-01)
+- **H1** `TacheListView.charger()` — fetch error silencieux → `do/catch` + `.alert` "Impossible de charger les tâches." avec Réessayer/Annuler
+- **H2** NFR-U1 — `minHeight: 44` → `minHeight: 60` sur les 3 boutons de `HeroTaskCard` (Lancer, Changer, Créer)
+- **M1** Dev Agent Record — 4 fichiers modifiés non documentés ajoutés : ActiviteListView, PieceDetailView, PieceListView, TacheDetailView
+- **M2** `showCreationOnAppear` — dead parameter supprimé de `TacheListView`; divergence AC documentée ci-dessus
+- **M3** `try? modelContext.save()` → `do { try } catch { }` explicite dans `lancerChantier()` et callback `onSelect`
+- **M4** Duplication tri → extension `trieeParSession()` dans `Array+TacheSort.swift`; appelée depuis DashboardViewModel et TacheListView

@@ -35,14 +35,7 @@ final class DashboardViewModel {
             let toutes = try modelContext.fetch(FetchDescriptor<TacheEntity>())
             tachesActives = toutes
                 .filter { $0.statut == .active }
-                .sorted {
-                    switch ($0.lastSessionDate, $1.lastSessionDate) {
-                    case let (l?, r?): return l > r
-                    case (.some, nil): return true
-                    case (nil, .some): return false
-                    case (nil, nil):   return $0.createdAt > $1.createdAt
-                    }
-                }
+                .trieeParSession()
 
             pieces = try modelContext.fetch(
                 FetchDescriptor<PieceEntity>(

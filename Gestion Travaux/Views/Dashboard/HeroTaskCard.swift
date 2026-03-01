@@ -47,7 +47,7 @@ struct HeroTaskCard: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color(hex: Constants.Couleurs.accent))
-                .frame(minHeight: 44)
+                .frame(minHeight: 60)
                 .accessibilityLabel("Lancer le mode chantier")
 
                 Button(action: onChanger) {
@@ -56,7 +56,7 @@ struct HeroTaskCard: View {
                         .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
                 }
                 .buttonStyle(.plain)
-                .frame(minHeight: 44)
+                .frame(minHeight: 60)
                 .accessibilityLabel("Changer de tâche")
             }
         }
@@ -84,7 +84,7 @@ struct HeroTaskCard: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(Color(hex: Constants.Couleurs.accent))
-            .frame(minHeight: 44)
+            .frame(minHeight: 60)
             .accessibilityLabel("Créer une tâche")
         }
         .frame(maxWidth: .infinity)

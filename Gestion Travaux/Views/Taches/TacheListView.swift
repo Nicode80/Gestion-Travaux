@@ -7,7 +7,6 @@
 //     Shows filter picker [Actives / Terminées] and [+] toolbar button.
 //   - Selection mode (onSelect != nil): rows are Buttons calling onSelect.
 //     Only active tasks are shown (no picker, no [+]). Used by "Changer de tâche" hero flow.
-// showCreationOnAppear: present TaskCreationView on first onAppear (Dashboard empty-state CTA).
 
 import SwiftUI
 import SwiftData
@@ -16,11 +15,11 @@ struct TacheListView: View {
 
     let modelContext: ModelContext
     var onSelect: ((TacheEntity) -> Void)? = nil
-    var showCreationOnAppear: Bool = false
 
     @State private var taches: [TacheEntity] = []
     @State private var filtreStatut: StatutTache = .active
     @State private var showCreation = false
+    @State private var showLoadError = false
 
     // In selection mode only active tasks are relevant (can't launch chantier on a terminée task).
     private var tachesFiltrees: [TacheEntity] {
@@ -91,11 +90,10 @@ struct TacheListView: View {
                 }
             )
         }
-        .onAppear {
-            charger()
-            if showCreationOnAppear {
-                showCreation = true
-            }
+        .onAppear { charger() }
+        .alert("Impossible de charger les tâches.", isPresented: $showLoadError) {
+            Button("Réessayer") { charger() }
+            Button("Annuler", role: .cancel) {}
         }
     }
 
@@ -122,14 +120,11 @@ struct TacheListView: View {
     // MARK: - Data
 
     private func charger() {
-        guard let toutes = try? modelContext.fetch(FetchDescriptor<TacheEntity>()) else { return }
-        taches = toutes.sorted {
-            switch ($0.lastSessionDate, $1.lastSessionDate) {
-            case let (l?, r?): return l > r
-            case (.some, nil): return true
-            case (nil, .some): return false
-            case (nil, nil):   return $0.createdAt > $1.createdAt
-            }
+        do {
+            let toutes = try modelContext.fetch(FetchDescriptor<TacheEntity>())
+            taches = toutes.trieeParSession()
+        } catch {
+            showLoadError = true
         }
     }
 }
