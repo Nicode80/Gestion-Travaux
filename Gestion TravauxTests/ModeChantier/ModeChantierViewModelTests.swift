@@ -1010,6 +1010,67 @@ struct ModeChantierViewModelTests {
         #expect(nouvelleTache.lastSessionDate! <= apres)
     }
 
+    // MARK: - Story 2.8 — onReprendreExistante : dispatch AC5 / AC6
+
+    @Test("AC5 — reprendre la tâche courante : comparaison persistentModelID identifie la même tâche, changerDeTache non appelé")
+    func reprendreExistanteAC5TacheCouranteInchangee() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tacheCourante = TacheEntity(titre: "Cuisine")
+        context.insert(tacheCourante)
+        try context.save()
+
+        let etat = ModeChantierState()
+        etat.tacheActive = tacheCourante
+        etat.demarrerSession()
+
+        // Pre-condition: lastSessionDate is nil before any changerDeTache call
+        #expect(tacheCourante.lastSessionDate == nil)
+
+        // AC5 dispatch: same persistentModelID → changerDeTache is NOT called
+        let estMemeTache = tacheCourante.persistentModelID == etat.tacheActive?.persistentModelID
+        #expect(estMemeTache, "AC5 : la tâche doit être reconnue comme la tâche courante via persistentModelID")
+
+        // Verify invariants: no changerDeTache call → tacheActive unchanged, lastSessionDate still nil
+        #expect(etat.tacheActive?.titre == "Cuisine")
+        #expect(tacheCourante.lastSessionDate == nil, "changerDeTache ne doit pas être appelé en AC5 — lastSessionDate reste nil")
+    }
+
+    @Test("AC6 — reprendre une autre tâche existante : persistentModelIDs distincts, changerDeTache appelé, tacheActive bascule")
+    func reprendreExistanteAC6AutreTacheBascule() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tacheCourante = TacheEntity(titre: "Cuisine")
+        let tacheExistante = TacheEntity(titre: "Garage")
+        context.insert(tacheCourante)
+        context.insert(tacheExistante)
+        try context.save()
+
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+        etat.tacheActive = tacheCourante
+        etat.demarrerSession()
+
+        // AC6 dispatch: different persistentModelID → changerDeTache IS called
+        #expect(tacheExistante.persistentModelID != tacheCourante.persistentModelID,
+                "AC6 : les deux tâches doivent avoir des persistentModelIDs distincts")
+
+        let avant = Date()
+        vm.changerDeTache(tache: tacheExistante, chantier: etat)
+        let apres = Date()
+
+        // tacheActive must switch to the other existing task
+        #expect(etat.tacheActive?.titre == "Garage", "tacheActive doit basculer sur la tâche existante (AC6)")
+        // lastSessionDate must be set (changerDeTache was called)
+        #expect(tacheExistante.lastSessionDate != nil, "lastSessionDate doit être défini après changerDeTache (AC6)")
+        #expect(tacheExistante.lastSessionDate! >= avant)
+        #expect(tacheExistante.lastSessionDate! <= apres)
+        // Original task must be unaffected
+        #expect(tacheCourante.lastSessionDate == nil, "La tâche initiale ne doit pas être modifiée (AC6)")
+    }
+
     @Test("changerDeTache() avec tâche fraîche : captures suivantes rattachées à la nouvelle tâche (AC3, FR11)")
     func changerDeTacheTacheFraicheCapturesRattachees() async throws {
         let container = try makeContainer()

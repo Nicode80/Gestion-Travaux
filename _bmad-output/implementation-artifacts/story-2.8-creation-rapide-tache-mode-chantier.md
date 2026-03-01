@@ -2,7 +2,7 @@
 story: "2.8"
 epic: 2
 title: "Création rapide de tâche depuis le Mode Chantier"
-status: review
+status: done
 frs: [FR7, FR22, FR23, FR24]
 nfrs: [NFR-U1, NFR-P5]
 ---
@@ -317,12 +317,18 @@ Aucun blocage rencontré. Implémentation directe conformément aux Dev Notes.
 
 - Modification unique : `ModeChantierView.swift` uniquement, conformément aux Dev Notes (aucun nouveau fichier, aucune modification de ViewModel).
 - Ajout de `@State private var showCreationDepuisChantier = false` dans ModeChantierView.
-- Ajout d'un `ToolbarItem(placement: .primaryAction)` [+] dans `taskSwitchSheet` (frame 44×44pt, accessibilityLabel, NFR-U1 respecté).
+- Ajout d'un `ToolbarItem(placement: .primaryAction)` [+] dans `taskSwitchSheet` (frame 60×60pt sur l'Image, NFR-U1 conforme, cohérent avec le bouton hamburger).
 - Ajout d'un `.sheet(isPresented: $showCreationDepuisChantier)` sur le NavigationStack de `taskSwitchSheet` (sheet-on-sheet iOS 16+, supporté depuis iOS 18).
-- Callbacks `onSuccess` (AC3) et `onReprendreExistante` (AC5/AC6) implémentés avec comparaison par `persistentModelID`.
-- AC4 garantie par le binding SwiftUI : swipe-down ferme uniquement `showCreationDepuisChantier`, `showTaskSwitch` reste true.
+- Callback `onSuccess` (AC3) : appelle `changerDeTache()` puis ferme les deux sheets.
+- Callback `onReprendreExistante` (AC5/AC6) : condition inversée (≠) pour éviter la duplication de code — `changerDeTache()` appelé uniquement si `persistentModelID` différent, dismiss commun aux deux branches.
+- Story 2.8 ajoutée au bloc de documentation en-tête de `ModeChantierView.swift`.
+- 4 tests unitaires dans ModeChantierViewModelTests pour Story 2.8 :
+  - `changerDeTacheAccepteTacheFraiche` (AC3 — tâche fraîche acceptée par changerDeTache)
+  - `changerDeTacheTacheFraicheCapturesRattachees` (AC3 + FR11 — captures rattachées à la nouvelle tâche)
+  - `reprendreExistanteAC5TacheCouranteInchangee` (AC5 — même persistentModelID → changerDeTache non appelé)
+  - `reprendreExistanteAC6AutreTacheBascule` (AC6 — persistentModelIDs distincts → changerDeTache appelé, tacheActive bascule)
+- AC4 garantie par le binding SwiftUI : swipe-down ferme uniquement `showCreationDepuisChantier`, `showTaskSwitch` reste true (comportement framework, non testable en unit tests).
 - AC1 garantie : le ToolbarItem est dans le NavigationStack parent, visible quel que soit l'état du Group conditionnel.
-- 2 tests unitaires ajoutés dans ModeChantierViewModelTests : `changerDeTacheAccepteTacheFraiche` et `changerDeTacheTacheFraicheCapturesRattachees`.
 - Build réussi (TEST SUCCEEDED) — 0 erreur, 0 régression.
 
 ### File List
@@ -335,3 +341,4 @@ Aucun blocage rencontré. Implémentation directe conformément aux Dev Notes.
 | Date | Description |
 |------|-------------|
 | 2026-03-01 | Story 2.8 implémentée — bouton [+] et sheet TaskCreationView dans taskSwitchSheet de ModeChantierView. 2 tests unitaires ajoutés. Build et suite complète : TEST SUCCEEDED. |
+| 2026-03-01 | Post-review adversariale — 4 fixes : L1 (header comment Story 2.8), M1 (frame [+] 44→60pt, cohérent NFR-U1), M2 (onReprendreExistante simplifié, condition inversée, dismiss dédupliqué), H1 (2 tests AC5/AC6 ajoutés : reprendreExistanteAC5TacheCouranteInchangee + reprendreExistanteAC6AutreTacheBascule). |

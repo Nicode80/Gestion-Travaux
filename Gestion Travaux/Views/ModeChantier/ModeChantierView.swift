@@ -34,6 +34,12 @@
 //   - Alert displays sessionCaptureCount and calls viewModel.endSession() on confirm
 //   - endSession() resets state and sets pendingClassification for DashboardView navigation
 //
+// Story 2.8 additions:
+//   - [+] ToolbarItem in taskSwitchSheet opens TaskCreationView as sheet-on-sheet (AC1, AC2)
+//   - onSuccess: calls changerDeTache() then dismisses both sheets (AC3)
+//   - onReprendreExistante: compares persistentModelID to dispatch AC5 (same task → close only)
+//     vs AC6 (other existing active task → changerDeTache + close)
+//
 // RULE: boutonVert == true → total navigation lockdown.
 //       [☰] and [■ Fin] are disabled; BigButton drives all interaction.
 
@@ -423,8 +429,8 @@ struct ModeChantierView: View {
                         showCreationDepuisChantier = true
                     } label: {
                         Image(systemName: "plus")
+                            .frame(minWidth: 60, minHeight: 60)
                     }
-                    .frame(minWidth: 44, minHeight: 44)
                     .accessibilityLabel("Créer une nouvelle tâche")
                 }
             }
@@ -439,16 +445,12 @@ struct ModeChantierView: View {
                         showTaskSwitch = false
                     },
                     onReprendreExistante: { tacheExistante in
-                        // AC5 : tâche identique à la courante → juste fermer tous les sheets
-                        // AC6 : autre tâche active → changerDeTache puis fermer
-                        if tacheExistante.persistentModelID == chantier.tacheActive?.persistentModelID {
-                            showCreationDepuisChantier = false
-                            showTaskSwitch = false
-                        } else {
+                        // AC6 : autre tâche active → changerDeTache ; AC5 : tâche courante → skip
+                        if tacheExistante.persistentModelID != chantier.tacheActive?.persistentModelID {
                             viewModel.changerDeTache(tache: tacheExistante, chantier: chantier)
-                            showCreationDepuisChantier = false
-                            showTaskSwitch = false
                         }
+                        showCreationDepuisChantier = false
+                        showTaskSwitch = false
                     }
                 )
             }
