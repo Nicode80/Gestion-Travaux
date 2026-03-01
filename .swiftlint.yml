@@ -1,0 +1,48 @@
+# SwiftLint configuration — Gestion Travaux
+# Enforces non-negotiable rules from architecture.md and retrospective decisions.
+#
+# Setup (one-time, in Xcode):
+#   Target → Build Phases → [+] New Run Script Phase → paste:
+#
+#   if which swiftlint > /dev/null; then
+#     swiftlint
+#   else
+#     echo "warning: SwiftLint not installed — brew install swiftlint"
+#   fi
+#
+# Install: brew install swiftlint
+
+# ─── Included paths ───────────────────────────────────────────────────────────
+included:
+  - Gestion Travaux
+
+excluded:
+  - Gestion TravauxTests
+  - Gestion Travaux.xcodeproj
+
+# ─── Disabled default rules ───────────────────────────────────────────────────
+disabled_rules:
+  - trailing_whitespace        # handled by editor
+  - line_length                # not a priority for this project
+
+# ─── Enabled opt-in rules ─────────────────────────────────────────────────────
+opt_in_rules:
+  - force_unwrapping           # warn on force-unwrap (!)
+
+# ─── Custom rules ─────────────────────────────────────────────────────────────
+custom_rules:
+
+  # Rule 1 — Règle non-négociable : modelContext.save() doit toujours être dans do/catch explicite.
+  # try? silencieux = perte de données potentielle sans feedback utilisateur.
+  no_try_optional_on_save:
+    name: "No try? on modelContext.save()"
+    regex: 'try\?\s+\w*[Cc]ontext\.save\(\)'
+    message: "Utiliser do { try context.save() } catch — risque de perte de données silencieuse (règle non-négociable architecture)"
+    severity: error
+
+  # Rule 2 — try! sur save() est également interdit.
+  no_try_force_on_save:
+    name: "No try! on modelContext.save()"
+    regex: 'try!\s+\w*[Cc]ontext\.save\(\)'
+    message: "Utiliser do { try context.save() } catch — try! crashe l'app en production"
+    severity: error

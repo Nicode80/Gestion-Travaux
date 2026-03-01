@@ -62,7 +62,7 @@ development_status:
   2-6-fin-de-session-mode-chantier: done
   2-7-refonte-dashboard-hero-task-card-et-explorer-enrichi: done
   2-8-creation-rapide-tache-mode-chantier: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   # ─────────────────────────────────────────────────────
   # Epic 3 : Mode Bureau — Classification et Check-out
