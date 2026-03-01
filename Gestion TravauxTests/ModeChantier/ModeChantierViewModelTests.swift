@@ -972,4 +972,79 @@ struct ModeChantierViewModelTests {
         #expect(etat.isBrowsing == false)
         #expect(etat.sessionActive == true)
     }
+
+    // MARK: - Story 2.8 — changerDeTache() avec une tâche fraîchement créée
+
+    @Test("changerDeTache() accepte une TacheEntity fraîchement créée (statut .active)")
+    func changerDeTacheAccepteTacheFraiche() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tacheInitiale = TacheEntity(titre: "Cuisine")
+        context.insert(tacheInitiale)
+        try context.save()
+
+        let vm = ModeChantierViewModel(modelContext: context)
+        let etat = ModeChantierState()
+        etat.tacheActive = tacheInitiale
+        etat.demarrerSession()
+
+        // Simulate a newly created task (as produced by TaskCreationViewModel.createTask)
+        let nouvelleTache = TacheEntity(titre: "Nouvelle pièce")
+        // statut is .active by default — lastSessionDate is nil before changerDeTache
+        context.insert(nouvelleTache)
+        try context.save()
+
+        #expect(nouvelleTache.statut == .active)
+        #expect(nouvelleTache.lastSessionDate == nil)
+
+        let avant = Date()
+        vm.changerDeTache(tache: nouvelleTache, chantier: etat)
+        let apres = Date()
+
+        // tacheActive must switch to the new task
+        #expect(etat.tacheActive?.titre == "Nouvelle pièce")
+        // lastSessionDate must be set (used for sort order in future sessions)
+        #expect(nouvelleTache.lastSessionDate != nil)
+        #expect(nouvelleTache.lastSessionDate! >= avant)
+        #expect(nouvelleTache.lastSessionDate! <= apres)
+    }
+
+    @Test("changerDeTache() avec tâche fraîche : captures suivantes rattachées à la nouvelle tâche (AC3, FR11)")
+    func changerDeTacheTacheFraicheCapturesRattachees() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let mockEngine = MockAudioEngine()
+        mockEngine.permissionAAccorder = true
+        mockEngine.resultatsPartiels = ["Poser le carrelage"]
+        let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
+        let etat = ModeChantierState()
+
+        let tacheInitiale = TacheEntity(titre: "Salle de bain")
+        context.insert(tacheInitiale)
+        try context.save()
+        etat.tacheActive = tacheInitiale
+        etat.demarrerSession()
+
+        // A new task freshly created during Mode Chantier
+        let nouvelleTache = TacheEntity(titre: "Couloir")
+        context.insert(nouvelleTache)
+        try context.save()
+
+        // Switch to the fresh task (AC3)
+        vm.changerDeTache(tache: nouvelleTache, chantier: etat)
+        #expect(etat.tacheActive?.titre == "Couloir")
+
+        // Next capture must be attached to the new task (FR11)
+        await vm.toggleEnregistrement(chantier: etat)
+        await vm.toggleEnregistrement(chantier: etat)
+
+        let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
+        let capturesCouloir = captures.filter { $0.tache?.titre == "Couloir" }
+        let capturesSalleDeBain = captures.filter { $0.tache?.titre == "Salle de bain" }
+
+        #expect(capturesCouloir.count == 1)
+        #expect(capturesSalleDeBain.isEmpty)
+    }
 }

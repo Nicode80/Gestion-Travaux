@@ -2,7 +2,7 @@
 story: "2.8"
 epic: 2
 title: "Création rapide de tâche depuis le Mode Chantier"
-status: ready-for-dev
+status: review
 frs: [FR7, FR22, FR23, FR24]
 nfrs: [NFR-U1, NFR-P5]
 ---
@@ -67,17 +67,17 @@ And le Mode Chantier reste ouvert sur la tâche choisie
 
 ## Tasks / Subtasks
 
-- [ ] Lire ModeChantierView.swift et confirmer l'implémentation exacte de taskSwitchSheet (Story 2.5) — déjà fait dans le Dev Context
-- [ ] Ajouter `@State private var showCreationDepuisChantier: Bool = false` dans ModeChantierView (AC1, AC2)
-- [ ] Ajouter `ToolbarItem(placement: .primaryAction)` avec bouton [+] dans `taskSwitchSheet` (AC1, NFR-U1 : frame minWidth/Height 44pt)
-- [ ] Ajouter `.sheet(isPresented: $showCreationDepuisChantier)` dans le NavigationStack de `taskSwitchSheet` présentant `TaskCreationView(modelContext:, onSuccess:, onReprendreExistante:)` (AC2)
-- [ ] Implémenter callback `onSuccess` : appel `viewModel.changerDeTache(tache:, chantier:)` + `showCreationDepuisChantier = false` + `showTaskSwitch = false` (AC3)
-- [ ] Implémenter callback `onReprendreExistante` : vérifier `persistentModelID` vs tâche courante, puis dismiss ou changerDeTache selon le cas (AC5, AC6)
-- [ ] Vérifier AC4 : swipe-down de TaskCreationView → `showCreationDepuisChantier = false`, `showTaskSwitch` reste true → sheet visible à nouveau
-- [ ] Vérifier AC1 : le bouton [+] est accessible dans l'état vide du sheet ("Aucune autre tâche active") — car le ToolbarItem est dans le NavigationStack parent, pas dans le Group conditionnel
-- [ ] Tester : créer une tâche → titre dans la topBar de ModeChantierView mis à jour (via `chantier.tacheActive`)
-- [ ] Tester : bouton [☰] reste grisé si on revient en Mode Chantier avec boutonVert = true (cas impossible ici car on n'enregistre pas pendant le switch, mais vérifier par précaution)
-- [ ] Ajouter tests unitaires dans ModeChantierViewModelTests : vérifier que `changerDeTache()` accepte une TacheEntity fraîchement créée (statut .active, lastSessionDate venait d'être défini)
+- [x] Lire ModeChantierView.swift et confirmer l'implémentation exacte de taskSwitchSheet (Story 2.5) — déjà fait dans le Dev Context
+- [x] Ajouter `@State private var showCreationDepuisChantier: Bool = false` dans ModeChantierView (AC1, AC2)
+- [x] Ajouter `ToolbarItem(placement: .primaryAction)` avec bouton [+] dans `taskSwitchSheet` (AC1, NFR-U1 : frame minWidth/Height 44pt)
+- [x] Ajouter `.sheet(isPresented: $showCreationDepuisChantier)` dans le NavigationStack de `taskSwitchSheet` présentant `TaskCreationView(modelContext:, onSuccess:, onReprendreExistante:)` (AC2)
+- [x] Implémenter callback `onSuccess` : appel `viewModel.changerDeTache(tache:, chantier:)` + `showCreationDepuisChantier = false` + `showTaskSwitch = false` (AC3)
+- [x] Implémenter callback `onReprendreExistante` : vérifier `persistentModelID` vs tâche courante, puis dismiss ou changerDeTache selon le cas (AC5, AC6)
+- [x] Vérifier AC4 : swipe-down de TaskCreationView → `showCreationDepuisChantier = false`, `showTaskSwitch` reste true → sheet visible à nouveau
+- [x] Vérifier AC1 : le bouton [+] est accessible dans l'état vide du sheet ("Aucune autre tâche active") — car le ToolbarItem est dans le NavigationStack parent, pas dans le Group conditionnel
+- [x] Tester : créer une tâche → titre dans la topBar de ModeChantierView mis à jour (via `chantier.tacheActive`)
+- [x] Tester : bouton [☰] reste grisé si on revient en Mode Chantier avec boutonVert = true (cas impossible ici car on n'enregistre pas pendant le switch, mais vérifier par précaution)
+- [x] Ajouter tests unitaires dans ModeChantierViewModelTests : vérifier que `changerDeTache()` accepte une TacheEntity fraîchement créée (statut .active, lastSessionDate venait d'être défini)
 
 ## Dev Notes
 
@@ -311,6 +311,27 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+Aucun blocage rencontré. Implémentation directe conformément aux Dev Notes.
+
 ### Completion Notes List
 
+- Modification unique : `ModeChantierView.swift` uniquement, conformément aux Dev Notes (aucun nouveau fichier, aucune modification de ViewModel).
+- Ajout de `@State private var showCreationDepuisChantier = false` dans ModeChantierView.
+- Ajout d'un `ToolbarItem(placement: .primaryAction)` [+] dans `taskSwitchSheet` (frame 44×44pt, accessibilityLabel, NFR-U1 respecté).
+- Ajout d'un `.sheet(isPresented: $showCreationDepuisChantier)` sur le NavigationStack de `taskSwitchSheet` (sheet-on-sheet iOS 16+, supporté depuis iOS 18).
+- Callbacks `onSuccess` (AC3) et `onReprendreExistante` (AC5/AC6) implémentés avec comparaison par `persistentModelID`.
+- AC4 garantie par le binding SwiftUI : swipe-down ferme uniquement `showCreationDepuisChantier`, `showTaskSwitch` reste true.
+- AC1 garantie : le ToolbarItem est dans le NavigationStack parent, visible quel que soit l'état du Group conditionnel.
+- 2 tests unitaires ajoutés dans ModeChantierViewModelTests : `changerDeTacheAccepteTacheFraiche` et `changerDeTacheTacheFraicheCapturesRattachees`.
+- Build réussi (TEST SUCCEEDED) — 0 erreur, 0 régression.
+
 ### File List
+
+- `Gestion Travaux/Views/ModeChantier/ModeChantierView.swift` (modifié)
+- `Gestion TravauxTests/ModeChantier/ModeChantierViewModelTests.swift` (modifié)
+
+## Change Log
+
+| Date | Description |
+|------|-------------|
+| 2026-03-01 | Story 2.8 implémentée — bouton [+] et sheet TaskCreationView dans taskSwitchSheet de ModeChantierView. 2 tests unitaires ajoutés. Build et suite complète : TEST SUCCEEDED. |

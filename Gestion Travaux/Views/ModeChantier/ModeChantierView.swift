@@ -50,6 +50,7 @@ struct ModeChantierView: View {
     @State private var photoCapturee: UIImage? = nil
     @State private var showMenu = false
     @State private var showTaskSwitch = false
+    @State private var showCreationDepuisChantier = false  // Story 2.8
     @State private var showEndAlert = false
 
     init(modelContext: ModelContext) {
@@ -416,6 +417,40 @@ struct ModeChantierView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annuler") { showTaskSwitch = false }
                 }
+                // Story 2.8 — création rapide depuis Mode Chantier (AC1, NFR-U1)
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showCreationDepuisChantier = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .frame(minWidth: 44, minHeight: 44)
+                    .accessibilityLabel("Créer une nouvelle tâche")
+                }
+            }
+            // Story 2.8 — sheet-on-sheet pour TaskCreationView (AC2, AC3, AC4, AC5, AC6)
+            .sheet(isPresented: $showCreationDepuisChantier) {
+                TaskCreationView(
+                    modelContext: modelContext,
+                    onSuccess: { nouvelleTache in
+                        // AC3 : basculer sur la nouvelle tâche et fermer tous les sheets
+                        viewModel.changerDeTache(tache: nouvelleTache, chantier: chantier)
+                        showCreationDepuisChantier = false
+                        showTaskSwitch = false
+                    },
+                    onReprendreExistante: { tacheExistante in
+                        // AC5 : tâche identique à la courante → juste fermer tous les sheets
+                        // AC6 : autre tâche active → changerDeTache puis fermer
+                        if tacheExistante.persistentModelID == chantier.tacheActive?.persistentModelID {
+                            showCreationDepuisChantier = false
+                            showTaskSwitch = false
+                        } else {
+                            viewModel.changerDeTache(tache: tacheExistante, chantier: chantier)
+                            showCreationDepuisChantier = false
+                            showTaskSwitch = false
+                        }
+                    }
+                )
             }
         }
     }
