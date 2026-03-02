@@ -2,7 +2,7 @@
 story: "3.1"
 epic: 3
 title: "Liste chronologique des captures non classées"
-status: review
+status: done
 frs: [FR12]
 nfrs: [NFR-P9]
 ---
@@ -191,6 +191,7 @@ if captures.isEmpty {
 - `Gestion Travaux/Shared/Extensions/Data+ContentBlock.swift` — ajout `nonisolated` sur les 3 fonctions
 - `Gestion Travaux/Views/Bureau/ClassificationView.swift` — implémentation complète (remplace le placeholder)
 - `Gestion Travaux/Views/Dashboard/DashboardView.swift` — passage de `modelContext` à `ClassificationView`
+- `Gestion Travaux/ViewModels/ModeChantierViewModel.swift` — fix audio post-story (texteCommis/dernierePartielle) découvert lors des tests 3.1 (commits c1dfab0, 107e34a, 0582fb8)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — `3-1-...` → `review`
 - `_bmad-output/implementation-artifacts/story-3.1-liste-captures-non-classees.md` — ce fichier
 
@@ -199,3 +200,4 @@ if captures.isEmpty {
 | Date | Version | Description |
 |------|---------|-------------|
 | 2026-03-02 | 3.1.0 | Implémentation complète Story 3.1 — liste chronologique des captures non classées, CaptureCard, barre de progression, état vide, 14 tests |
+| 2026-03-02 | 3.1.1 | Code review adversarial — 4 fixes : ViewState\<Void\> sur ClassificationViewModel (M2+M4), chargement image async dans PhotoThumbnailView (M3), pluriel français dans progressBar (L2), File List complétée avec ModeChantierViewModel.swift (M1) ; +3 tests viewState |

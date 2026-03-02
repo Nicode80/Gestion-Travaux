@@ -48,6 +48,49 @@ private func makeCapture(
 @MainActor
 struct ClassificationViewModelTests {
 
+    // MARK: - viewState
+
+    @Test("viewState starts as idle before first charger() call")
+    func viewStateStartsIdle() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let viewModel = ClassificationViewModel(modelContext: context)
+
+        guard case .idle = viewModel.viewState else {
+            Issue.record("Expected .idle, got \(viewModel.viewState)")
+            return
+        }
+    }
+
+    @Test("viewState is .success after charger() completes")
+    func viewStateSuccessAfterCharger() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let viewModel = ClassificationViewModel(modelContext: context)
+
+        viewModel.charger()
+
+        guard case .success = viewModel.viewState else {
+            Issue.record("Expected .success, got \(viewModel.viewState)")
+            return
+        }
+    }
+
+    @Test("viewState stays .success on subsequent charger() calls (no flicker)")
+    func viewStateNoLoadingFlickerOnReload() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let viewModel = ClassificationViewModel(modelContext: context)
+
+        viewModel.charger()  // first call: idle → loading → success
+        viewModel.charger()  // second call: must stay .success, NOT go back to .loading
+
+        guard case .success = viewModel.viewState else {
+            Issue.record("Expected .success on reload, got \(viewModel.viewState)")
+            return
+        }
+    }
+
     // MARK: - charger()
 
     @Test("charger() returns empty array when no captures exist")

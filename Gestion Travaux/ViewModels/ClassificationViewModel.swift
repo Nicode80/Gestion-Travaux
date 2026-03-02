@@ -18,6 +18,10 @@ final class ClassificationViewModel {
 
     // MARK: - State
 
+    /// Loading state — .idle until first charger() call, then .loading (first call only),
+    /// .success(()) when data is ready, .failure if SwiftData throws.
+    private(set) var viewState: ViewState<Void> = .idle
+
     /// Unclassified captures sorted by createdAt ascending.
     private(set) var captures: [CaptureEntity] = []
 
@@ -42,17 +46,24 @@ final class ClassificationViewModel {
     // MARK: - Data loading
 
     /// Loads all unclassified captures sorted by createdAt.
+    /// Shows a loading spinner on the first call only; subsequent calls keep existing data visible.
     /// Sets `total` on the first call only, so the progress bar advances as items are classified.
     func charger() {
-        let descriptor = FetchDescriptor<CaptureEntity>(
-            predicate: #Predicate { $0.classifiee == false },
-            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
-        )
-        let loaded = (try? modelContext.fetch(descriptor)) ?? []
-        if !initialLoadDone {
-            total = loaded.count
-            initialLoadDone = true
+        if case .idle = viewState { viewState = .loading }
+        do {
+            let descriptor = FetchDescriptor<CaptureEntity>(
+                predicate: #Predicate { $0.classifiee == false },
+                sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+            )
+            let loaded = try modelContext.fetch(descriptor)
+            if !initialLoadDone {
+                total = loaded.count
+                initialLoadDone = true
+            }
+            captures = loaded
+            viewState = .success(())
+        } catch {
+            viewState = .failure("Impossible de charger les captures. Réessayez.")
         }
-        captures = loaded
     }
 }

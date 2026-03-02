@@ -22,10 +22,32 @@ struct ClassificationView: View {
 
     var body: some View {
         Group {
-            if viewModel.captures.isEmpty {
-                emptyState
-            } else {
-                captureList
+            switch viewModel.viewState {
+            case .idle, .loading:
+                ProgressView("Chargement…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            case .failure(let message):
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                    Text(message)
+                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                        .multilineTextAlignment(.center)
+                    Button("Réessayer") { viewModel.charger() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Color(hex: Constants.Couleurs.accent))
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            case .success:
+                if viewModel.captures.isEmpty {
+                    emptyState
+                } else {
+                    captureList
+                }
             }
         }
         .navigationTitle("Débrief")
@@ -63,7 +85,7 @@ struct ClassificationView: View {
             .tint(Color(hex: Constants.Couleurs.accent))
             .padding(.horizontal, 16)
 
-            Text("\(viewModel.remaining) capture(s) restante(s)")
+            Text("\(viewModel.remaining) \(viewModel.remaining == 1 ? "capture restante" : "captures restantes")")
                 .font(.caption)
                 .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
         }
