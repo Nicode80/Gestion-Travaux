@@ -29,7 +29,7 @@ struct ClassificationView: View {
             }
         }
         .navigationTitle("Débrief")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .onAppear { viewModel.charger() }
     }

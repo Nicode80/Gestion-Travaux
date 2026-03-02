@@ -83,9 +83,12 @@ final class ModeChantierViewModel {
     @ObservationIgnored nonisolated(unsafe) private var pulseTimer: Timer? = nil
     /// Guard against concurrent toggleEnregistrement calls during async permission dialog (H3).
     @ObservationIgnored private var isProcessingToggle = false
-    /// Accumulated text from previous recognition segments that auto-stopped (isFinal).
-    /// Prepended to new partial results when recognition restarts mid-capture (photo interleaving fix).
+    /// Accumulated text from completed recognition sessions (committed at each restart).
+    /// Prepended to new partial results so no speech is lost across recognition sessions.
     private var texteCommis: String = ""
+    /// Last raw partial text from the CURRENT recognition session (not combined with texteCommis).
+    /// Saved into texteCommis at restart; avoids double-counting if transcription is already combined.
+    private var dernierePartielle: String = ""
     /// Reusable haptic generator for photo confirmation — prepare() when camera opens, impactOccurred() on save (M5-fix).
     @ObservationIgnored private let haptiquePhoto = UIImpactFeedbackGenerator(style: .medium)
 
@@ -223,11 +226,12 @@ final class ModeChantierViewModel {
             }
         }
 
-        // Save committed text when restarting an existing capture (isFinal auto-stop during photo interleaving).
-        // texteCommis is prepended to new partial results so no speech is lost across recognition sessions.
-        if captureEnCours != nil && !transcription.isEmpty {
-            texteCommis = texteCommis.isEmpty ? transcription : texteCommis + " " + transcription
+        // Commit the last raw partial from the previous recognition session.
+        // Uses dernierePartielle (not transcription) to avoid double-counting the already-combined display text.
+        if captureEnCours != nil && !dernierePartielle.isEmpty {
+            texteCommis = texteCommis.isEmpty ? dernierePartielle : texteCommis + " " + dernierePartielle
         }
+        dernierePartielle = ""
 
         // H1: Optimistic UI update for < 100ms visual response (NFR-P2)
         chantier.boutonVert = true
@@ -237,7 +241,8 @@ final class ModeChantierViewModel {
             try await audioEngine.demarrer { [weak self] partialText in
                 // M3: Guard against stale callbacks after recording was stopped
                 guard let self, self.audioEngine.isRecording else { return }
-                // Show combined text in UI: committed (previous segments) + current partial
+                // Track raw partial separately; show combined text in UI
+                self.dernierePartielle = partialText
                 self.transcription = self.texteCommis.isEmpty
                     ? partialText
                     : self.texteCommis + " " + partialText
@@ -314,6 +319,7 @@ final class ModeChantierViewModel {
         if captureEnCours?.sessionId != sessionId {
             captureEnCours = nil
             texteCommis = ""
+            dernierePartielle = ""
         }
         if captureEnCours == nil {
             let capture = CaptureEntity()
@@ -382,6 +388,7 @@ final class ModeChantierViewModel {
             }
         }
         texteCommis = ""
+        dernierePartielle = ""
         captureEnCours = nil
     }
 
