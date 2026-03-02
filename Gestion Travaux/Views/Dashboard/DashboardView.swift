@@ -54,9 +54,9 @@ struct DashboardView: View {
                             }
                         )
                     }
-                    // Story 2.6: navigate to ClassificationView after session ends with captures
+                    // Story 3.1: navigate to ClassificationView after session ends with captures
                     .navigationDestination(isPresented: $showClassification) {
-                        ClassificationView()
+                        ClassificationView(modelContext: modelContext)
                     }
                     // Used by onReprendreExistante in TaskCreationView (task already exists)
                     .navigationDestination(for: TacheEntity.self) { tache in

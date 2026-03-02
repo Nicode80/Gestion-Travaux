@@ -68,7 +68,7 @@ development_status:
   # Epic 3 : Mode Bureau — Classification et Check-out
   # ─────────────────────────────────────────────────────
   epic-3: in-progress
-  3-1-liste-chronologique-des-captures-non-classees: ready-for-dev
+  3-1-liste-chronologique-des-captures-non-classees: review
   3-2-swipe-game-classification-par-direction: ready-for-dev
   3-3-recapitulatif-validation-et-check-out: ready-for-dev
   epic-3-retrospective: optional

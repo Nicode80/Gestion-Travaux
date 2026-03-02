@@ -2,7 +2,7 @@
 story: "3.1"
 epic: 3
 title: "Liste chronologique des captures non classées"
-status: pending
+status: review
 frs: [FR12]
 nfrs: [NFR-P9]
 ---
@@ -141,12 +141,61 @@ if captures.isEmpty {
 
 ## Tasks
 
-- [ ] Créer `ViewModels/ClassificationViewModel.swift` : `@Observable`, chargement CaptureEntities `classifiee == false`, triées par `createdAt`
-- [ ] Créer `Views/Classification/ClassificationView.swift` : liste avec `LazyVStack`, barre de progression
-- [ ] Créer `Views/Classification/CaptureCard.swift` : label tâche uppercase, transcription, timestamp relatif, thumbnail photo
-- [ ] Implémenter `firstPhotoPath` dans CaptureEntity (propriété calculée depuis ContentBlocks)
-- [ ] Implémenter barre de progression dynamique (classified / total)
-- [ ] Implémenter état "Tout est classé ✅" avec CTA [Définir la prochaine action]
-- [ ] Vérifier que la liste reste fluide avec 1000 captures (NFR-P9) — utiliser LazyVStack
-- [ ] Vérifier que les captures de tâches différentes indiquent clairement leur tâche d'origine
-- [ ] Créer `GestionTravauxTests/ViewModels/ClassificationViewModelTests.swift`
+- [x] Créer `ViewModels/ClassificationViewModel.swift` : `@Observable`, chargement CaptureEntities `classifiee == false`, triées par `createdAt`
+- [x] Créer `Views/Classification/ClassificationView.swift` : liste avec `LazyVStack`, barre de progression
+- [x] Créer `Views/Classification/CaptureCard.swift` : label tâche uppercase, transcription, timestamp relatif, thumbnail photo
+- [x] Implémenter `firstPhotoPath` dans CaptureEntity (propriété calculée depuis ContentBlocks)
+- [x] Implémenter barre de progression dynamique (classified / total)
+- [x] Implémenter état "Tout est classé ✅" avec CTA [Définir la prochaine action]
+- [x] Vérifier que la liste reste fluide avec 1000 captures (NFR-P9) — utiliser LazyVStack
+- [x] Vérifier que les captures de tâches différentes indiquent clairement leur tâche d'origine
+- [x] Créer `GestionTravauxTests/ViewModels/ClassificationViewModelTests.swift`
+
+## Dev Agent Record
+
+### Implementation Plan
+
+1. **CaptureEntity** — Ajout `classifiee: Bool = false` (migration SwiftData légère, valeur par défaut), + propriétés calculées `transcription` (texte agrégé des blocs text) et `firstPhotoPath` (chemin du premier bloc photo).
+2. **Data+ContentBlock** — Ajout `nonisolated` sur les 3 fonctions (JSON encode/decode est thread-safe ; requis car Swift 6 `default-isolation = MainActor` rendait les helpers `@MainActor`-isolated, ce qui causait une erreur de compilation dans les computed properties de `@Model`).
+3. **ClassificationViewModel** — `@Observable @MainActor`, `charger()` charge les captures `classifiee == false` triées par `createdAt` asc. `total` figé au premier appel pour que la barre de progression avance correctement lors de la classification (Story 3.2).
+4. **PhotoThumbnailView** — composant `Views/Components/`, charge une `UIImage` depuis un chemin relatif dans `Documents/`, fallback icône SF Symbols.
+5. **CaptureCard** — `Views/Bureau/`, affiche : titre tâche uppercase gris, transcription (200 chars max), timestamp `relativeFrench`, thumbnail photo 44×44.
+6. **ClassificationView** — Remplace le placeholder, reçoit `ModelContext` via init, `LazyVStack` (NFR-P9), barre de progression, état vide "Tout est classé ✅".
+7. **DashboardView** — `ClassificationView()` → `ClassificationView(modelContext: modelContext)`.
+8. **Tests** — 14 tests Swift Testing couvrant: charger vide/non-classées/triées, total figé, remaining/classified, transcription (aggrège texte / ignore photos / vide), firstPhotoPath (premier/nil/vide), classifiee défaut.
+
+### Debug Log
+
+| Date | Issue | Resolution |
+|------|-------|------------|
+| 2026-03-02 | `call to main actor-isolated instance method 'toContentBlocks()' in a synchronous nonisolated context` dans `CaptureEntity` computed properties | Ajout de `nonisolated` sur `Data.toContentBlocks()`, `Data.fromContentBlocks()`, `[ContentBlock].toData()` dans `Data+ContentBlock.swift` |
+
+### Completion Notes
+
+- Toutes les ACs couvertes : liste chronologique, tâche par carte, barre de progression, état vide.
+- NFR-P9 (fluide 1000 captures) : `LazyVStack` dans `ScrollView`.
+- 14 tests passent, zéro régression (suite complète : `** TEST SUCCEEDED **`).
+- `classifiee: Bool = false` compatible migration légère SwiftData (pas de `.modelVersion` requis).
+- La navigation vers Story 3.3 est préparée dans l'état vide (bouton présent, handler commenté `// Story 3.3`).
+
+## File List
+
+**Nouveaux fichiers :**
+- `Gestion Travaux/ViewModels/ClassificationViewModel.swift`
+- `Gestion Travaux/Views/Bureau/CaptureCard.swift`
+- `Gestion Travaux/Views/Components/PhotoThumbnailView.swift`
+- `Gestion TravauxTests/ViewModels/ClassificationViewModelTests.swift`
+
+**Fichiers modifiés :**
+- `Gestion Travaux/Models/CaptureEntity.swift` — ajout `classifiee`, `transcription`, `firstPhotoPath`
+- `Gestion Travaux/Shared/Extensions/Data+ContentBlock.swift` — ajout `nonisolated` sur les 3 fonctions
+- `Gestion Travaux/Views/Bureau/ClassificationView.swift` — implémentation complète (remplace le placeholder)
+- `Gestion Travaux/Views/Dashboard/DashboardView.swift` — passage de `modelContext` à `ClassificationView`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — `3-1-...` → `review`
+- `_bmad-output/implementation-artifacts/story-3.1-liste-captures-non-classees.md` — ce fichier
+
+## Change Log
+
+| Date | Version | Description |
+|------|---------|-------------|
+| 2026-03-02 | 3.1.0 | Implémentation complète Story 3.1 — liste chronologique des captures non classées, CaptureCard, barre de progression, état vide, 14 tests |
