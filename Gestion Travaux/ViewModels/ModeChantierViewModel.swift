@@ -83,6 +83,9 @@ final class ModeChantierViewModel {
     @ObservationIgnored nonisolated(unsafe) private var pulseTimer: Timer? = nil
     /// Guard against concurrent toggleEnregistrement calls during async permission dialog (H3).
     @ObservationIgnored private var isProcessingToggle = false
+    /// Accumulated text from previous recognition segments that auto-stopped (isFinal).
+    /// Prepended to new partial results when recognition restarts mid-capture (photo interleaving fix).
+    private var texteCommis: String = ""
     /// Reusable haptic generator for photo confirmation — prepare() when camera opens, impactOccurred() on save (M5-fix).
     @ObservationIgnored private let haptiquePhoto = UIImpactFeedbackGenerator(style: .medium)
 
@@ -220,6 +223,12 @@ final class ModeChantierViewModel {
             }
         }
 
+        // Save committed text when restarting an existing capture (isFinal auto-stop during photo interleaving).
+        // texteCommis is prepended to new partial results so no speech is lost across recognition sessions.
+        if captureEnCours != nil && !transcription.isEmpty {
+            texteCommis = texteCommis.isEmpty ? transcription : texteCommis + " " + transcription
+        }
+
         // H1: Optimistic UI update for < 100ms visual response (NFR-P2)
         chantier.boutonVert = true
         demarrerPulseTimer()
@@ -228,7 +237,10 @@ final class ModeChantierViewModel {
             try await audioEngine.demarrer { [weak self] partialText in
                 // M3: Guard against stale callbacks after recording was stopped
                 guard let self, self.audioEngine.isRecording else { return }
-                self.transcription = partialText
+                // Show combined text in UI: committed (previous segments) + current partial
+                self.transcription = self.texteCommis.isEmpty
+                    ? partialText
+                    : self.texteCommis + " " + partialText
                 // Incremental persistence (NFR-R3): write each partial result immediately
                 if let tache = chantier.tacheActive {
                     self.mettreAJourCaptureEnCours(texte: partialText, tache: tache, sessionId: chantier.sessionId)
@@ -301,6 +313,7 @@ final class ModeChantierViewModel {
         // M3: Discard stale capture if session changed (e.g. force-terminated previous session)
         if captureEnCours?.sessionId != sessionId {
             captureEnCours = nil
+            texteCommis = ""
         }
         if captureEnCours == nil {
             let capture = CaptureEntity()
@@ -310,14 +323,16 @@ final class ModeChantierViewModel {
             captureEnCours = capture
         }
         // Update the text block in-place; keep all photo blocks untouched (Story 2.3).
+        // Prefix with texteCommis to preserve text from previous recognition segments (restart after isFinal).
+        let texteComplet = texteCommis.isEmpty ? texte : texteCommis + " " + texte
         var blocks = captureEnCours!.blocksData.toContentBlocks()
         if let idx = blocks.firstIndex(where: { $0.type == .text }) {
-            blocks[idx].text = texte
+            blocks[idx].text = texteComplet
         } else {
             // M2-fix: if photos already exist (taken before first text result), place text at an order
             // strictly below the minimum photo order to avoid duplicate-0 collisions.
             let textOrder = blocks.isEmpty ? 0 : (blocks.map(\.order).min() ?? 0) - 1
-            blocks.insert(ContentBlock(type: .text, text: texte, order: textOrder), at: 0)
+            blocks.insert(ContentBlock(type: .text, text: texteComplet, order: textOrder), at: 0)
         }
         captureEnCours!.blocksData = blocks.toData()
         do {
@@ -366,6 +381,7 @@ final class ModeChantierViewModel {
                 // Orphaned empty capture acceptable — will be cleaned up on next session
             }
         }
+        texteCommis = ""
         captureEnCours = nil
     }
 
