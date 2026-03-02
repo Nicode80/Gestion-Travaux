@@ -241,15 +241,15 @@ final class ModeChantierViewModel {
             try await audioEngine.demarrer { [weak self] partialText in
                 // M3: Guard against stale callbacks after recording was stopped
                 guard let self, self.audioEngine.isRecording else { return }
-                // Track raw partial separately; show combined text in UI
-                self.dernierePartielle = partialText
-                self.transcription = self.texteCommis.isEmpty
-                    ? partialText
-                    : self.texteCommis + " " + partialText
-                // Incremental persistence (NFR-R3): write each partial result immediately
+                // Incremental persistence (NFR-R3): must run BEFORE transcription update so
+                // texteCommis is current (within-task reset detection may update it).
                 if let tache = chantier.tacheActive {
                     self.mettreAJourCaptureEnCours(texte: partialText, tache: tache, sessionId: chantier.sessionId)
                 }
+                // Update display text; texteCommis reflects any reset detection performed above.
+                self.transcription = self.texteCommis.isEmpty
+                    ? partialText
+                    : self.texteCommis + " " + partialText
             }
             // Haptic léger (activation)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -328,8 +328,14 @@ final class ModeChantierViewModel {
             modelContext.insert(capture)
             captureEnCours = capture
         }
+        // Within-task hypothesis reset detection: on-device SFSpeechRecognizer may restart its
+        // hypothesis after extended silence (e.g. during photo capture). A shorter incoming partial
+        // signals a fresh start — commit the previous partial to texteCommis before appending.
+        if !dernierePartielle.isEmpty && texte.count < dernierePartielle.count {
+            texteCommis = texteCommis.isEmpty ? dernierePartielle : texteCommis + " " + dernierePartielle
+        }
+        dernierePartielle = texte
         // Update the text block in-place; keep all photo blocks untouched (Story 2.3).
-        // Prefix with texteCommis to preserve text from previous recognition segments (restart after isFinal).
         let texteComplet = texteCommis.isEmpty ? texte : texteCommis + " " + texte
         var blocks = captureEnCours!.blocksData.toContentBlocks()
         if let idx = blocks.firstIndex(where: { $0.type == .text }) {
