@@ -92,7 +92,7 @@ struct SwipeClassifier: View {
 
                 // Draggable card
                 CaptureCard(capture: capture)
-                    .padding(.horizontal, 16)
+                    .frame(maxWidth: 220)
                     .offset(dragOffset)
                     .rotationEffect(.degrees(Double(dragOffset.width) / 20))
                     .shadow(color: cardShadow, radius: 10, x: 0, y: 4)
