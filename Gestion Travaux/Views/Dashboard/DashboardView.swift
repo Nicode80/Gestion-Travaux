@@ -54,9 +54,14 @@ struct DashboardView: View {
                             }
                         )
                     }
-                    // Story 3.1: navigate to ClassificationView after session ends with captures
+                    // Story 3.1: navigate to ClassificationView after session ends with captures.
+                    // Story 3.3: onComplete pops the entire classification flow (ClassificationView,
+                    // RecapitulatifView, CheckoutView) back to Dashboard and refreshes the Hero.
                     .navigationDestination(isPresented: $showClassification) {
-                        ClassificationView(modelContext: modelContext)
+                        ClassificationView(modelContext: modelContext, onComplete: {
+                            showClassification = false
+                            viewModel.charger()
+                        })
                     }
                     // Used by onReprendreExistante in TaskCreationView (task already exists)
                     .navigationDestination(for: TacheEntity.self) { tache in

@@ -22,6 +22,15 @@ enum AstuceLevel: String, Codable, CaseIterable {
     case critique
     case importante
     case utile
+
+    /// Human-readable French label used in RecapitulatifView.
+    var libelle: String {
+        switch self {
+        case .critique:    "Critique"
+        case .importante:  "Importante"
+        case .utile:       "Utile"
+        }
+    }
 }
 
 enum BlockType: String, Codable {
