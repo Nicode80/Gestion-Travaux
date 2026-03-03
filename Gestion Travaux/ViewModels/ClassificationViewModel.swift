@@ -107,6 +107,9 @@ final class ClassificationViewModel {
     /// Error shown in CheckoutView when save fails.
     var checkoutError: String?
 
+    /// Message describing why validateClassifications() returned false — shown in RecapitulatifView.
+    var validationError: String?
+
     // MARK: - Story 3.3: Voice input for prochaine action
 
     /// Text being built by voice recognition — bound to CheckoutView's TextField.
@@ -223,20 +226,12 @@ final class ClassificationViewModel {
 
     // MARK: - Reclassification (Story 3.3 — FR18)
 
-    /// Deletes the previously created entity and recreates it under a new type.
-    /// Preserves the original content blocks and task/activity links.
+    /// Recreates the entity under a new type, then deletes the old one, then saves.
+    /// Create-before-delete order ensures no entity is orphaned if a guard fails (e.g., LDC absent).
     func reclassify(item: ClassificationSummaryItem, newType: ClassificationType) {
         guard let idx = summaryItems.firstIndex(where: { $0.id == item.id }) else { return }
         do {
-            // 1. Delete old entity
-            switch item.entity {
-            case .alerte(let e): modelContext.delete(e)
-            case .astuce(let e): modelContext.delete(e)
-            case .note(let e):   modelContext.delete(e)
-            case .achat(let e):  modelContext.delete(e)
-            }
-
-            // 2. Create new entity using the original blocksData and links
+            // 1. Create new entity FIRST — if a guard fails here, nothing has been deleted yet
             let newEntity: ClassifiedEntity
             let newDestination: String
 
@@ -268,7 +263,7 @@ final class ClassificationViewModel {
             case .achat:
                 guard let ldc = try modelContext.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first else {
                     reclassifyError = "Liste de courses introuvable. Réessayez."
-                    return
+                    return  // Safe: old entity untouched
                 }
                 let transcription = item.blocksData.toContentBlocks()
                     .filter { $0.type == .text }
@@ -279,6 +274,14 @@ final class ClassificationViewModel {
                 modelContext.insert(achat)
                 newEntity = .achat(achat)
                 newDestination = "Liste de courses"
+            }
+
+            // 2. Delete old entity only after new entity is successfully prepared
+            switch item.entity {
+            case .alerte(let e): modelContext.delete(e)
+            case .astuce(let e): modelContext.delete(e)
+            case .note(let e):   modelContext.delete(e)
+            case .achat(let e):  modelContext.delete(e)
             }
 
             try modelContext.save()
@@ -302,13 +305,21 @@ final class ClassificationViewModel {
 
     /// Verifies that no unclassified CaptureEntity remains.
     /// Returns true when the recap is consistent (all captures gone) and navigation can proceed.
+    /// Sets validationError with the appropriate message on failure so the view can show the right alert.
     func validateClassifications() -> Bool {
         do {
             let remaining = try modelContext.fetch(
                 FetchDescriptor<CaptureEntity>(predicate: #Predicate { !$0.classifiee })
             )
-            return remaining.isEmpty
+            if remaining.isEmpty {
+                validationError = nil
+                return true
+            } else {
+                validationError = "Des captures non classées subsistent. Retourne au swipe game pour les traiter."
+                return false
+            }
         } catch {
+            validationError = "Erreur technique lors de la validation. Réessayez."
             return false
         }
     }

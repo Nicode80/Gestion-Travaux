@@ -36,7 +36,8 @@ struct CheckoutView: View {
         // Confirmation alert before marking terminee (FR21)
         .alert("Marquer comme terminée ?", isPresented: $showTerminaisonAlert) {
             Button("Terminer", role: .destructive) {
-                viewModel.markTaskAsTerminee(viewModel.tacheCourante!)
+                guard let tache = viewModel.tacheCourante else { return }
+                viewModel.markTaskAsTerminee(tache)
                 if viewModel.checkoutError == nil {
                     onComplete()
                 }
@@ -95,7 +96,8 @@ struct CheckoutView: View {
             }
 
             Button {
-                viewModel.saveProchaineAction(for: viewModel.tacheCourante!)
+                guard let tache = viewModel.tacheCourante else { return }
+                viewModel.saveProchaineAction(for: tache)
                 if viewModel.checkoutError == nil {
                     onComplete()
                 }

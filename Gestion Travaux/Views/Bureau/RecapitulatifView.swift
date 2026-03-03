@@ -55,11 +55,12 @@ struct RecapitulatifView: View {
                 reclassifyActions(for: item)
             }
         }
-        // Validation failure alert (safety net — should never trigger in normal flow)
+        // Validation failure alert — message driven by viewModel.validationError
+        // (distinguishes "captures remain" from a SwiftData fetch error)
         .alert("Validation impossible", isPresented: $showValidationAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Des captures non classées subsistent. Retourne au swipe game pour les traiter.")
+            Text(viewModel.validationError ?? "Erreur lors de la validation.")
         }
         // Reclassification error alert
         .alert(

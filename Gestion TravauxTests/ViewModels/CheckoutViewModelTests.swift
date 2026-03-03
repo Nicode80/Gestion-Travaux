@@ -389,6 +389,91 @@ struct CheckoutViewModelTests {
         #expect(t2.statut == .active)
     }
 
+    // MARK: - reclassify when LDC absent (create-before-delete safety)
+
+    @Test("reclassify to achat without LDC sets reclassifyError and leaves summaryItems unchanged")
+    func reclassifyToAchatWithoutLDCSetsError() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        // No LDC inserted intentionally
+        let tache = makeTache(in: context)
+        let capture = makeCapture(texte: "Chevilles sans LDC", tache: tache, in: context)
+        try context.save()
+
+        vm.charger()
+        vm.classify(capture, as: .alerte)
+        #expect(vm.summaryItems.count == 1)
+
+        let item = vm.summaryItems[0]
+        vm.reclassify(item: item, newType: .achat)
+
+        // Error must be set
+        #expect(vm.reclassifyError != nil)
+        // summaryItems must remain unchanged (still alerte, not updated)
+        #expect(vm.summaryItems.count == 1)
+        if case .alerte = vm.summaryItems[0].type {} else {
+            Issue.record("summaryItems should still show .alerte after failed reclassify")
+        }
+    }
+
+    @Test("reclassify to achat without LDC does not delete the original AlerteEntity")
+    func reclassifyToAchatWithoutLDCPreservesOldEntity() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        // No LDC inserted intentionally
+        let tache = makeTache(in: context)
+        let capture = makeCapture(texte: "Données à préserver", tache: tache, in: context)
+        try context.save()
+
+        vm.charger()
+        vm.classify(capture, as: .alerte)
+
+        let item = vm.summaryItems[0]
+        vm.reclassify(item: item, newType: .achat)
+
+        // AlerteEntity must still be in the store (create-before-delete guarantee)
+        let alertes = try context.fetch(FetchDescriptor<AlerteEntity>())
+        #expect(alertes.count == 1, "AlerteEntity must not be deleted when reclassify guard fails")
+        // No AchatEntity must have been created
+        let achats = try context.fetch(FetchDescriptor<AchatEntity>())
+        #expect(achats.isEmpty)
+    }
+
+    // MARK: - reclassify ASTUCE → different ASTUCE level
+
+    @Test("reclassify astuce critique to astuce utile creates new AstuceEntity with correct niveau")
+    func reclassifyAstuceCritiqueToUtile() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let activite = ActiviteEntity(nom: "Électricité")
+        context.insert(activite)
+        let tache = makeTache(in: context)
+        tache.activite = activite
+        let capture = makeCapture(texte: "Astuce niveaux", tache: tache, in: context)
+        try context.save()
+
+        vm.charger()
+        vm.classify(capture, as: .astuce(.critique))
+
+        let item = vm.summaryItems[0]
+        vm.reclassify(item: item, newType: .astuce(.utile))
+
+        if case .astuce(let niveau) = vm.summaryItems[0].type {
+            #expect(niveau == .utile)
+        } else {
+            Issue.record("Expected .astuce(.utile) after reclassify")
+        }
+        let astuces = try context.fetch(FetchDescriptor<AstuceEntity>())
+        #expect(astuces.count == 1)
+        #expect(astuces[0].niveau == .utile)
+    }
+
     // MARK: - tacheCourante
 
     @Test("charger sets tacheCourante from first capture's tache")

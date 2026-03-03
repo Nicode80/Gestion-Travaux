@@ -2,7 +2,7 @@
 story: "3.3"
 epic: 3
 title: "Récapitulatif, validation et check-out"
-status: review
+status: done
 frs: [FR17, FR18, FR19, FR20, FR21]
 nfrs: [NFR-P4]
 ---
@@ -238,3 +238,4 @@ func markTaskAsTerminee() {
 ## Change Log
 
 - 2026-03-03 : Story 3.3 implémentée — RecapitulatifView + CheckoutView + reclassification + validation + checkout (prochaine action / terminée). Voice one-shot pour prochaine action. 23 tests ajoutés, 0 régression.
+- 2026-03-03 : Code review — 4 fixes appliqués : (1) guard let tacheCourante dans CheckoutView (force-unwrap crash), (2) reclassify() create-before-delete pour éviter entité orpheline, (3) validateClassifications() distingue erreur SwiftData vs captures restantes, (4) 3 tests ajoutés (reclassify sans LDC × 2 + reclassify ASTUCE niveau). 26 tests, 0 régression.
