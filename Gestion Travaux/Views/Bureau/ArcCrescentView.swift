@@ -51,15 +51,17 @@ struct ArcCrescentShape: Shape {
         innerR = outerR * 0.62
 
         return Path { path in
-            // Outer arc — clockwise on screen from `start` through the cardinal direction to `end`
+            // SwiftUI's clockwise parameter uses the Core Graphics convention (y pointing UP),
+            // which is the OPPOSITE of the screen convention (y pointing DOWN).
+            // So clockwise:false = visually clockwise on screen = short arc toward screen center.
             path.move(to: pointOn(center: center, radius: outerR, angle: start))
             path.addArc(center: center, radius: outerR,
-                        startAngle: start, endAngle: end, clockwise: true)
+                        startAngle: start, endAngle: end, clockwise: false)
 
-            // Inner arc — counterclockwise back from `end` to `start`
+            // Inner arc back — clockwise:true = visually counter-clockwise = returns short way
             path.addLine(to: pointOn(center: center, radius: innerR, angle: end))
             path.addArc(center: center, radius: innerR,
-                        startAngle: end, endAngle: start, clockwise: false)
+                        startAngle: end, endAngle: start, clockwise: true)
 
             path.closeSubpath()
         }
@@ -94,18 +96,30 @@ struct ArcCrescentView: View {
                 Text(label)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(isActive ? .white : color.opacity(0.55))
+                    // Left/right labels are rotated 90° so they read along the edge, not across it
+                    .rotationEffect(labelRotation)
                     .position(labelPosition(in: geo.size))
                     .animation(.easeInOut(duration: 0.1), value: isActive)
             }
         }
     }
 
-    private func labelPosition(in size: CGSize) -> CGPoint {
+    /// Left reads bottom-to-top (−90°), right reads top-to-bottom (+90°), top/bottom stay flat.
+    private var labelRotation: Angle {
         switch direction {
-        case .left:  return CGPoint(x: 28, y: size.height / 2)
-        case .right: return CGPoint(x: size.width - 28, y: size.height / 2)
-        case .up:    return CGPoint(x: size.width / 2, y: 28)
-        case .down:  return CGPoint(x: size.width / 2, y: size.height - 28)
+        case .left:        return .degrees(-90)
+        case .right:       return .degrees(90)
+        case .up, .down:   return .zero
+        }
+    }
+
+    private func labelPosition(in size: CGSize) -> CGPoint {
+        // Position labels near the center of each arc's visible band
+        switch direction {
+        case .left:  return CGPoint(x: 22, y: size.height / 2)
+        case .right: return CGPoint(x: size.width - 22, y: size.height / 2)
+        case .up:    return CGPoint(x: size.width / 2, y: 36)
+        case .down:  return CGPoint(x: size.width / 2, y: size.height - 36)
         }
     }
 }

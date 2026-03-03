@@ -109,6 +109,8 @@ struct SwipeClassifier: View {
                     )
             }
         }
+        // Clip prevents arc shapes from drawing outside this view's bounds (e.g. over the progress bar)
+        .clipped()
         .sheet(isPresented: $showCriticitéSheet) {
             CriticitéSheet { niveau in
                 hapticTrigger.toggle()
