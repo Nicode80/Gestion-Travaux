@@ -1,4 +1,4 @@
-// ClassificationViewModelTests.swift
+// ClassificationClassifyTests.swift
 // Gestion TravauxTests
 //
 // Story 3.2 (code review fix): Tests for ClassificationViewModel.classify() —
@@ -12,7 +12,7 @@ import SwiftData
 @testable import Gestion_Travaux
 
 @MainActor
-struct ClassificationViewModelTests {
+struct ClassificationClassifyTests {
 
     // MARK: - Helpers
 

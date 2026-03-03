@@ -5,7 +5,8 @@
 // Story 3.2: Swipe game — single card per view with 4 directional arcs.
 //            List removed; SwipeClassifier handles one capture at a time.
 //            Classification errors shown as a system alert.
-// Story 3.3 adds the checkout CTA handler.
+// Story 3.3: Empty state navigates to RecapitulatifView.
+//            onComplete callback threaded through to CheckoutView for dashboard pop.
 
 import SwiftUI
 import SwiftData
@@ -13,10 +14,15 @@ import SwiftData
 struct ClassificationView: View {
 
     private let modelContext: ModelContext
+    /// Called when CheckoutView completes (prochaine action saved or tache terminee).
+    /// DashboardView uses this to pop the entire classification flow.
+    let onComplete: () -> Void
+
     @State private var viewModel: ClassificationViewModel
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, onComplete: @escaping () -> Void) {
         self.modelContext = modelContext
+        self.onComplete = onComplete
         _viewModel = State(initialValue: ClassificationViewModel(modelContext: modelContext))
     }
 
@@ -100,7 +106,7 @@ struct ClassificationView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
     }
 
-    // MARK: - Empty state
+    // MARK: - Empty state (Story 3.3 — all captures classified, navigate to RecapitulatifView)
 
     private var emptyState: some View {
         VStack(spacing: 16) {
@@ -108,11 +114,22 @@ struct ClassificationView: View {
                 .font(.title2.bold())
                 .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
 
-            Button("Définir la prochaine action") {
-                // Story 3.3 — navigation to checkout wired in DashboardView
+            Text("\(viewModel.summaryItems.count) capture\(viewModel.summaryItems.count == 1 ? "" : "s") traitée\(viewModel.summaryItems.count == 1 ? "" : "s")")
+                .font(.subheadline)
+                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+
+            NavigationLink {
+                RecapitulatifView(viewModel: viewModel, onComplete: onComplete)
+            } label: {
+                Text("Voir le récapitulatif")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(hex: Constants.Couleurs.accent))
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, 32)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color(hex: Constants.Couleurs.accent))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

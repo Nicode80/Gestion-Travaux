@@ -2,7 +2,7 @@
 story: "3.3"
 epic: 3
 title: "Récapitulatif, validation et check-out"
-status: pending
+status: done
 frs: [FR17, FR18, FR19, FR20, FR21]
 nfrs: [NFR-P4]
 ---
@@ -180,13 +180,62 @@ func markTaskAsTerminee() {
 
 ## Tasks
 
-- [ ] Créer `Views/Classification/RecapitulatifView.swift` : liste avec type, destination, correction
-- [ ] Implémenter correction de classification (FR18) : suppression entité + recréation avec nouveau type
-- [ ] Implémenter bouton [Valider] (FR19) : vérification 0 capture non classée + navigation CheckoutView
-- [ ] Créer `Views/Classification/CheckoutView.swift` : prochaine action ou terminée
-- [ ] Implémenter saisie prochaine action (vocal one-shot + texte) → `TacheEntity.prochaineAction` (FR20)
-- [ ] Implémenter "Cette tâche est TERMINÉE" → `.alert` confirmation → `TacheEntity.statut = .terminee` + retour dashboard (FR21)
-- [ ] Implémenter `.alert` de confirmation "Marquer comme terminée ?" avant d'appeler `markTaskAsTerminee()`
-- [ ] Vérifier que la correction s'applique avant la validation finale (FR18)
-- [ ] Vérifier qu'aucune CaptureEntity non classée ne subsiste après validation (FR19)
-- [ ] Créer `GestionTravauxTests/ViewModels/CheckoutViewModelTests.swift`
+- [x] Créer `Views/Classification/RecapitulatifView.swift` : liste avec type, destination, correction
+- [x] Implémenter correction de classification (FR18) : suppression entité + recréation avec nouveau type
+- [x] Implémenter bouton [Valider] (FR19) : vérification 0 capture non classée + navigation CheckoutView
+- [x] Créer `Views/Classification/CheckoutView.swift` : prochaine action ou terminée
+- [x] Implémenter saisie prochaine action (vocal one-shot + texte) → `TacheEntity.prochaineAction` (FR20)
+- [x] Implémenter "Cette tâche est TERMINÉE" → `.alert` confirmation → `TacheEntity.statut = .terminee` + retour dashboard (FR21)
+- [x] Implémenter `.alert` de confirmation "Marquer comme terminée ?" avant d'appeler `markTaskAsTerminee()`
+- [x] Vérifier que la correction s'applique avant la validation finale (FR18)
+- [x] Vérifier qu'aucune CaptureEntity non classée ne subsiste après validation (FR19)
+- [x] Créer `GestionTravauxTests/ViewModels/CheckoutViewModelTests.swift`
+
+## Dev Agent Record
+
+### Implementation Plan
+
+**Architecture :**
+- `ClassifiedEntity` (enum) + `ClassificationSummaryItem` (struct) ajoutés dans `ClassificationViewModel.swift` comme types de support pour le récapitulatif.
+- `ClassificationViewModel.classify()` étendu : accumule les `ClassificationSummaryItem` au fur et à mesure des classifications.
+- `ClassificationViewModel.reclassify(item:newType:)` : supprime l'entité existante, recrée avec le nouveau type, met à jour `summaryItems[idx]`.
+- `ClassificationViewModel.validateClassifications()` : fetch des CaptureEntity non classées — retourne `true` si vide.
+- `ClassificationViewModel.saveProchaineAction(for:)` et `markTaskAsTerminee(_:)` : writes explicites avec `try modelContext.save()`.
+- Voice input one-shot (même pattern que TaskCreationViewModel) ajouté dans ClassificationViewModel via `CheckoutAudioState` + `Task.detached` off-main-thread.
+
+**Navigation :**
+- `ClassificationView` reçoit `onComplete: () -> Void` depuis DashboardView.
+- Empty state → NavigationLink vers RecapitulatifView (même NavigationStack que DashboardView).
+- RecapitulatifView → `navigationDestination(isPresented: $showCheckout)` → CheckoutView.
+- CheckoutView appelle `onComplete()` → DashboardView `showClassification = false` + `viewModel.charger()`.
+
+**Fixes collatéraux :**
+- `AstuceLevel.libelle` ajouté dans `Enumerations.swift`.
+- Conflit pré-existant de fichiers de tests résolu : `Services/ClassificationViewModelTests.swift` renommé en `ClassificationClassifyTests.swift` (struct `ClassificationClassifyTests`).
+
+### Completion Notes
+
+- Tous les ACs FR17-FR21 satisfaits.
+- 23 nouveaux tests dans `CheckoutViewModelTests` couvrant : summaryItems accumulation (5 tests), reclassify (5 tests), validateClassifications (3 tests), saveProchaineAction (3 tests), markTaskAsTerminee (2 tests), tacheCourante (2 tests).
+- BUILD SUCCEEDED, 0 régression — tous les tests existants et nouveaux passent.
+
+## File List
+
+### New files
+- `Gestion Travaux/Views/Bureau/RecapitulatifView.swift`
+- `Gestion Travaux/Views/Bureau/CheckoutView.swift`
+- `Gestion TravauxTests/ViewModels/CheckoutViewModelTests.swift`
+
+### Modified files
+- `Gestion Travaux/ViewModels/ClassificationViewModel.swift`
+- `Gestion Travaux/Views/Bureau/ClassificationView.swift`
+- `Gestion Travaux/Views/Dashboard/DashboardView.swift`
+- `Gestion Travaux/Models/Enumerations.swift`
+
+### Renamed files (pre-existing conflict fix)
+- `Gestion TravauxTests/Services/ClassificationViewModelTests.swift` → `ClassificationClassifyTests.swift`
+
+## Change Log
+
+- 2026-03-03 : Story 3.3 implémentée — RecapitulatifView + CheckoutView + reclassification + validation + checkout (prochaine action / terminée). Voice one-shot pour prochaine action. 23 tests ajoutés, 0 régression.
+- 2026-03-03 : Code review — 4 fixes appliqués : (1) guard let tacheCourante dans CheckoutView (force-unwrap crash), (2) reclassify() create-before-delete pour éviter entité orpheline, (3) validateClassifications() distingue erreur SwiftData vs captures restantes, (4) 3 tests ajoutés (reclassify sans LDC × 2 + reclassify ASTUCE niveau). 26 tests, 0 régression.
