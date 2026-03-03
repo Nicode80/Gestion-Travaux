@@ -42,9 +42,9 @@ struct RecapitulatifView: View {
         .navigationDestination(isPresented: $showCheckout) {
             CheckoutView(viewModel: viewModel, onComplete: onComplete)
         }
-        // 4-option reclassification dialog (FR18)
+        // Reclassification dialog (FR18) — titre = ancienne classification, options filtrées
         .confirmationDialog(
-            "Reclassifier cette capture",
+            itemARecorriger.map { "Anciennement : \($0.typeEmoji) \($0.typeLibelle)" } ?? "",
             isPresented: Binding(
                 get: { itemARecorriger != nil },
                 set: { if !$0 { itemARecorriger = nil } }
@@ -144,32 +144,47 @@ struct RecapitulatifView: View {
     }
 
     // MARK: - Reclassification dialog actions (FR18)
+    // Only shows types that differ from the current classification.
 
     @ViewBuilder
     private func reclassifyActions(for item: ClassificationSummaryItem) -> some View {
-        Button("🚨 ALERTE") {
-            viewModel.reclassify(item: item, newType: .alerte)
-            itemARecorriger = nil
+        let current = item.type
+
+        if case .alerte = current {} else {
+            Button("🚨 ALERTE") {
+                viewModel.reclassify(item: item, newType: .alerte)
+                itemARecorriger = nil
+            }
         }
-        Button("💡 ASTUCE — Critique") {
-            viewModel.reclassify(item: item, newType: .astuce(.critique))
-            itemARecorriger = nil
+        if case .astuce(let n) = current, n == .critique {} else {
+            Button("💡 ASTUCE — Critique") {
+                viewModel.reclassify(item: item, newType: .astuce(.critique))
+                itemARecorriger = nil
+            }
         }
-        Button("💡 ASTUCE — Importante") {
-            viewModel.reclassify(item: item, newType: .astuce(.importante))
-            itemARecorriger = nil
+        if case .astuce(let n) = current, n == .importante {} else {
+            Button("💡 ASTUCE — Importante") {
+                viewModel.reclassify(item: item, newType: .astuce(.importante))
+                itemARecorriger = nil
+            }
         }
-        Button("💡 ASTUCE — Utile") {
-            viewModel.reclassify(item: item, newType: .astuce(.utile))
-            itemARecorriger = nil
+        if case .astuce(let n) = current, n == .utile {} else {
+            Button("💡 ASTUCE — Utile") {
+                viewModel.reclassify(item: item, newType: .astuce(.utile))
+                itemARecorriger = nil
+            }
         }
-        Button("📝 NOTE") {
-            viewModel.reclassify(item: item, newType: .note)
-            itemARecorriger = nil
+        if case .note = current {} else {
+            Button("📝 NOTE") {
+                viewModel.reclassify(item: item, newType: .note)
+                itemARecorriger = nil
+            }
         }
-        Button("🛒 ACHAT") {
-            viewModel.reclassify(item: item, newType: .achat)
-            itemARecorriger = nil
+        if case .achat = current {} else {
+            Button("🛒 ACHAT") {
+                viewModel.reclassify(item: item, newType: .achat)
+                itemARecorriger = nil
+            }
         }
         Button("Annuler", role: .cancel) {
             itemARecorriger = nil
