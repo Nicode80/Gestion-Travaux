@@ -28,3 +28,19 @@ enum BlockType: String, Codable {
     case text
     case photo
 }
+
+// Classification direction detected by the swipe gesture.
+enum SwipeDirection: Equatable {
+    case left   // ALERTE
+    case right  // ASTUCE (shows criticité sheet)
+    case up     // NOTE
+    case down   // ACHAT
+}
+
+// Final classification type sent to the ViewModel after optional sheet interaction.
+enum ClassificationType {
+    case alerte
+    case astuce(AstuceLevel)
+    case note
+    case achat
+}

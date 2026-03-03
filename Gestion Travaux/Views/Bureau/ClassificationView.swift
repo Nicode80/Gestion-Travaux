@@ -2,10 +2,10 @@
 // Gestion Travaux
 //
 // Story 3.1: Chronological list of unclassified captures.
-// Displays a LazyVStack of CaptureCard views (NFR-P9: up to 1000 captures stay fluid),
-// a dynamic progress bar, and an empty state when all captures are classified.
-//
-// Story 3.2 will add swipe-based classification; Story 3.3 adds the checkout CTA handler.
+// Story 3.2: Swipe game — single card per view with 4 directional arcs.
+//            List removed; SwipeClassifier handles one capture at a time.
+//            Classification errors shown as a system alert.
+// Story 3.3 adds the checkout CTA handler.
 
 import SwiftUI
 import SwiftData
@@ -46,7 +46,7 @@ struct ClassificationView: View {
                 if viewModel.captures.isEmpty {
                     emptyState
                 } else {
-                    captureList
+                    swipeGameView
                 }
             }
         }
@@ -54,22 +54,29 @@ struct ClassificationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .onAppear { viewModel.charger() }
+        .alert(
+            "Erreur de classification",
+            isPresented: Binding(
+                get: { viewModel.classificationError != nil },
+                set: { if !$0 { viewModel.classificationError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { viewModel.classificationError = nil }
+        } message: {
+            Text(viewModel.classificationError ?? "")
+        }
     }
 
-    // MARK: - Capture list
+    // MARK: - Swipe game (Story 3.2)
 
-    private var captureList: some View {
+    private var swipeGameView: some View {
         VStack(spacing: 0) {
             progressBar
 
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(viewModel.captures) { capture in
-                        CaptureCard(capture: capture)
-                            .padding(.horizontal, 16)
-                    }
+            if let capture = viewModel.captures.first {
+                SwipeClassifier(capture: capture) { type in
+                    viewModel.classify(capture, as: type)
                 }
-                .padding(.vertical, 12)
             }
         }
     }
