@@ -17,7 +17,6 @@ struct CriticitéSheet: View {
         VStack(spacing: 16) {
             Text("Niveau de criticité")
                 .font(.headline)
-                .padding(.top, 36)
 
             niveauButton(
                 title: "Critique",
@@ -44,7 +43,8 @@ struct CriticitéSheet: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 24)
-        .presentationDetents([.height(240)])
+        .padding(.top, 28)
+        .presentationDetents([.height(270)])
         .presentationDragIndicator(.visible)
     }
 
