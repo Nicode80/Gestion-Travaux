@@ -2,7 +2,7 @@
 story: "3.2"
 epic: 3
 title: "Swipe Game — Classification par direction"
-status: review
+status: done
 frs: [FR13, FR14, FR15, FR16, FR30, FR34]
 nfrs: [NFR-P8, NFR-R5, NFR-U6]
 ---
@@ -264,11 +264,13 @@ Story 3.2 complète. 14 tests SwipeClassifierTests créés et passants. Aucune r
 - `Gestion Travaux/Views/Bureau/ArcCrescentView.swift` — créé (ArcCrescentShape + ArcCrescentView)
 - `Gestion Travaux/Views/Bureau/CriticitéSheet.swift` — créé
 - `Gestion Travaux/Views/Bureau/ClassificationView.swift` — modifié (swipeGameView, alert classificationError)
-- `Gestion TravauxTests/Services/SwipeClassifierTests.swift` — créé (14 tests direction detection)
-- `_bmad-output/implementation-artifacts/sprint-status.yaml` — mis à jour (in-progress → review)
+- `Gestion TravauxTests/Services/SwipeClassifierTests.swift` — modifié (14 → 18 tests : +4 boundary UP/DOWN)
+- `Gestion TravauxTests/Services/ClassificationViewModelTests.swift` — créé (8 tests classify VM)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — mis à jour (review → done)
 
 ---
 
 ## Change Log
 
 - 2026-03-03 : Story 3.2 implémentée — Swipe Game classification par direction. 4 composants créés (SwipeClassifier, ArcCrescentView, CriticitéSheet, tests direction). ClassificationViewModel étendu avec `classify(_:as:)`. ClassificationView migrée de liste vers single-card swipe.
+- 2026-03-03 : Code review (AI adversarial) — 3 fixes appliqués : (1) guard ListeDeCoursesEntity nil dans classify(.achat) évite perte silencieuse de données ; (2) DispatchQueue.main.asyncAfter remplacé par Task { @MainActor in } (Swift 6 idiomatique) ; (3) 4 tests UP/DOWN boundary ajoutés dans SwipeClassifierTests + nouveau ClassificationViewModelTests (8 tests).

@@ -151,7 +151,8 @@ struct SwipeClassifier: View {
             }
             activeDirection = nil
             // Small delay so the spring settles before the sheet appears
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 150_000_000)
                 showCriticitéSheet = true
             }
         } else {
@@ -172,7 +173,8 @@ struct SwipeClassifier: View {
             }
 
             // Wait for fly-out animation, then deliver classification
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.30) {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 300_000_000)
                 activeDirection = nil
                 dragOffset = .zero
                 switch direction {

@@ -98,7 +98,10 @@ final class ClassificationViewModel {
                 modelContext.insert(note)
 
             case .achat:
-                let ldc = try modelContext.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first
+                guard let ldc = try modelContext.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first else {
+                    classificationError = "Liste de courses introuvable. Réessayez."
+                    return
+                }
                 let achat = AchatEntity(texte: capture.transcription)
                 achat.listeDeCourses = ldc
                 modelContext.insert(achat)

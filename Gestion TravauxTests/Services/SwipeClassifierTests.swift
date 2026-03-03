@@ -111,4 +111,34 @@ struct SwipeClassifierTests {
         let t = CGSize(width: 0, height: -200)
         #expect(SwipeDirectionDetector.detect(t) == .up)
     }
+
+    // MARK: - UP / DOWN ±15° tolerance boundary (NFR-U6)
+
+    @Test("swipe at 76° is .down (just inside DOWN lower boundary)")
+    func downLowerBoundary() {
+        let angle = 76.0 * Double.pi / 180
+        let t = CGSize(width: 100 * CGFloat(cos(angle)), height: 100 * CGFloat(sin(angle)))
+        #expect(SwipeDirectionDetector.detect(t) == .down)
+    }
+
+    @Test("swipe at 74° is nil (just outside DOWN lower boundary)")
+    func justOutsideDownBoundary() {
+        let angle = 74.0 * Double.pi / 180
+        let t = CGSize(width: 100 * CGFloat(cos(angle)), height: 100 * CGFloat(sin(angle)))
+        #expect(SwipeDirectionDetector.detect(t) == nil)
+    }
+
+    @Test("swipe at -76° is .up (just inside UP upper boundary)")
+    func upUpperBoundary() {
+        let angle = -76.0 * Double.pi / 180
+        let t = CGSize(width: 100 * CGFloat(cos(angle)), height: 100 * CGFloat(sin(angle)))
+        #expect(SwipeDirectionDetector.detect(t) == .up)
+    }
+
+    @Test("swipe at -74° is nil (just outside UP upper boundary)")
+    func justOutsideUpBoundary() {
+        let angle = -74.0 * Double.pi / 180
+        let t = CGSize(width: 100 * CGFloat(cos(angle)), height: 100 * CGFloat(sin(angle)))
+        #expect(SwipeDirectionDetector.detect(t) == nil)
+    }
 }
