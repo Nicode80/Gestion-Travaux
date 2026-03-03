@@ -145,7 +145,7 @@ struct ArcCrescentView: View {
             VStack(spacing: 1) {
                 ForEach(chars.indices, id: \.self) { i in
                     Text(String(chars[i]))
-                        .font(.system(size: 8.5, weight: weight))
+                        .font(.system(size: 12, weight: weight))
                         .foregroundStyle(fg)
                 }
             }
@@ -156,7 +156,7 @@ struct ArcCrescentView: View {
             VStack(spacing: 1) {
                 ForEach(chars.indices, id: \.self) { i in
                     Text(String(chars[i]))
-                        .font(.system(size: 8.5, weight: weight))
+                        .font(.system(size: 12, weight: weight))
                         .foregroundStyle(fg)
                 }
             }
@@ -166,14 +166,14 @@ struct ArcCrescentView: View {
         // Top / bottom: single horizontal text
         case .up:
             Text(label)
-                .font(.system(size: 8.5, weight: weight))
+                .font(.system(size: 12, weight: weight))
                 .foregroundStyle(fg)
-                // y = 16/400 = 4% from top — just above the arc peak (~7%)
-                .position(x: w * 0.5, y: max(14, h * (16.0 / 400.0)))
+                // Raised slightly above the arc peak (~5.25% of height) — fixed 10pt min
+                .position(x: w * 0.5, y: max(10, h * (9.0 / 400.0)))
 
         case .down:
             Text(label)
-                .font(.system(size: 8.5, weight: weight))
+                .font(.system(size: 12, weight: weight))
                 .foregroundStyle(fg)
                 // y = 396/400 ≈ bottom — .position centers the view, so inset from bottom
                 .position(x: w * 0.5, y: min(h - 14, h * (396.0 / 400.0)))
