@@ -20,6 +20,8 @@ final class DashboardViewModel {
     private(set) var tachesActives: [TacheEntity] = []
     private(set) var pieces: [PieceEntity] = []
     private(set) var activites: [ActiviteEntity] = []
+    /// Latest non-archived seasonal note, or nil if none exists.
+    private(set) var activeSeasonNote: NoteSaisonEntity? = nil
 
     var tacheHero: TacheEntity? { tachesActives.first }
 
@@ -52,6 +54,14 @@ final class DashboardViewModel {
                 )
             )
 
+            // Fetch latest non-archived seasonal note (FR42).
+            let notes = try modelContext.fetch(
+                FetchDescriptor<NoteSaisonEntity>(
+                    sortBy: [SortDescriptor(\NoteSaisonEntity.createdAt, order: .reverse)]
+                )
+            )
+            activeSeasonNote = notes.first(where: { !$0.archivee })
+
             viewState = .success(())
         } catch {
             viewState = .failure("Impossible de charger les données.")
@@ -69,6 +79,28 @@ final class DashboardViewModel {
         }
         chantier.tacheActive = tache
         chantier.demarrerSession()
+    }
+
+    /// Returns true when the seasonal note should be shown on the dashboard.
+    /// Condition: an active note exists AND the previous session was ≥ 2 months ago (FR42).
+    func shouldShowSeasonNote() -> Bool {
+        guard activeSeasonNote != nil else { return false }
+        guard let prev = UserDefaults.standard.object(forKey: Constants.UserDefaultsKeys.previousSessionDate) as? Date else {
+            return false
+        }
+        let seuilSecondes = Constants.SeasonNote.seuilAbsenceJours * 24 * 60 * 60
+        return Date().timeIntervalSince(prev) >= seuilSecondes
+    }
+
+    /// Archives the given seasonal note (FR43). Does not delete it — stays consultable.
+    func archiveNote(_ note: NoteSaisonEntity) {
+        note.archivee = true
+        do {
+            try modelContext.save()
+        } catch {
+            // Archive failed silently — note remains visible until next successful save.
+        }
+        charger()
     }
 
     /// Updates lastSessionDate so the given task becomes the Hero on next charger() call.

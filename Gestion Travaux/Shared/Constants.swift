@@ -33,5 +33,7 @@ enum Constants {
 
     enum UserDefaultsKeys {
         static let lastAppOpenDate = "lastAppOpenDate"
+        /// Saved before lastAppOpenDate is updated — used by shouldShowSeasonNote() to detect ≥ 2-month gap.
+        static let previousSessionDate = "previousSessionDate"
     }
 }

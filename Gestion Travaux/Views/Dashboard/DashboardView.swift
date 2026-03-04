@@ -25,6 +25,8 @@ struct DashboardView: View {
     @State private var tachePourBriefing: TacheEntity?
     // Sheet for task creation from empty HeroTaskCard — closes back to Dashboard on success.
     @State private var showCreation = false
+    // Story 4.4: Note de Saison creation sheet (FR41).
+    @State private var showNoteSaison = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -114,6 +116,12 @@ struct DashboardView: View {
                     }
                 )
             }
+            // Story 4.4: Note de Saison creation sheet (FR41).
+            .sheet(isPresented: $showNoteSaison, onDismiss: {
+                viewModel.charger()
+            }) {
+                NoteSaisonCreationView(modelContext: modelContext, onSave: {})
+            }
         }
     }
 
@@ -150,6 +158,18 @@ struct DashboardView: View {
 
     private var dashboardList: some View {
         List {
+            // Story 4.4: SeasonNoteCard — shown FIRST before any other content (FR42).
+            // Only visible when a non-archived note exists AND ≥ 2-month absence is detected.
+            if let note = viewModel.activeSeasonNote, viewModel.shouldShowSeasonNote() {
+                Section {
+                    SeasonNoteCard(note: note) {
+                        viewModel.archiveNote(note)
+                    }
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color.clear)
+            }
+
             // Hero Task Card
             Section {
                 HeroTaskCard(
@@ -213,6 +233,15 @@ struct DashboardView: View {
                     Label("Alertes", systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
                 }
+
+                // Story 4.4: Note de Saison creation (FR41).
+                Button {
+                    showNoteSaison = true
+                } label: {
+                    Label("Note de Saison", systemImage: "leaf.fill")
+                        .foregroundStyle(Color.orange)
+                }
+                .frame(minHeight: 44) // NFR-U1
             }
         }
         .listStyle(.insetGrouped)

@@ -2,7 +2,7 @@
 story: "4.4"
 epic: 4
 title: "Note de Saison — message au futur soi"
-status: pending
+status: review
 frs: [FR41, FR42, FR43]
 nfrs: []
 ---
@@ -216,15 +216,45 @@ if let note = viewModel.activeSeasonNote, viewModel.shouldShowSeasonNote() {
 
 ## Tasks
 
-- [ ] Créer `ViewModels/NoteSaisonViewModel.swift` : création, archivage, `shouldShowSeasonNote()` (seuil ≥ 2 mois)
-- [ ] Implémenter mise à jour `lastAppOpenDate` dans `UserDefaults` à chaque lancement
-- [ ] Créer `Views/SeasonNote/NoteSaisonCreationView.swift` : TextEditor + saisie vocale one-shot + bouton Enregistrer
-- [ ] Implémenter `createNote()` : `NoteSaisonEntity` liée à `MaisonEntity`, sans écraser la précédente
-- [ ] Créer `Views/Components/SeasonNoteCard.swift` : carte avec texte, date, bouton [Archiver]
-- [ ] Implémenter `.alert` de confirmation d'archivage sur SeasonNoteCard (FR43)
-- [ ] Implémenter `archiveNote()` : `note.archivee = true` + sauvegarde
-- [ ] Intégrer SeasonNoteCard en tête de DashboardView si `shouldShowSeasonNote() == true` (FR42)
-- [ ] Vérifier qu'aucune SeasonNoteCard ne s'affiche sans note créée au préalable
-- [ ] Vérifier que la note archivée reste consultable (non supprimée)
-- [ ] Ajouter accès [📝 Note de Saison] depuis le menu ou le dashboard (FR41)
-- [ ] Créer `GestionTravauxTests/ViewModels/NoteSaisonViewModelTests.swift`
+- [x] Créer `ViewModels/NoteSaisonViewModel.swift` : création, archivage, `shouldShowSeasonNote()` (seuil ≥ 2 mois)
+- [x] Implémenter mise à jour `lastAppOpenDate` dans `UserDefaults` à chaque lancement
+- [x] Créer `Views/SeasonNote/NoteSaisonCreationView.swift` : TextEditor + saisie vocale one-shot + bouton Enregistrer
+- [x] Implémenter `createNote()` : `NoteSaisonEntity` liée à `MaisonEntity`, sans écraser la précédente
+- [x] Créer `Views/Components/SeasonNoteCard.swift` : carte avec texte, date, bouton [Archiver]
+- [x] Implémenter `.alert` de confirmation d'archivage sur SeasonNoteCard (FR43)
+- [x] Implémenter `archiveNote()` : `note.archivee = true` + sauvegarde
+- [x] Intégrer SeasonNoteCard en tête de DashboardView si `shouldShowSeasonNote() == true` (FR42)
+- [x] Vérifier qu'aucune SeasonNoteCard ne s'affiche sans note créée au préalable
+- [x] Vérifier que la note archivée reste consultable (non supprimée)
+- [x] Ajouter accès [📝 Note de Saison] depuis le menu ou le dashboard (FR41)
+- [x] Créer `GestionTravauxTests/ViewModels/NoteSaisonViewModelTests.swift`
+
+## Dev Agent Record
+
+### Implementation Plan
+
+- `NoteSaisonViewModel` : VM standalone pour `NoteSaisonCreationView`, gère création + saisie vocale one-shot (même pattern AudioState que `TaskCreationViewModel`)
+- `DashboardViewModel` étendu : `activeSeasonNote`, `shouldShowSeasonNote()`, `archiveNote()` — `charger()` fetche aussi la note active
+- `previousSessionDate` (UserDefaultsKeys) : sauvegardée AVANT update de `lastAppOpenDate` dans `App.init` pour permettre la comparaison cross-session (gap ≥ 60 jours)
+- `SeasonNoteCard` : composant dashboard avec alert de confirmation archivage
+- `NoteSaisonCreationView` : sheet avec TextEditor + mic + bouton Enregistrer + alert de confirmation post-save
+- `DashboardView` : SeasonNoteCard en tête de liste avant HeroTaskCard + bouton "Note de Saison" dans section Explorer
+
+### Completion Notes
+
+✅ 11/11 tâches story complètes. 20 nouveaux tests (NoteSaisonViewModelTests x 11 + DashboardViewModelSeasonNoteTests x 9), tous verts. Suite de régression complète sans échec.
+
+## File List
+
+- `Gestion Travaux/ViewModels/NoteSaisonViewModel.swift` — créé
+- `Gestion Travaux/Views/Components/SeasonNoteCard.swift` — créé
+- `Gestion Travaux/Views/SeasonNote/NoteSaisonCreationView.swift` — créé
+- `Gestion Travaux/ViewModels/DashboardViewModel.swift` — modifié (activeSeasonNote, shouldShowSeasonNote, archiveNote, charger)
+- `Gestion Travaux/Views/Dashboard/DashboardView.swift` — modifié (SeasonNoteCard, sheet Note de Saison, Explorer link)
+- `Gestion Travaux/Shared/Constants.swift` — modifié (previousSessionDate key)
+- `Gestion Travaux/Gestion_TravauxApp.swift` — modifié (sauvegarde previousSessionDate avant update)
+- `Gestion TravauxTests/ViewModels/NoteSaisonViewModelTests.swift` — créé
+
+## Change Log
+
+- 2026-03-04 : Implémentation Story 4.4 — Note de Saison (FR41, FR42, FR43). Création NoteSaisonViewModel, SeasonNoteCard, NoteSaisonCreationView. Extension DashboardViewModel avec logique note saisonnière. 20 tests ajoutés.
