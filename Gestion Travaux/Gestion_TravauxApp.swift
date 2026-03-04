@@ -46,8 +46,14 @@ struct Gestion_TravauxApp: App {
                 try context.save()
             }
 
-            // Record last open date for SeasonNote threshold detection (FR42)
+            // Save previous open date before overwriting — used by shouldShowSeasonNote() gap check (FR42).
+            // previousSessionDate holds the last session's date for cross-launch comparison.
+            if let prev = UserDefaults.standard.object(forKey: Constants.UserDefaultsKeys.lastAppOpenDate) as? Date {
+                UserDefaults.standard.set(prev, forKey: Constants.UserDefaultsKeys.previousSessionDate)
+            }
+            // Record this launch date for next session's comparison.
             UserDefaults.standard.set(Date(), forKey: Constants.UserDefaultsKeys.lastAppOpenDate)
+
 
         } catch {
             fatalError("Impossible de créer le ModelContainer : \(error)")
