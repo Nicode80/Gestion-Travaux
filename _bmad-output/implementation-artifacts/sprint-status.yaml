@@ -71,13 +71,13 @@ development_status:
   3-1-liste-chronologique-des-captures-non-classees: done
   3-2-swipe-game-classification-par-direction: done
   3-3-recapitulatif-validation-et-check-out: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
   # ─────────────────────────────────────────────────────
   # Epic 4 : Mémoire Active — Alertes, Astuces, Briefing et Note de Saison
   # ─────────────────────────────────────────────────────
   epic-4: in-progress
-  4-1-briefing-de-reprise-dune-tache: ready-for-dev
+  4-1-briefing-de-reprise-dune-tache: done
   4-2-vue-globale-des-alertes-et-drill-down-note-originale: ready-for-dev
   4-3-fiches-activites-astuces-accumulees-par-niveau: ready-for-dev
   4-4-note-de-saison-message-au-futur-soi: ready-for-dev
