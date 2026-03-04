@@ -2,7 +2,7 @@
 story: "4.3"
 epic: 4
 title: "Fiches Activités — astuces accumulées par niveau"
-status: review
+status: done
 frs: [FR35, FR37]
 nfrs: [NFR-P3]
 ---
@@ -223,7 +223,7 @@ Button("📋 Voir toutes les astuces") {
 - [x] Créer `Views/Activites/AstuceRowView.swift` : preview 100 chars + date relative
 - [x] Implémenter masquage des sections vides (FR35)
 - [x] Brancher `onTapGesture` sur AstuceRowView → `CaptureDetailView` en sheet (FR37, FR46)
-- [x] Ajouter `AstuceEntity.preview` : propriété calculée (100 premiers chars de la transcription)
+- [x] Vérifier `AstuceEntity.preview` : propriété déjà présente (texte complet du 1er bloc) — troncature à 100 chars déléguée à `AstuceRowView.previewText` pour ne pas impacter BriefingView
 - [x] Ajouter bouton [📋 Voir toutes les astuces] dans BriefingView → ActiviteDetailView en sheet
 - [x] Vérifier apparition immédiate d'une nouvelle AstuceEntity après swipe game (Story 3.2)
 - [x] Vérifier chargement ≤ 500ms (NFR-P3)
@@ -256,11 +256,14 @@ Implémentation complète de `ActiviteDetailView` pour afficher les astuces d'un
 - `Gestion TravauxTests/ViewModels/ActiviteDetailViewModelTests.swift`
 
 ### Modifiés
-- `Gestion Travaux/Views/Activites/ActiviteDetailView.swift` (réécriture complète du shell Story 1.2)
-- `Gestion Travaux/Views/Briefing/BriefingView.swift` (ajout `@Environment modelContext`, état `showActiviteDetail`, bouton et sheet Story 4.3)
+- `Gestion Travaux/Views/Activites/ActiviteDetailView.swift` (réécriture complète du shell Story 1.2 + `showDismissButton` + constantes couleurs)
+- `Gestion Travaux/Views/Activites/AstuceRowView.swift` (minHeight 60pt NFR-U1 + single-pass truncation)
+- `Gestion Travaux/Views/Briefing/BriefingView.swift` (ajout `@Environment modelContext`, état `showActiviteDetail`, bouton et sheet Story 4.3 + `showDismissButton: true`)
+- `Gestion Travaux/Shared/Constants.swift` (ajout `astuceImportante` #FFCC00 et `astuceUtile` #34C759)
 - `_bmad-output/implementation-artifacts/story-4.3-fiches-activites-astuces.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ## Change Log
 
 - 2026-03-04 : Story 4.3 implémentée — ActiviteDetailView complète (3 sections par niveau), ActiviteDetailViewModel, AstuceSection, AstuceRowView, bouton BriefingView → ActiviteDetailView sheet, 6 tests unitaires.
+- 2026-03-04 : Code review — 6 fixes : bouton Fermer sheet (AC4), couleurs IMPORTANTES/UTILES dans Constants, minHeight 60pt NFR-U1, single-pass truncation, ordre insertion test, libellé tâche preview.

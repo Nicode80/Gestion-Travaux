@@ -9,14 +9,18 @@ import SwiftData
 
 struct ActiviteDetailView: View {
 
+    @Environment(\.dismiss) private var dismiss
+
     @State private var viewModel: ActiviteDetailViewModel
     @State private var selectedAstuce: AstuceEntity?
 
     private let modelContext: ModelContext
+    private let showDismissButton: Bool
 
-    init(activite: ActiviteEntity, modelContext: ModelContext) {
+    init(activite: ActiviteEntity, modelContext: ModelContext, showDismissButton: Bool = false) {
         _viewModel = State(initialValue: ActiviteDetailViewModel(activite: activite))
         self.modelContext = modelContext
+        self.showDismissButton = showDismissButton
     }
 
     // MARK: - Tâches liées
@@ -65,7 +69,7 @@ struct ActiviteDetailView: View {
                     AstuceSection(
                         title: "IMPORTANTES",
                         subtitle: "Bonnes pratiques",
-                        color: Color(hex: "#FFCC00"),
+                        color: Color(hex: Constants.Couleurs.astuceImportante),
                         icon: "lightbulb.fill",
                         astuces: viewModel.astucesImportantes
                     ) { astuce in
@@ -77,7 +81,7 @@ struct ActiviteDetailView: View {
                     AstuceSection(
                         title: "UTILES",
                         subtitle: "Infos pratiques complémentaires",
-                        color: Color(hex: "#34C759"),
+                        color: Color(hex: Constants.Couleurs.astuceUtile),
                         icon: "info.circle.fill",
                         astuces: viewModel.astucesUtiles
                     ) { astuce in
@@ -102,6 +106,13 @@ struct ActiviteDetailView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle(viewModel.activite.nom)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if showDismissButton {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Fermer") { dismiss() }
+                }
+            }
+        }
         .task { viewModel.load() }
         // FR37, FR46 — note originale complète
         .sheet(item: $selectedAstuce) { astuce in

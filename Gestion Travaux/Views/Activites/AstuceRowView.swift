@@ -12,8 +12,8 @@ struct AstuceRowView: View {
 
     private var previewText: String {
         let full = astuce.preview
-        guard full.count > 100 else { return full }
-        return String(full.prefix(100)) + "…"
+        let prefix = full.prefix(100)
+        return prefix.count < full.count ? String(prefix) + "…" : full
     }
 
     var body: some View {
@@ -34,7 +34,7 @@ struct AstuceRowView: View {
                 .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
         }
         .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
         .background(Color(hex: Constants.Couleurs.backgroundCard), in: RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal)
     }

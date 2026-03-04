@@ -90,7 +90,7 @@ struct BriefingView: View {
         .sheet(isPresented: $showActiviteDetail) {
             if let activite = viewModel.tache.activite {
                 NavigationStack {
-                    ActiviteDetailView(activite: activite, modelContext: modelContext)
+                    ActiviteDetailView(activite: activite, modelContext: modelContext, showDismissButton: true)
                 }
             }
         }

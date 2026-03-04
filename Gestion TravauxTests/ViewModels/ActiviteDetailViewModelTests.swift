@@ -70,11 +70,10 @@ struct ActiviteDetailViewModelTests {
         let context = ModelContext(container)
 
         let activite = ActiviteEntity(nom: "Électricité")
+        context.insert(activite)
         for _ in 0..<2 { let a = AstuceEntity(niveau: .critique); a.activite = activite; context.insert(a) }
         for _ in 0..<3 { let a = AstuceEntity(niveau: .importante); a.activite = activite; context.insert(a) }
         for _ in 0..<1 { let a = AstuceEntity(niveau: .utile); a.activite = activite; context.insert(a) }
-
-        context.insert(activite)
         try context.save()
 
         let vm = ActiviteDetailViewModel(activite: activite)
