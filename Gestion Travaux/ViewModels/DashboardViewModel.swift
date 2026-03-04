@@ -62,6 +62,17 @@ final class DashboardViewModel {
             )
             activeSeasonNote = notes.first(where: { !$0.archivee })
 
+            // Trigger season note display when ≥2-month gap is first detected (FR42).
+            // The flag persists in UserDefaults so the card stays visible across consecutive
+            // sessions — it is only cleared when the user explicitly archives the note.
+            if activeSeasonNote != nil,
+               let prev = UserDefaults.standard.object(forKey: Constants.UserDefaultsKeys.previousSessionDate) as? Date {
+                let seuilSecondes = Constants.SeasonNote.seuilAbsenceJours * 24 * 60 * 60
+                if Date().timeIntervalSince(prev) >= seuilSecondes {
+                    UserDefaults.standard.set(true, forKey: Constants.UserDefaultsKeys.seasonNoteTriggered)
+                }
+            }
+
             viewState = .success(())
         } catch {
             viewState = .failure("Impossible de charger les données.")
@@ -81,15 +92,12 @@ final class DashboardViewModel {
         chantier.demarrerSession()
     }
 
-    /// Returns true when the seasonal note should be shown on the dashboard.
-    /// Condition: an active note exists AND the previous session was ≥ 2 months ago (FR42).
+    /// Returns true when the seasonal note should be shown on the dashboard (FR42).
+    /// The flag is set by charger() on first ≥2-month gap detection and cleared by archiveNote()
+    /// — keeps the card visible across consecutive sessions until the user explicitly archives it.
     func shouldShowSeasonNote() -> Bool {
         guard activeSeasonNote != nil else { return false }
-        guard let prev = UserDefaults.standard.object(forKey: Constants.UserDefaultsKeys.previousSessionDate) as? Date else {
-            return false
-        }
-        let seuilSecondes = Constants.SeasonNote.seuilAbsenceJours * 24 * 60 * 60
-        return Date().timeIntervalSince(prev) >= seuilSecondes
+        return UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.seasonNoteTriggered)
     }
 
     /// Archives the given seasonal note (FR43). Does not delete it — stays consultable.
@@ -97,6 +105,9 @@ final class DashboardViewModel {
         note.archivee = true
         do {
             try modelContext.save()
+            // Clear the persistent flag only on successful save — if save fails, the card
+            // remains visible on the next session (consistent with the pending archive intent).
+            UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.seasonNoteTriggered)
         } catch {
             // Archive failed silently — note remains visible until next successful save.
         }

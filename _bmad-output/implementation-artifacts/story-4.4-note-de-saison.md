@@ -2,7 +2,7 @@
 story: "4.4"
 epic: 4
 title: "Note de Saison — message au futur soi"
-status: review
+status: done
 frs: [FR41, FR42, FR43]
 nfrs: []
 ---
@@ -249,12 +249,14 @@ if let note = viewModel.activeSeasonNote, viewModel.shouldShowSeasonNote() {
 - `Gestion Travaux/ViewModels/NoteSaisonViewModel.swift` — créé
 - `Gestion Travaux/Views/Components/SeasonNoteCard.swift` — créé
 - `Gestion Travaux/Views/SeasonNote/NoteSaisonCreationView.swift` — créé
+- `Gestion Travaux/Views/SeasonNote/NoteSaisonArchivesView.swift` — créé
 - `Gestion Travaux/ViewModels/DashboardViewModel.swift` — modifié (activeSeasonNote, shouldShowSeasonNote, archiveNote, charger)
 - `Gestion Travaux/Views/Dashboard/DashboardView.swift` — modifié (SeasonNoteCard, sheet Note de Saison, Explorer link)
-- `Gestion Travaux/Shared/Constants.swift` — modifié (previousSessionDate key)
+- `Gestion Travaux/Shared/Constants.swift` — modifié (previousSessionDate + seasonNoteTriggered keys)
 - `Gestion Travaux/Gestion_TravauxApp.swift` — modifié (sauvegarde previousSessionDate avant update)
 - `Gestion TravauxTests/ViewModels/NoteSaisonViewModelTests.swift` — créé
 
 ## Change Log
 
-- 2026-03-04 : Implémentation Story 4.4 — Note de Saison (FR41, FR42, FR43). Création NoteSaisonViewModel, SeasonNoteCard, NoteSaisonCreationView. Extension DashboardViewModel avec logique note saisonnière. 20 tests ajoutés.
+- 2026-03-04 : Implémentation Story 4.4 — Note de Saison (FR41, FR42, FR43). Création NoteSaisonViewModel, SeasonNoteCard, NoteSaisonCreationView, NoteSaisonArchivesView. Extension DashboardViewModel avec logique note saisonnière. 20 tests ajoutés.
+- 2026-03-04 : Code review — 3 HIGH + 1 MEDIUM corrigés. HIGH-1: shouldShowSeasonNote() rendu persistant via flag seasonNoteTriggered (AC "reste visible jusqu'à archivage explicite"). HIGH-2: requiresOnDeviceRecognition=true ajouté (offline NFR). HIGH-3: AVAudioApplication.requestRecordPermission() ajouté au pattern audio. MEDIUM-1: NoteSaisonArchivesView ajouté au File List. 1 test de régression ajouté (21 tests total).

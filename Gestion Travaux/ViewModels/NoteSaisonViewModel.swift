@@ -65,14 +65,21 @@ final class NoteSaisonViewModel {
 
     func startVoiceInput() {
         Task { [weak self] in
-            let status = await NoteSaisonViewModel.requestSpeechAuthorization()
+            // Both permissions required — called via nonisolated static helpers to avoid
+            // dispatch_assert_queue_not(main_queue) crash on real device (see MEMORY.md audio pattern).
+            let micGranted = await NoteSaisonViewModel.requestMicroPermission()
+            let speechStatus = await NoteSaisonViewModel.requestSpeechAuthorization()
             guard let self else { return }
-            guard status == .authorized else {
+            guard micGranted, speechStatus == .authorized else {
                 self.errorMessage = "Permission microphone requise pour la saisie vocale."
                 return
             }
             self.beginCapture()
         }
+    }
+
+    private nonisolated static func requestMicroPermission() async -> Bool {
+        await AVAudioApplication.requestRecordPermission()
     }
 
     private nonisolated static func requestSpeechAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
@@ -106,6 +113,7 @@ final class NoteSaisonViewModel {
 
         let req = SFSpeechAudioBufferRecognitionRequest()
         req.shouldReportPartialResults = true
+        req.requiresOnDeviceRecognition = true  // offline-first — never send audio to Apple servers
         audio.request = req
 
         let audioState = audio

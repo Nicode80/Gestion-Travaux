@@ -35,5 +35,8 @@ enum Constants {
         static let lastAppOpenDate = "lastAppOpenDate"
         /// Saved before lastAppOpenDate is updated — used by shouldShowSeasonNote() to detect ≥ 2-month gap.
         static let previousSessionDate = "previousSessionDate"
+        /// Set to true when the ≥2-month gap is first detected — cleared on explicit archive (FR42).
+        /// Keeps SeasonNoteCard visible across consecutive sessions until the user archives it.
+        static let seasonNoteTriggered = "seasonNoteTriggered"
     }
 }

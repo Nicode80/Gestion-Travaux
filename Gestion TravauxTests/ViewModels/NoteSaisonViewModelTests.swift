@@ -267,6 +267,7 @@ struct DashboardViewModelSeasonNoteTests {
         #expect(vm.shouldShowSeasonNote() == false)
 
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.previousSessionDate)
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.seasonNoteTriggered)
     }
 
     @Test("shouldShowSeasonNote() returns true when gap ≥ 60 days and note exists")
@@ -287,6 +288,34 @@ struct DashboardViewModelSeasonNoteTests {
         #expect(vm.shouldShowSeasonNote() == true)
 
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.previousSessionDate)
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.seasonNoteTriggered)
+    }
+
+    @Test("shouldShowSeasonNote() stays true across consecutive sessions once triggered")
+    func seasonNoteCardPersistsAcrossConsecutiveSessions() throws {
+        let (context, maison) = try makeContextWithMaison()
+        let note = NoteSaisonEntity(texte: "Note saisonnière persistante")
+        note.maison = maison
+        context.insert(note)
+        try context.save()
+
+        // First session after long absence — triggers the flag
+        let oldDate = Date(timeIntervalSinceNow: -(61 * 24 * 60 * 60))
+        UserDefaults.standard.set(oldDate, forKey: Constants.UserDefaultsKeys.previousSessionDate)
+
+        let vm = DashboardViewModel(modelContext: context)
+        vm.charger()
+        #expect(vm.shouldShowSeasonNote() == true)
+
+        // Simulate next-day re-launch without archiving: previousSessionDate is now recent
+        UserDefaults.standard.set(Date(), forKey: Constants.UserDefaultsKeys.previousSessionDate)
+        vm.charger() // gap check fails, but seasonNoteTriggered flag persists
+
+        // Card must remain visible until explicitly archived (FR42 AC)
+        #expect(vm.shouldShowSeasonNote() == true)
+
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.previousSessionDate)
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.seasonNoteTriggered)
     }
 
     @Test("archiveNote() sets archivee to true and persists")
