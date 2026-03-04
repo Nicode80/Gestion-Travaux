@@ -54,6 +54,7 @@ struct Gestion_TravauxApp: App {
             // Record this launch date for next session's comparison.
             UserDefaults.standard.set(Date(), forKey: Constants.UserDefaultsKeys.lastAppOpenDate)
 
+
         } catch {
             fatalError("Impossible de créer le ModelContainer : \(error)")
         }

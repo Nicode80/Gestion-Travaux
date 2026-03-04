@@ -36,6 +36,7 @@ struct NoteSaisonCreationView: View {
                     }
                 }
                 submitSection
+                archivesSection
             }
             .scrollContentBackground(.hidden)
             .background(Color(hex: Constants.Couleurs.backgroundBureau))
@@ -94,6 +95,18 @@ struct NoteSaisonCreationView: View {
                     .font(.headline)
             }
             .disabled(!viewModel.canSave)
+        }
+    }
+
+    private var archivesSection: some View {
+        Section {
+            NavigationLink {
+                NoteSaisonArchivesView(modelContext: modelContext)
+            } label: {
+                Label("Consulter les notes archivées", systemImage: "archivebox")
+                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+            }
+            .frame(minHeight: 44) // NFR-U1
         }
     }
 
