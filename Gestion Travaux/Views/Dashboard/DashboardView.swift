@@ -205,6 +205,14 @@ struct DashboardView: View {
                     Label("Activités", systemImage: "wrench.and.screwdriver")
                         .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                 }
+
+                // Story 4.2: Global alert view — one tap from Dashboard (FR46).
+                NavigationLink {
+                    AlerteListView(modelContext: modelContext)
+                } label: {
+                    Label("Alertes", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                }
             }
         }
         .listStyle(.insetGrouped)

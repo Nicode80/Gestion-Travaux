@@ -2,7 +2,7 @@
 story: "4.2"
 epic: 4
 title: "Vue globale des alertes et drill-down note originale"
-status: pending
+status: review
 frs: [FR31, FR32, FR46]
 nfrs: [NFR-P3]
 ---
@@ -183,15 +183,56 @@ Un seul tap sur une AlerteEntity ou AstuceEntity depuis n'importe quelle vue →
 
 ## Tasks
 
-- [ ] Créer `ViewModels/AlerteListViewModel.swift` : `@Observable`, requête globale AlerteEntities `resolue == false`, groupées par tâche
-- [ ] Créer `Views/Alertes/AlerteListView.swift` : liste groupée par tâche
-- [ ] Créer `Views/Alertes/AlerteRowView.swift` : texte, tâche parente, date de création
-- [ ] Implémenter état vide : "Aucune alerte active — tout est sous contrôle ✅"
-- [ ] Créer `Views/Shared/CaptureDetailView.swift` : rendu séquentiel ContentBlocks (TextBlock + PhotoBlock)
-- [ ] Créer `Views/Shared/PhotoView.swift` : chargement asynchrone depuis `Documents/captures/`
-- [ ] Ajouter accès à AlerteListView depuis le Dashboard (bouton ou section)
-- [ ] Brancher `onTapGesture` sur AlerteEntity → CaptureDetailView en sheet (FR46)
-- [ ] Brancher `onTapGesture` sur AstuceEntity → CaptureDetailView en sheet (FR46) — préparation Story 4.3
-- [ ] Vérifier chargement CaptureDetailView ≤ 500ms (NFR-P3)
-- [ ] Vérifier accès en ≤ 1 interaction depuis briefing et vue globale (FR46)
-- [ ] Créer `GestionTravauxTests/ViewModels/AlerteListViewModelTests.swift`
+- [x] Créer `ViewModels/AlerteListViewModel.swift` : `@Observable`, requête globale AlerteEntities `resolue == false`, groupées par tâche
+- [x] Créer `Views/Alertes/AlerteListView.swift` : liste groupée par tâche
+- [x] Créer `Views/Alertes/AlerteRowView.swift` : texte, tâche parente, date de création
+- [x] Implémenter état vide : "Aucune alerte active — tout est sous contrôle ✅"
+- [x] Créer `Views/Shared/CaptureDetailView.swift` : rendu séquentiel ContentBlocks (TextBlock + PhotoBlock)
+- [x] Créer `Views/Shared/PhotoView.swift` : chargement asynchrone depuis `Documents/captures/`
+- [x] Ajouter accès à AlerteListView depuis le Dashboard (bouton ou section)
+- [x] Brancher `onTapGesture` sur AlerteEntity → CaptureDetailView en sheet (FR46)
+- [x] Brancher `onTapGesture` sur AstuceEntity → CaptureDetailView en sheet (FR46) — préparation Story 4.3
+- [x] Vérifier chargement CaptureDetailView ≤ 500ms (NFR-P3)
+- [x] Vérifier accès en ≤ 1 interaction depuis briefing et vue globale (FR46)
+- [x] Créer `GestionTravauxTests/ViewModels/AlerteListViewModelTests.swift`
+
+## Dev Agent Record
+
+### Implementation Notes
+
+- `AlerteEntity.resolue` existe bien dans le codebase (la note story était obsolète) — le filtre `!$0.resolue` fonctionne correctement dans le `FetchDescriptor`.
+- `ContentBlock` utilise `photoLocalPath` (pas `photoPath`) et `blocksData` (pas `contentBlocksData`) — templates de la story mis à jour pour correspondre au code réel.
+- `PhotoView` créé séparément de `PhotoThumbnailView` existant : même pattern async Task.detached mais en `scaledToFit` pour les détails (vs `scaledToFill` pour les miniatures).
+- `CaptureDetailView` utilise un `NavigationStack` interne pour le titre "Note originale" dans la sheet.
+- Dans `BriefingView`, le sheet CaptureDetailView utilise `@State private var showCaptureDetail: Bool` + `captureDetailData: Data` car `Data` n'est pas `Identifiable`.
+- Tri alphabétique des groupes dans `AlerteListViewModel` : nil-tache trie en dernier (`"ZZZ"` comme sentinel).
+- Accès depuis Dashboard : entrée "Alertes" ajoutée dans la section "Explorer" (1 tap = FR46 ✅).
+
+### Completion Notes
+
+Toutes les ACs satisfaites :
+- ✅ AlerteListView groupée par tâche avec filtre segmenté "Actives / Tâches terminées" (FR32, FR31)
+- ✅ CaptureDetailView en sheet depuis AlerteEntity et AstuceEntity (BriefingView + AlerteListView)
+- ✅ Chargement ≤ 500ms : décodage JSON synchrone (déjà en mémoire), photos async LazyVStack (NFR-P3)
+- ✅ Accès en ≤ 1 interaction depuis briefing et vue globale (FR46)
+- ✅ État vide positif "Aucune alerte active — tout est sous contrôle ✅"
+- ✅ Alertes des tâches terminées restent visibles avec badge "Tâche terminée"
+- ✅ 6 tests unitaires AlerteListViewModel — tous passent
+
+## File List
+
+### New Files
+- `Gestion Travaux/ViewModels/AlerteListViewModel.swift`
+- `Gestion Travaux/Views/Alertes/AlerteListView.swift`
+- `Gestion Travaux/Views/Alertes/AlerteRowView.swift`
+- `Gestion Travaux/Views/Shared/CaptureDetailView.swift`
+- `Gestion Travaux/Views/Shared/PhotoView.swift`
+- `Gestion TravauxTests/ViewModels/AlerteListViewModelTests.swift`
+
+### Modified Files
+- `Gestion Travaux/Views/Dashboard/DashboardView.swift` — ajout NavigationLink "Alertes" dans section Explorer
+- `Gestion Travaux/Views/Briefing/BriefingView.swift` — ajout tap alertes/astuces → CaptureDetailView sheet
+
+## Change Log
+
+- 2026-03-04 : Story 4.2 implémentée — Vue globale des alertes et drill-down note originale (FR31, FR32, FR46, NFR-P3)
