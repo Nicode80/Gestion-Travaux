@@ -20,6 +20,9 @@ struct DashboardView: View {
     @State private var navigationPath = NavigationPath()
     @State private var showChangerTache = false
     @State private var showClassification = false
+    // Story 4.1: BriefingView shown before entering Mode Chantier.
+    @State private var showBriefing = false
+    @State private var tachePourBriefing: TacheEntity?
     // Sheet for task creation from empty HeroTaskCard — closes back to Dashboard on success.
     @State private var showCreation = false
 
@@ -54,6 +57,15 @@ struct DashboardView: View {
                             }
                         )
                     }
+                    // Story 4.1: BriefingView — pushed before entering Mode Chantier.
+                    .navigationDestination(isPresented: $showBriefing) {
+                        if let tache = tachePourBriefing {
+                            BriefingView(
+                                tache: tache,
+                                onDemarrer: { lancerChantier(tache: tache) }
+                            )
+                        }
+                    }
                     // Story 3.1: navigate to ClassificationView after session ends with captures.
                     // Story 3.3: onComplete pops the entire classification flow (ClassificationView,
                     // RecapitulatifView, CheckoutView) back to Dashboard and refreshes the Hero.
@@ -76,6 +88,9 @@ struct DashboardView: View {
             // onDismiss fires after the animation completes — ensures ClassificationView is pushed
             // only once ModeChantierView is fully gone (C3-fix: eliminates race condition).
             .fullScreenCover(isPresented: $chantier.sessionActive, onDismiss: {
+                // Story 4.1: pop BriefingView so user lands back on Dashboard.
+                showBriefing = false
+                tachePourBriefing = nil
                 if chantier.pendingClassification {
                     showClassification = true
                     chantier.pendingClassification = false
@@ -141,7 +156,9 @@ struct DashboardView: View {
                     tache: viewModel.tacheHero,
                     onLancer: {
                         if let tache = viewModel.tacheHero {
-                            lancerChantier(tache: tache)
+                            // Story 4.1: show BriefingView before entering Mode Chantier.
+                            tachePourBriefing = tache
+                            showBriefing = true
                         }
                     },
                     onChanger: {
@@ -157,12 +174,14 @@ struct DashboardView: View {
             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
 
-            // Briefing card (shell — Story 4.1)
-            Section {
-                BriefingCard()
+            // Story 4.1: BriefingCard — shown only when a hero task exists.
+            if let tache = viewModel.tacheHero {
+                Section {
+                    BriefingCard(tache: tache)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color.clear)
             }
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            .listRowBackground(Color.clear)
 
             // Browse section — enrichi Story 2.7 avec Tâches
             Section("Explorer") {

@@ -19,4 +19,13 @@ final class AstuceEntity {
     init(niveau: AstuceLevel = .utile) {
         self.niveau = niveau
     }
+
+    // MARK: - Computed helpers (not persisted)
+
+    /// First text block content, used in compact displays (BriefingView).
+    var preview: String {
+        blocksData.toContentBlocks()
+            .first(where: { $0.type == .text && ($0.text?.isEmpty == false) })?
+            .text ?? ""
+    }
 }
