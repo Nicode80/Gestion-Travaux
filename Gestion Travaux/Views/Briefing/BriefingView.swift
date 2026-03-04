@@ -14,6 +14,9 @@ struct BriefingView: View {
     @State private var viewModel: BriefingViewModel
     @State private var alertesExpanded = true
     @State private var astucesExpanded = true
+    // Story 4.2: CaptureDetailView sheet for alerts and tips (FR46).
+    @State private var showCaptureDetail = false
+    @State private var captureDetailData: Data = Data()
 
     let onDemarrer: () -> Void
 
@@ -60,6 +63,10 @@ struct BriefingView: View {
         .navigationTitle(viewModel.tache.titre)
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.load() }
+        // Story 4.2: CaptureDetailView sheet — opened by tapping an alert or tip (FR46).
+        .sheet(isPresented: $showCaptureDetail) {
+            CaptureDetailView(blocksData: captureDetailData)
+        }
     }
 
     // MARK: - Prochaine Action
@@ -105,15 +112,25 @@ struct BriefingView: View {
         DisclosureGroup(isExpanded: $alertesExpanded) {
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(viewModel.alertesActives) { alerte in
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
-                            .frame(width: 20)
-                        Text(alerte.preview.isEmpty ? "Alerte (sans texte)" : alerte.preview)
-                            .font(.subheadline)
-                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                        Spacer()
+                    Button {
+                        captureDetailData = alerte.blocksData
+                        showCaptureDetail = true
+                    } label: {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                                .frame(width: 20)
+                            Text(alerte.preview.isEmpty ? "Alerte (sans texte)" : alerte.preview)
+                                .font(.subheadline)
+                                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        }
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.top, 8)
@@ -136,15 +153,25 @@ struct BriefingView: View {
         DisclosureGroup(isExpanded: $astucesExpanded) {
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(viewModel.astucesCritiques) { astuce in
-                    HStack(alignment: .top, spacing: 8) {
-                        Image(systemName: "lightbulb.fill")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.astuce))
-                            .frame(width: 20)
-                        Text(astuce.preview.isEmpty ? "Astuce (sans texte)" : astuce.preview)
-                        .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                        Spacer()
+                    Button {
+                        captureDetailData = astuce.blocksData
+                        showCaptureDetail = true
+                    } label: {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "lightbulb.fill")
+                                .foregroundStyle(Color(hex: Constants.Couleurs.astuce))
+                                .frame(width: 20)
+                            Text(astuce.preview.isEmpty ? "Astuce (sans texte)" : astuce.preview)
+                                .font(.subheadline)
+                                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        }
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.top, 8)
