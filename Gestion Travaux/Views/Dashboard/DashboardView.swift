@@ -117,11 +117,9 @@ struct DashboardView: View {
                 )
             }
             // Story 4.4: Note de Saison creation sheet (FR41).
-            .sheet(isPresented: $showNoteSaison, onDismiss: {
-                viewModel.charger()
-            }) {
+            .sheet(isPresented: $showNoteSaison, onDismiss: { viewModel.charger() }, content: {
                 NoteSaisonCreationView(modelContext: modelContext, onSave: {})
-            }
+            })
         }
     }
 
