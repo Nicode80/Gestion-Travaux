@@ -11,12 +11,15 @@ import SwiftData
 
 struct BriefingView: View {
 
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel: BriefingViewModel
     @State private var alertesExpanded = true
     @State private var astucesExpanded = true
     // Story 4.2: CaptureDetailView sheet for alerts and tips (FR46).
     @State private var showCaptureDetail = false
     @State private var captureDetailData: Data = Data()
+    // Story 4.3: ActiviteDetailView sheet — all tips for this activity.
+    @State private var showActiviteDetail = false
 
     let onDemarrer: () -> Void
 
@@ -40,6 +43,22 @@ struct BriefingView: View {
                     // 3. ASTUCES CRITIQUES — masquées si vides
                     if !viewModel.astucesCritiques.isEmpty {
                         astucesCritiquesSection
+                    }
+
+                    // 4. Story 4.3 — Lien vers toutes les astuces de l'activité
+                    if viewModel.tache.activite != nil {
+                        Button {
+                            showActiviteDetail = true
+                        } label: {
+                            Label("Voir toutes les astuces", systemImage: "list.bullet.rectangle")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color(hex: Constants.Couleurs.accent).opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .buttonStyle(.plain)
                     }
 
                     // Espace pour le bouton flottant
@@ -66,6 +85,14 @@ struct BriefingView: View {
         // Story 4.2: CaptureDetailView sheet — opened by tapping an alert or tip (FR46).
         .sheet(isPresented: $showCaptureDetail) {
             CaptureDetailView(blocksData: captureDetailData)
+        }
+        // Story 4.3: Full activity tip sheet — all tips grouped by level.
+        .sheet(isPresented: $showActiviteDetail) {
+            if let activite = viewModel.tache.activite {
+                NavigationStack {
+                    ActiviteDetailView(activite: activite, modelContext: modelContext, showDismissButton: true)
+                }
+            }
         }
     }
 

@@ -15,7 +15,9 @@ enum Constants {
         static let textePrimaire       = "#1C1C1E"
         static let texteSecondaire     = "#6C6C70"
         static let alerte              = "#FF3B30"
-        static let astuce              = "#FF9500"
+        static let astuce              = "#FF9500"      // critique
+        static let astuceImportante    = "#FFCC00"      // importante
+        static let astuceUtile         = "#34C759"      // utile
         static let achat               = "#1B3D6F"
     }
 
