@@ -2,7 +2,7 @@
 story: "4.2"
 epic: 4
 title: "Vue globale des alertes et drill-down note originale"
-status: review
+status: done
 frs: [FR31, FR32, FR46]
 nfrs: [NFR-P3]
 ---
@@ -207,17 +207,27 @@ Un seul tap sur une AlerteEntity ou AstuceEntity depuis n'importe quelle vue →
 - Dans `BriefingView`, le sheet CaptureDetailView utilise `@State private var showCaptureDetail: Bool` + `captureDetailData: Data` car `Data` n'est pas `Identifiable`.
 - Tri alphabétique des groupes dans `AlerteListViewModel` : nil-tache trie en dernier (`"ZZZ"` comme sentinel).
 - Accès depuis Dashboard : entrée "Alertes" ajoutée dans la section "Explorer" (1 tap = FR46 ✅).
+- Alertes orphelines (tache == nil) : traitées comme tâches actives (visibles en filtre .active, invisibles en .terminee) — comportement documenté et testé.
+
+### Code Review Fixes (2026-03-04)
+
+- **H1** `AlerteRowView` : badge "Tâche terminée" (capsule grise) ajouté sur chaque row quand `alerte.tache?.statut == .terminee` — AC2 / FR31 correctement satisfait.
+- **M1** `AlerteListViewModel.load()` : commentaire ajouté sur le comportement nil-tache. Test `loadOrphanAlerteAppearsOnlyInActiveFilter` ajouté.
+- **M2** `AlerteListViewModel.load()` : `try?` remplacé par `do/catch` → `loadError: String?`. `AlerteListView` présente une `.alert` système avec Réessayer/Annuler.
+- **M3** `CaptureDetailView` : état vide (`ContentUnavailableView`) ajouté quand `contentBlocks.isEmpty`.
+- **M4** Completion Notes : "6 tests" corrigé en "8 tests" (7 originaux + 1 ajouté en review).
 
 ### Completion Notes
 
 Toutes les ACs satisfaites :
 - ✅ AlerteListView groupée par tâche avec filtre segmenté "Actives / Tâches terminées" (FR32, FR31)
+- ✅ Badge "Tâche terminée" sur chaque AlerteRowView quand tâche parente est terminée (FR31)
 - ✅ CaptureDetailView en sheet depuis AlerteEntity et AstuceEntity (BriefingView + AlerteListView)
 - ✅ Chargement ≤ 500ms : décodage JSON synchrone (déjà en mémoire), photos async LazyVStack (NFR-P3)
 - ✅ Accès en ≤ 1 interaction depuis briefing et vue globale (FR46)
 - ✅ État vide positif "Aucune alerte active — tout est sous contrôle ✅"
-- ✅ Alertes des tâches terminées restent visibles avec badge "Tâche terminée"
-- ✅ 6 tests unitaires AlerteListViewModel — tous passent
+- ✅ CaptureDetailView : état vide "Note vide" quand aucun contenu
+- ✅ 8 tests unitaires AlerteListViewModel — tous passent
 
 ## File List
 

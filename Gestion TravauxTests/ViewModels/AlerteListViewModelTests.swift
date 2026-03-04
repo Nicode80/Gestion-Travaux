@@ -165,6 +165,31 @@ struct AlerteListViewModelTests {
         #expect(allAlertes.first?.tache?.statut == .active)
     }
 
+    @Test("load() includes orphan alerts (nil tache) in .active filter only")
+    func loadOrphanAlerteAppearsOnlyInActiveFilter() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        // Alert with no parent task (e.g. task was deleted after capture).
+        let alerteOrpheline = AlerteEntity()
+        alerteOrpheline.tache = nil
+        context.insert(alerteOrpheline)
+        try context.save()
+
+        let vm = AlerteListViewModel(modelContext: context)
+
+        // Default filter (.active): orphan should appear.
+        vm.load()
+        let activeAlertes = vm.alertesGroupedByTache.flatMap { $0.1 }
+        #expect(activeAlertes.count == 1)
+
+        // Filter .terminee: orphan should NOT appear.
+        vm.filtreTache = .terminee
+        vm.load()
+        let termineeAlertes = vm.alertesGroupedByTache.flatMap { $0.1 }
+        #expect(termineeAlertes.count == 0)
+    }
+
     @Test("load() collects alerts from multiple tasks at once")
     func loadAggregatesAcrossAllTasks() throws {
         let container = try makeContainer()

@@ -29,9 +29,22 @@ struct AlerteRowView: View {
                         .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                         .lineLimit(3)
 
-                    Text(alerte.createdAt.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    HStack(spacing: 6) {
+                        Text(alerte.createdAt.formatted(date: .abbreviated, time: .omitted))
+                            .font(.caption)
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+
+                        // FR31: badge when parent task is terminated.
+                        if alerte.tache?.statut == .terminee {
+                            Text("Tâche terminée")
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.15))
+                                .clipShape(Capsule())
+                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        }
+                    }
                 }
 
                 Spacer()

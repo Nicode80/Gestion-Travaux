@@ -60,5 +60,14 @@ struct AlerteListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.load() }
         .onChange(of: viewModel.filtreTache) { viewModel.load() }
+        .alert("Erreur de chargement", isPresented: Binding(
+            get: { viewModel.loadError != nil },
+            set: { if !$0 { viewModel.loadError = nil } }
+        )) {
+            Button("Réessayer") { viewModel.load() }
+            Button("Annuler", role: .cancel) { viewModel.loadError = nil }
+        } message: {
+            Text(viewModel.loadError ?? "")
+        }
     }
 }

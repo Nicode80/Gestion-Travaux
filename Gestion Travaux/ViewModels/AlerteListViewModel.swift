@@ -20,18 +20,31 @@ final class AlerteListViewModel {
     /// Sorted alphabetically by task name; nil-tache group sorts to the end.
     var alertesGroupedByTache: [(TacheEntity?, [AlerteEntity])] = []
 
+    /// Non-nil when a SwiftData fetch error occurred; shown to the user as an error state.
+    var loadError: String? = nil
+
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
     }
 
     func load() {
+        loadError = nil
         let descriptor = FetchDescriptor<AlerteEntity>(
             predicate: #Predicate { !$0.resolue },
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
-        let all = (try? modelContext.fetch(descriptor)) ?? []
+        let all: [AlerteEntity]
+        do {
+            all = try modelContext.fetch(descriptor)
+        } catch {
+            loadError = "Impossible de charger les alertes."
+            alertesGroupedByTache = []
+            return
+        }
 
         // Filter in-memory by parent task status.
+        // Note: alerts with no parent task (nil tache) are treated as belonging to
+        // active tasks — they appear in the .active filter and not in .terminee.
         let filtered = all.filter { alerte in
             guard let tache = alerte.tache else { return filtreTache == .active }
             return tache.statut == filtreTache

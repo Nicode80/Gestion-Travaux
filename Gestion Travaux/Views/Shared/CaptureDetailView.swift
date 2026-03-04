@@ -17,25 +17,35 @@ struct CaptureDetailView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 12) {
-                    ForEach(contentBlocks) { block in
-                        switch block.type {
-                        case .text:
-                            Text(block.text ?? "")
-                                .font(.body)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        case .photo:
-                            if let path = block.photoLocalPath {
-                                PhotoView(path: path)
-                                    .frame(maxWidth: .infinity)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            Group {
+                if contentBlocks.isEmpty {
+                    ContentUnavailableView(
+                        "Note vide",
+                        systemImage: "doc.text",
+                        description: Text("Cette note ne contient aucun contenu enregistré.")
+                    )
+                } else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 12) {
+                            ForEach(contentBlocks) { block in
+                                switch block.type {
+                                case .text:
+                                    Text(block.text ?? "")
+                                        .font(.body)
+                                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                case .photo:
+                                    if let path = block.photoLocalPath {
+                                        PhotoView(path: path)
+                                            .frame(maxWidth: .infinity)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    }
+                                }
                             }
                         }
+                        .padding()
                     }
                 }
-                .padding()
             }
             .background(Color(hex: Constants.Couleurs.backgroundBureau))
             .navigationTitle("Note originale")
