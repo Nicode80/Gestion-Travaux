@@ -2,8 +2,9 @@
 // Gestion Travaux
 //
 // Compact briefing card displayed on the Dashboard.
-// Shows the prochaine action and up to 3 active alerts for the hero task.
-// Story 4.1: wired with real data (replaces the placeholder shell from Story 1.2).
+// QF2: shows up to 3 tappable active alerts for the hero task (prochaine action moved to hero).
+// Hidden entirely when no active alerts. Each alert opens CaptureDetailView as a sheet.
+// "Voir N de plus" opens a sheet listing all remaining alerts.
 
 import SwiftUI
 
@@ -11,51 +12,68 @@ struct BriefingCard: View {
 
     let tache: TacheEntity
 
+    @State private var selectedAlerte: AlerteEntity?
+    @State private var showAll = false
+
     private var alertesActives: [AlerteEntity] {
         tache.alertes.filter { !$0.resolue }
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Prochaine action
-            HStack(spacing: 8) {
-                Image(systemName: "play.fill")
-                    .foregroundStyle(Color(hex: Constants.Couleurs.accent))
-                if let action = tache.prochaineAction, !action.isEmpty {
-                    Text(action)
-                        .font(.subheadline.bold())
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                        .lineLimit(2)
-                } else {
-                    Text("Aucune prochaine action")
-                        .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                        .italic()
+        let visibles = showAll ? alertesActives : Array(alertesActives.prefix(3))
+        let restantes = alertesActives.count - 3
+
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(visibles.enumerated()), id: \.element.persistentModelID) { index, alerte in
+                Button {
+                    selectedAlerte = alerte
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                            .font(.subheadline)
+                        Text(alerte.preview.isEmpty ? "Alerte" : alerte.preview)
+                            .font(.subheadline)
+                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(minHeight: 44) // NFR-U1
+                    .padding(.horizontal, 14)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if index < visibles.count - 1 || (!showAll && restantes > 0) {
+                    Divider().padding(.leading, 44)
                 }
             }
 
-            // Max 3 alertes actives
-            let recentes = Array(alertesActives.prefix(3))
-            if !recentes.isEmpty {
-                Divider()
-                ForEach(recentes) { alerte in
-                    Label(alerte.preview.isEmpty ? "Alerte" : alerte.preview,
-                          systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
-                        .font(.caption)
-                        .lineLimit(1)
+            if restantes > 0 {
+                Divider().padding(.leading, 44)
+                Button {
+                    showAll.toggle()
+                } label: {
+                    Text(showAll
+                         ? "Voir moins"
+                         : "Voir \(restantes) alerte\(restantes > 1 ? "s" : "") de plus")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(minHeight: 44) // NFR-U1
+                        .padding(.horizontal, 14)
+                        .contentShape(Rectangle())
                 }
-                let restantes = alertesActives.count - recentes.count
-                if restantes > 0 {
-                    Text("+ \(restantes) alerte\(restantes > 1 ? "s" : "") supplémentaire\(restantes > 1 ? "s" : "")")
-                        .font(.caption2)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                }
+                .buttonStyle(.plain)
             }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 4)
         .background(Color(hex: Constants.Couleurs.backgroundCard))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .onAppear { showAll = false }
+        .sheet(item: $selectedAlerte) { alerte in
+            CaptureDetailView(blocksData: alerte.blocksData)
+        }
     }
 }

@@ -201,8 +201,8 @@ struct DashboardView: View {
             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
 
-            // Story 4.1: BriefingCard — shown only when a hero task exists.
-            if let tache = viewModel.tacheHero {
+            // QF2: BriefingCard shown only when hero task has active alerts.
+            if let tache = viewModel.tacheHero, !tache.alertes.filter({ !$0.resolue }).isEmpty {
                 Section {
                     BriefingCard(tache: tache)
                 }

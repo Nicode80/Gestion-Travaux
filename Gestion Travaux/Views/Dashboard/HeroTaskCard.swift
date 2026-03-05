@@ -34,12 +34,23 @@ struct HeroTaskCard: View {
                             .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                             .multilineTextAlignment(.center)
 
-                        if let action = tache.prochaineAction, !action.isEmpty {
-                            Text(action)
-                                .font(.subheadline)
+                        HStack(alignment: .top, spacing: 6) {
+                            Image(systemName: "arrow.right")
+                                .font(.caption)
                                 .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                                .multilineTextAlignment(.center)
-                                .lineLimit(2)
+                                .padding(.top, 2)
+                            if let action = tache.prochaineAction, !action.isEmpty {
+                                Text(action)
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                    .multilineTextAlignment(.leading)
+                                    .lineLimit(2)
+                            } else {
+                                Text("Aucune prochaine action")
+                                    .font(.subheadline)
+                                    .italic()
+                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.5))
+                            }
                         }
                     }
                     .frame(maxWidth: .infinity)
