@@ -80,7 +80,7 @@ struct RecapitulatifView: View {
     // MARK: - Summary list
 
     private var summarySection: some View {
-        Section("Captures classifiées") {
+        Section {
             ForEach(viewModel.summaryItems) { item in
                 Button {
                     itemARecorriger = item
@@ -89,6 +89,8 @@ struct RecapitulatifView: View {
                 }
                 .buttonStyle(.plain)
             }
+        } header: {
+            Text("Captures classifiées")
         } footer: {
             Text("Tape sur une capture pour modifier sa classification.")
                 .font(.caption)

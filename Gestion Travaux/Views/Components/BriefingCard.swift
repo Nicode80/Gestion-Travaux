@@ -24,7 +24,7 @@ struct BriefingCard: View {
         let restantes = alertesActives.count - 3
 
         VStack(alignment: .leading, spacing: 0) {
-            ForEach(Array(visibles.enumerated()), id: \.element.persistentModelID) { index, alerte in
+            ForEach(Array(visibles.enumerated()), id: \.element.persistentModelID) { _, alerte in
                 Button {
                     selectedAlerte = alerte
                 } label: {

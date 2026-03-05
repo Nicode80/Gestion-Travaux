@@ -46,23 +46,23 @@ extension ContentBlock: Codable {
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id             = try c.decode(UUID.self,      forKey: .id)
-        type           = try c.decode(BlockType.self,  forKey: .type)
-        text           = try c.decodeIfPresent(String.self, forKey: .text)
+        id = try c.decode(UUID.self, forKey: .id)
+        type = try c.decode(BlockType.self, forKey: .type)
+        text = try c.decodeIfPresent(String.self, forKey: .text)
         photoLocalPath = try c.decodeIfPresent(String.self, forKey: .photoLocalPath)
-        order          = try c.decode(Int.self,        forKey: .order)
+        order = try c.decode(Int.self, forKey: .order)
         // Pre-2.3 stored blocks lack `timestamp`; use epoch as a stable sentinel so the value
         // does not change across repeated decode/encode cycles (M3-fix: avoids drifting timestamps).
-        timestamp      = try c.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date(timeIntervalSince1970: 0)
+        timestamp = try c.decodeIfPresent(Date.self, forKey: .timestamp) ?? Date(timeIntervalSince1970: 0)
     }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(id,             forKey: .id)
-        try c.encode(type,           forKey: .type)
-        try c.encodeIfPresent(text,           forKey: .text)
+        try c.encode(id, forKey: .id)
+        try c.encode(type, forKey: .type)
+        try c.encodeIfPresent(text, forKey: .text)
         try c.encodeIfPresent(photoLocalPath, forKey: .photoLocalPath)
-        try c.encode(order,          forKey: .order)
-        try c.encode(timestamp,      forKey: .timestamp)
+        try c.encode(order, forKey: .order)
+        try c.encode(timestamp, forKey: .timestamp)
     }
 }
