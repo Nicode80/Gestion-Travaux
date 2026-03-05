@@ -27,6 +27,8 @@ struct DashboardView: View {
     @State private var showCreation = false
     // Story 4.4: Note de Saison creation sheet (FR41).
     @State private var showNoteSaison = false
+    // QF1: direct access to TacheDetailView from the hero chevron.
+    @State private var showHeroDetail = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -80,6 +82,12 @@ struct DashboardView: View {
                     // Used by onReprendreExistante in TaskCreationView (task already exists)
                     .navigationDestination(for: TacheEntity.self) { tache in
                         TacheDetailView(tache: tache, modelContext: modelContext)
+                    }
+                    // QF1: hero chevron → TacheDetailView for the active task.
+                    .navigationDestination(isPresented: $showHeroDetail) {
+                        if let tache = viewModel.tacheHero {
+                            TacheDetailView(tache: tache, modelContext: modelContext)
+                        }
                     }
                     // IMPORTANT: onAppear inside the NavigationStack content (not on the stack
                     // itself) so that charger() re-fires every time the user navigates back to
@@ -186,7 +194,8 @@ struct DashboardView: View {
                         // Open TaskCreationView directly — on success, Hero updates
                         // and user stays on Dashboard (no TacheListView intermediary).
                         showCreation = true
-                    }
+                    },
+                    onVoirDetail: viewModel.tacheHero != nil ? { showHeroDetail = true } : nil
                 )
             }
             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))

@@ -13,6 +13,7 @@ struct ActiviteDetailView: View {
 
     @State private var viewModel: ActiviteDetailViewModel
     @State private var selectedAstuce: AstuceEntity?
+    @State private var tachesExpanded = false
 
     private let modelContext: ModelContext
     private let showDismissButton: Bool
@@ -41,16 +42,11 @@ struct ActiviteDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
 
-                // En-tête : nom activité + compteur total
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.activite.nom)
-                        .font(.title2.bold())
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                    Text(subtitleText)
-                        .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                }
-                .padding(.horizontal)
+                // QF9: title is already in .inline navigationTitle — only show astuce count.
+                Text(subtitleText)
+                    .font(.subheadline)
+                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .padding(.horizontal)
 
                 // Sections astuces — masquées si vides (FR35)
                 if !viewModel.astucesCritiques.isEmpty {
@@ -133,40 +129,40 @@ struct ActiviteDetailView: View {
     @ViewBuilder
     private var tachesSection: some View {
         if !tachesActives.isEmpty || !tachesTerminees.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("TÂCHES LIÉES")
-                    .font(.caption.bold())
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                    .padding(.horizontal)
+            let total = tachesActives.count + tachesTerminees.count
+            let label = "\(total) tâche\(total > 1 ? "s" : "") liée\(total > 1 ? "s" : "")"
 
-                ForEach(tachesActives) { tache in
-                    NavigationLink {
-                        TacheDetailView(tache: tache, modelContext: modelContext)
-                    } label: {
-                        TaskRowView(tache: tache)
-                            .padding(.horizontal)
+            VStack(alignment: .leading, spacing: 0) {
+                DisclosureGroup(isExpanded: $tachesExpanded) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(tachesActives) { tache in
+                            NavigationLink {
+                                TacheDetailView(tache: tache, modelContext: modelContext)
+                            } label: {
+                                TaskRowView(tache: tache)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        if !tachesTerminees.isEmpty {
+                            ForEach(tachesTerminees) { tache in
+                                NavigationLink {
+                                    TacheDetailView(tache: tache, modelContext: modelContext)
+                                } label: {
+                                    TaskRowView(tache: tache)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
-                    .buttonStyle(.plain)
-                }
-
-                if !tachesTerminees.isEmpty {
-                    Text("TERMINÉES")
+                    .padding(.top, 8)
+                } label: {
+                    Text(label.uppercased())
                         .font(.caption.bold())
                         .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-
-                    ForEach(tachesTerminees) { tache in
-                        NavigationLink {
-                            TacheDetailView(tache: tache, modelContext: modelContext)
-                        } label: {
-                            TaskRowView(tache: tache)
-                                .padding(.horizontal)
-                        }
-                        .buttonStyle(.plain)
-                    }
                 }
             }
+            .padding(.horizontal)
         }
     }
 }

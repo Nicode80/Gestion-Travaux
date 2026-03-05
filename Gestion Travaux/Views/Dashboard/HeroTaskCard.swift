@@ -12,6 +12,7 @@ struct HeroTaskCard: View {
     let onLancer: () -> Void
     let onChanger: () -> Void
     let onCreer: () -> Void
+    var onVoirDetail: (() -> Void)? = nil
 
     var body: some View {
         if let tache {
@@ -25,20 +26,34 @@ struct HeroTaskCard: View {
 
     private func cardNormale(tache: TacheEntity) -> some View {
         VStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .center, spacing: 6) {
-                Text(tache.titre)
-                    .font(.title2.bold())
-                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                    .multilineTextAlignment(.center)
+            Button(action: { onVoirDetail?() }) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .center, spacing: 6) {
+                        Text(tache.titre)
+                            .font(.title2.bold())
+                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            .multilineTextAlignment(.center)
 
-                if let action = tache.prochaineAction, !action.isEmpty {
-                    Text(action)
-                        .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
+                        if let action = tache.prochaineAction, !action.isEmpty {
+                            Text(action)
+                                .font(.subheadline)
+                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .multilineTextAlignment(.center)
+                                .lineLimit(2)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    if onVoirDetail != nil {
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline)
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .padding(.top, 4)
+                    }
                 }
             }
+            .buttonStyle(.plain)
+            .disabled(onVoirDetail == nil)
 
             VStack(spacing: 10) {
                 Button(action: onLancer) {

@@ -341,14 +341,19 @@ final class ClassificationViewModel {
         }
     }
 
-    /// Marks the task as terminee. On failure the statut is rolled back and checkoutError is set.
+    /// Marks the task as terminee and clears prochaineAction (no pending action makes sense on a done task).
+    /// On failure, both mutations are rolled back and checkoutError is set.
     func markTaskAsTerminee(_ tache: TacheEntity) {
+        let ancienStatut = tache.statut
+        let ancienneProchaineAction = tache.prochaineAction
         tache.statut = .terminee
+        tache.prochaineAction = nil
         do {
             try modelContext.save()
             checkoutError = nil
         } catch {
-            tache.statut = .active
+            tache.statut = ancienStatut
+            tache.prochaineAction = ancienneProchaineAction
             checkoutError = "Impossible de terminer la tâche. Réessayez."
         }
     }

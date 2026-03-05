@@ -15,18 +15,10 @@ struct AchatRowView: View {
                 .font(.title3)
                 .foregroundStyle(achat.achete ? Color(hex: Constants.Couleurs.accent) : Color.secondary)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(achat.texte)
-                    .font(.body)
-                    .strikethrough(achat.achete, color: .secondary)
-                    .foregroundStyle(achat.achete ? Color.secondary : Color(hex: Constants.Couleurs.textePrimaire))
-
-                if let tache = achat.tacheOrigine {
-                    Text(tache.titre)
-                        .font(.caption)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                }
-            }
+            Text(achat.texte)
+                .font(.body)
+                .strikethrough(achat.achete, color: .secondary)
+                .foregroundStyle(achat.achete ? Color.secondary : Color(hex: Constants.Couleurs.textePrimaire))
         }
         .opacity(achat.achete ? 0.6 : 1.0)
         .frame(minHeight: 44) // NFR-U1

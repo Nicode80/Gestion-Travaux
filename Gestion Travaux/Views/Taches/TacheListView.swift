@@ -65,28 +65,35 @@ struct TacheListView: View {
         .navigationTitle("Tâches")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // [+] only in navigation mode
-            if onSelect == nil {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showCreation = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .accessibilityLabel("Créer une tâche")
-                    }
+            // [+] available in both modes — in selection mode it auto-selects the new task
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showCreation = true
+                } label: {
+                    Image(systemName: "plus")
+                        .accessibilityLabel("Créer une tâche")
                 }
             }
         }
         .sheet(isPresented: $showCreation) {
             TaskCreationView(
                 modelContext: modelContext,
-                onSuccess: { _ in
+                onSuccess: { nouvelleTache in
                     showCreation = false
-                    charger()
+                    if let onSelect {
+                        // Selection mode: auto-select the newly created task
+                        onSelect(nouvelleTache)
+                    } else {
+                        charger()
+                    }
                 },
-                onReprendreExistante: { _ in
+                onReprendreExistante: { tacheExistante in
                     showCreation = false
-                    charger()
+                    if let onSelect {
+                        onSelect(tacheExistante)
+                    } else {
+                        charger()
+                    }
                 }
             )
         }
