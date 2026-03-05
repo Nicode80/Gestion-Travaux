@@ -20,6 +20,8 @@ final class NoteSaisonViewModel {
     private(set) var isRecording: Bool = false
     private(set) var errorMessage: String? = nil
     private(set) var saved: Bool = false
+    /// Non-archived note found on load — nil means no active note exists.
+    private(set) var noteActive: NoteSaisonEntity? = nil
 
     var canSave: Bool {
         !texte.trimmingCharacters(in: .whitespaces).isEmpty && !saved
@@ -36,10 +38,23 @@ final class NoteSaisonViewModel {
         self.modelContext = modelContext
     }
 
-    // MARK: - Note creation
+    // MARK: - Load active note
+
+    /// Fetches the most recent non-archived note, if any.
+    func charger() {
+        let descriptor = FetchDescriptor<NoteSaisonEntity>(
+            predicate: #Predicate { !$0.archivee },
+            sortBy: [SortDescriptor(\NoteSaisonEntity.createdAt, order: .reverse)]
+        )
+        noteActive = (try? modelContext.fetch(descriptor))?.first
+        if let note = noteActive {
+            texte = note.texte
+        }
+    }
+
+    // MARK: - Note creation / modification
 
     /// Creates a new NoteSaisonEntity linked to the Maison singleton.
-    /// Each season creates a separate record — no overwriting.
     func createNote() {
         let trimmed = texte.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
@@ -55,9 +70,40 @@ final class NoteSaisonViewModel {
             note.maison = maison
             modelContext.insert(note)
             try modelContext.save()
+            noteActive = note
             saved = true
         } catch {
             errorMessage = "Impossible d'enregistrer la note. Réessayez."
+        }
+    }
+
+    /// Updates the text of the existing active note.
+    func modifierNote() {
+        guard let note = noteActive else { return }
+        let trimmed = texte.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        errorMessage = nil
+        note.texte = trimmed
+        do {
+            try modelContext.save()
+            saved = true
+        } catch {
+            note.texte = texte // rollback
+            errorMessage = "Impossible d'enregistrer les modifications. Réessayez."
+        }
+    }
+
+    /// Archives the active note then creates a new one.
+    func archiverEtCreerNouvelle() {
+        noteActive?.archivee = true
+        noteActive = nil
+        texte = ""
+        saved = false
+        errorMessage = nil
+        do {
+            try modelContext.save()
+        } catch {
+            errorMessage = "Impossible d'archiver la note. Réessayez."
         }
     }
 
