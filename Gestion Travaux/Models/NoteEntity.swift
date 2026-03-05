@@ -16,4 +16,13 @@ final class NoteEntity {
     var tache: TacheEntity?
 
     init() {}
+
+    // MARK: - Computed helpers (not persisted)
+
+    /// First text block content, used in compact displays.
+    var preview: String {
+        blocksData.toContentBlocks()
+            .first(where: { $0.type == .text && ($0.text?.isEmpty == false) })?
+            .text ?? ""
+    }
 }
