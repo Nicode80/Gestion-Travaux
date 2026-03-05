@@ -18,6 +18,7 @@ struct BriefingView: View {
     // Story 4.2: CaptureDetailView sheet for alerts and tips (FR46).
     @State private var showCaptureDetail = false
     @State private var captureDetailData: Data = Data()
+    @State private var captureDetailTitre: String = "Capture"
     // Story 4.3: ActiviteDetailView sheet — all tips for this activity.
     @State private var showActiviteDetail = false
 
@@ -84,7 +85,7 @@ struct BriefingView: View {
         .task { viewModel.load() }
         // Story 4.2: CaptureDetailView sheet — opened by tapping an alert or tip (FR46).
         .sheet(isPresented: $showCaptureDetail) {
-            CaptureDetailView(blocksData: captureDetailData)
+            CaptureDetailView(blocksData: captureDetailData, titre: captureDetailTitre)
         }
         // Story 4.3: Full activity tip sheet — all tips grouped by level.
         .sheet(isPresented: $showActiviteDetail) {
@@ -141,6 +142,7 @@ struct BriefingView: View {
                 ForEach(viewModel.alertesActives) { alerte in
                     Button {
                         captureDetailData = alerte.blocksData
+                        captureDetailTitre = "Alerte"
                         showCaptureDetail = true
                     } label: {
                         HStack(alignment: .top, spacing: 8) {
@@ -150,10 +152,8 @@ struct BriefingView: View {
                             Text(alerte.preview.isEmpty ? "Alerte (sans texte)" : alerte.preview)
                                 .font(.subheadline)
                                 .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .lineLimit(2)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .contentShape(Rectangle())
                     }
@@ -182,6 +182,7 @@ struct BriefingView: View {
                 ForEach(viewModel.astucesCritiques) { astuce in
                     Button {
                         captureDetailData = astuce.blocksData
+                        captureDetailTitre = "Astuce"
                         showCaptureDetail = true
                     } label: {
                         HStack(alignment: .top, spacing: 8) {
@@ -191,10 +192,8 @@ struct BriefingView: View {
                             Text(astuce.preview.isEmpty ? "Astuce (sans texte)" : astuce.preview)
                                 .font(.subheadline)
                                 .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .lineLimit(2)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .contentShape(Rectangle())
                     }

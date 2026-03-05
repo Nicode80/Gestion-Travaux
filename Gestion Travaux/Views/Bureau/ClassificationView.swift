@@ -19,6 +19,7 @@ struct ClassificationView: View {
     let onComplete: () -> Void
 
     @State private var viewModel: ClassificationViewModel
+    @State private var showRecap = false
 
     init(modelContext: ModelContext, onComplete: @escaping () -> Void) {
         self.modelContext = modelContext
@@ -50,7 +51,8 @@ struct ClassificationView: View {
 
             case .success:
                 if viewModel.captures.isEmpty {
-                    emptyState
+                    // C-fix: auto-navigate to RecapitulatifView — no intermediate screen.
+                    Color.clear.onAppear { showRecap = true }
                 } else {
                     swipeGameView
                 }
@@ -58,8 +60,12 @@ struct ClassificationView: View {
         }
         .navigationTitle("Débrief")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .onAppear { viewModel.charger() }
+        .navigationDestination(isPresented: $showRecap) {
+            RecapitulatifView(viewModel: viewModel, onComplete: onComplete)
+        }
         .alert(
             "Erreur de classification",
             isPresented: Binding(
@@ -106,31 +112,4 @@ struct ClassificationView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
     }
 
-    // MARK: - Empty state (Story 3.3 — all captures classified, navigate to RecapitulatifView)
-
-    private var emptyState: some View {
-        VStack(spacing: 16) {
-            Text("Tout est classé ✅")
-                .font(.title2.bold())
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-
-            Text("\(viewModel.summaryItems.count) capture\(viewModel.summaryItems.count == 1 ? "" : "s") traitée\(viewModel.summaryItems.count == 1 ? "" : "s")")
-                .font(.subheadline)
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-
-            NavigationLink {
-                RecapitulatifView(viewModel: viewModel, onComplete: onComplete)
-            } label: {
-                Text("Voir le récapitulatif")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color(hex: Constants.Couleurs.accent))
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal, 32)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 }
