@@ -89,6 +89,9 @@ struct RecapitulatifView: View {
                 }
                 .buttonStyle(.plain)
             }
+        } footer: {
+            Text("Tape sur une capture pour modifier sa classification.")
+                .font(.caption)
         }
     }
 

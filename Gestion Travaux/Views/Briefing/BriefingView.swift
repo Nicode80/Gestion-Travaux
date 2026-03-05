@@ -153,10 +153,7 @@ struct BriefingView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                                 .lineLimit(2)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .contentShape(Rectangle())
                     }
@@ -196,10 +193,7 @@ struct BriefingView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                                 .lineLimit(2)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .contentShape(Rectangle())
                     }

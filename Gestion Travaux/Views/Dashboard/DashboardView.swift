@@ -94,6 +94,15 @@ struct DashboardView: View {
                     // the dashboard — keeping tacheHero up to date after task creation/changes.
                     .onAppear { viewModel.charger() }
             }
+            // Flash-fix: opaque overlay hides Dashboard during the gap between
+            // ModeChantierView dismiss and ClassificationView push.
+            // pendingClassification is true from endSession() until onDismiss clears it.
+            .overlay {
+                if chantier.pendingClassification {
+                    Color(hex: Constants.Couleurs.backgroundBureau)
+                        .ignoresSafeArea()
+                }
+            }
             // fullScreenCover driven by ModeChantierState.sessionActive (Story 2.1)
             // onDismiss fires after the animation completes — ensures ClassificationView is pushed
             // only once ModeChantierView is fully gone (C3-fix: eliminates race condition).
