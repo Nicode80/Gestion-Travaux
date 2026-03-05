@@ -23,6 +23,9 @@ final class DashboardViewModel {
     /// Latest non-archived seasonal note, or nil if none exists.
     private(set) var activeSeasonNote: NoteSaisonEntity? = nil
 
+    /// Number of unchecked shopping items — drives the badge on the Liste de Courses row.
+    private(set) var nombreAchatsEnAttente: Int = 0
+
     var tacheHero: TacheEntity? { tachesActives.first }
 
     init(modelContext: ModelContext) {
@@ -61,6 +64,12 @@ final class DashboardViewModel {
                 )
             )
             activeSeasonNote = notes.first(where: { !$0.archivee })
+
+            // Story 5.1: count unchecked items for the shopping list badge.
+            let achats = try modelContext.fetch(
+                FetchDescriptor<AchatEntity>(predicate: #Predicate { !$0.achete })
+            )
+            nombreAchatsEnAttente = achats.count
 
             // Trigger season note display when ≥2-month gap is first detected (FR42).
             // The flag persists in UserDefaults so the card stays visible across consecutive

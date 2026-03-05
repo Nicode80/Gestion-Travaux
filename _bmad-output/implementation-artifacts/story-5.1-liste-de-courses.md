@@ -2,7 +2,7 @@
 story: "5.1"
 epic: 5
 title: "Liste de Courses — consultation et gestion"
-status: pending
+status: done
 frs: [FR38, FR39, FR40]
 nfrs: []
 ---
@@ -224,14 +224,52 @@ Bouton ou section dans `DashboardView` → navigation vers `ShoppingListView`. U
 
 ## Tasks
 
-- [ ] Créer `ViewModels/ShoppingListViewModel.swift` : `@Observable`, `load()`, `addItem()`, `toggleItem()`, `deleteItem()`
-- [ ] Créer `Views/Shopping/ShoppingListView.swift` : liste, champ ajout, swipe-to-delete, état vide
-- [ ] Créer `Views/Shopping/AchatRowView.swift` : texte barré si coché, tâche d'origine, date
-- [ ] Implémenter ajout manuel : TextField → AchatEntity sans tâche d'origine (FR38)
-- [ ] Implémenter toggle coché/décoché avec feedback haptique léger (FR39)
-- [ ] Implémenter swipe-to-delete avec `.alert` de confirmation (FR40)
-- [ ] Implémenter état vide : "Aucun achat à faire pour l'instant" + bouton [+ Ajouter un article]
-- [ ] Ajouter accès ShoppingListView depuis DashboardView (bouton ou section dédiée)
-- [ ] Vérifier que les AchatEntities créées via swipe game (Story 3.2) apparaissent bien avec leur tâche d'origine
-- [ ] Vérifier la persistance des articles cochés après fermeture de l'app
-- [ ] Créer `GestionTravauxTests/ViewModels/ShoppingListViewModelTests.swift`
+- [x] Créer `ViewModels/ShoppingListViewModel.swift` : `@Observable`, `load()`, `addItem()`, `toggleItem()`, `deleteItem()`
+- [x] Créer `Views/Shopping/ShoppingListView.swift` : liste, champ ajout, swipe-to-delete, état vide
+- [x] Créer `Views/Shopping/AchatRowView.swift` : texte barré si coché, tâche d'origine, date
+- [x] Implémenter ajout manuel : TextField → AchatEntity sans tâche d'origine (FR38)
+- [x] Implémenter toggle coché/décoché avec feedback haptique léger (FR39)
+- [x] Implémenter swipe-to-delete avec `.alert` de confirmation (FR40)
+- [x] Implémenter état vide : "Aucun achat à faire pour l'instant" + bouton [+ Ajouter un article]
+- [x] Ajouter accès ShoppingListView depuis DashboardView (bouton ou section dédiée)
+- [x] Vérifier que les AchatEntities créées via swipe game (Story 3.2) apparaissent bien avec leur tâche d'origine
+- [x] Vérifier la persistance des articles cochés après fermeture de l'app
+- [x] Créer `GestionTravauxTests/ViewModels/ShoppingListViewModelTests.swift`
+
+## Dev Agent Record
+
+### Implementation Plan
+
+1. Créé branche `feat/story-5.1-liste-de-courses`
+2. Mis à jour `AchatEntity` : ajout `achete: Bool = false` et `tacheOrigine: TacheEntity?`
+3. Mis à jour `ClassificationViewModel` : `achat.tacheOrigine = tache` dans `classify()` et `reclassify()` (swipe game)
+4. Créé `ShoppingListViewModel` : `@Observable @MainActor`, `load()`, `addItem()`, `toggleItem()`, `deleteItem()` + `ShoppingListError`
+5. Créé `AchatRowView` : texte barré, tâche d'origine, date relative, opacity 0.6 si coché
+6. Créé `ShoppingListView` : état vide `ContentUnavailableView`, liste avec swipe-to-delete, champ inline, alertes confirmation/erreur
+7. Mis à jour `DashboardViewModel` : `nombreAchatsEnAttente` pour le badge
+8. Mis à jour `DashboardView` : `NavigationLink → ShoppingListView` avec badge dans la section Explorer
+9. Créé `ShoppingListViewModelTests` : 12 tests couvrant load, addItem, toggleItem, deleteItem, tacheOrigine
+
+### Completion Notes
+
+Tous les ACs satisfaits. 13 nouveaux tests passent. Aucune régression sur la suite complète.
+`AchatEntity` étendu avec migration SwiftData légère (nouveaux champs optionnels/avec valeur par défaut).
+
+**Décision intentionnelle :** La date `createdAt` n'est pas affichée dans `AchatRowView` — choix explicite de Nico lors de la revue (2026-03-05). L'AC1 mentionne "avec la date d'ajout" mais l'utilisateur a jugé l'affichage superflu pour ce cas d'usage.
+
+## File List
+
+- `Gestion Travaux/Models/AchatEntity.swift` — modifié (+achete, +tacheOrigine)
+- `Gestion Travaux/ViewModels/ClassificationViewModel.swift` — modifié (achat.tacheOrigine = tache)
+- `Gestion Travaux/ViewModels/ShoppingListViewModel.swift` — créé
+- `Gestion Travaux/ViewModels/DashboardViewModel.swift` — modifié (+nombreAchatsEnAttente)
+- `Gestion Travaux/Views/Shopping/ShoppingListView.swift` — créé
+- `Gestion Travaux/Views/Shopping/AchatRowView.swift` — créé
+- `Gestion Travaux/Views/Dashboard/DashboardView.swift` — modifié (NavigationLink + badge)
+- `Gestion TravauxTests/ViewModels/ShoppingListViewModelTests.swift` — créé
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — modifié (in-progress → review)
+
+## Change Log
+
+- 2026-03-05 : Story 5.1 implémentée — Liste de Courses (FR38, FR39, FR40). Nouveau ViewModel + 2 Views + 12 tests.
+- 2026-03-05 : Revue de code — 5 corrections appliquées : ViewState<T> dans ShoppingListViewModel (MEDIUM), erreurs toggle/delete propagées vers errorMessage (HIGH), auto-focus TextField (MEDIUM), bouton Annuler dans addItemRow (MEDIUM), +1 test reload-after-add (LOW). Date dans AchatRowView intentionnellement omise.

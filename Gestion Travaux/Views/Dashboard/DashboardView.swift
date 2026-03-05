@@ -232,6 +232,29 @@ struct DashboardView: View {
                         .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
                 }
 
+                // Story 5.1: Liste de Courses — FR38, FR39, FR40.
+                NavigationLink {
+                    ShoppingListView(modelContext: modelContext)
+                } label: {
+                    HStack {
+                        Label("Liste de courses", systemImage: "cart.fill")
+                            .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                        Spacer()
+                        let nonAchetes = viewModel.nombreAchatsEnAttente
+                        if nonAchetes > 0 {
+                            Text("\(nonAchetes)")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color(hex: Constants.Couleurs.accent))
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+                .frame(minHeight: 44) // NFR-U1
+
                 // Story 4.4: Note de Saison creation (FR41).
                 Button {
                     showNoteSaison = true
