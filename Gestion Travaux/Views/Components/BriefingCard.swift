@@ -69,7 +69,7 @@ struct BriefingCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear { showAll = false }
         .sheet(item: $selectedAlerte) { alerte in
-            CaptureDetailView(blocksData: alerte.blocksData)
+            CaptureDetailView(blocksData: alerte.blocksData, titre: "Alerte")
         }
     }
 }

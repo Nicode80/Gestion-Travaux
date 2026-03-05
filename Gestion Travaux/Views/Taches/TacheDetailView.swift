@@ -98,10 +98,10 @@ struct TacheDetailView: View {
         .navigationTitle(tache.titre)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedAlerte) { alerte in
-            CaptureDetailView(blocksData: alerte.blocksData)
+            CaptureDetailView(blocksData: alerte.blocksData, titre: "Alerte")
         }
         .sheet(item: $selectedNote) { note in
-            CaptureDetailView(blocksData: note.blocksData)
+            CaptureDetailView(blocksData: note.blocksData, titre: "Note")
         }
     }
 

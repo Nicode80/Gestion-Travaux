@@ -53,7 +53,7 @@ struct AlerteRowView: View {
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showDetail) {
-            CaptureDetailView(blocksData: alerte.blocksData)
+            CaptureDetailView(blocksData: alerte.blocksData, titre: "Alerte")
         }
     }
 }

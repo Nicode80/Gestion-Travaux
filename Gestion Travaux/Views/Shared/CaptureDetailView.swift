@@ -10,6 +10,8 @@ import SwiftUI
 struct CaptureDetailView: View {
 
     let blocksData: Data
+    /// Display title shown in the navigation bar. Defaults to "Capture".
+    var titre: String = "Capture"
 
     private var contentBlocks: [ContentBlock] {
         blocksData.toContentBlocks().sorted { $0.order < $1.order }
@@ -48,7 +50,7 @@ struct CaptureDetailView: View {
                 }
             }
             .background(Color(hex: Constants.Couleurs.backgroundBureau))
-            .navigationTitle("Note originale")
+            .navigationTitle(titre)
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium, .large])

@@ -89,6 +89,13 @@ final class ModeChantierViewModel {
     /// Last raw partial text from the CURRENT recognition session (not combined with texteCommis).
     /// Saved into texteCommis at restart; avoids double-counting if transcription is already combined.
     private var dernierePartielle: String = ""
+    /// Order value for the ContentBlock text segment currently being built.
+    /// Advances after each photo so each speech segment gets its own block (INV1 fix).
+    private var currentTextBlockOrder: Int = 0
+    /// Full transcription at the moment the last photo was saved.
+    /// Used to strip the cumulative prefix from SFSpeechRecognizer results so only the new
+    /// segment text is written into the current text block (SFSpeech gives cumulative partials).
+    private var committedTextAtPhoto: String = ""
     /// Reusable haptic generator for photo confirmation — prepare() when camera opens, impactOccurred() on save (M5-fix).
     @ObservationIgnored private let haptiquePhoto = UIImpactFeedbackGenerator(style: .medium)
 
@@ -320,6 +327,8 @@ final class ModeChantierViewModel {
             captureEnCours = nil
             texteCommis = ""
             dernierePartielle = ""
+            currentTextBlockOrder = 0
+            committedTextAtPhoto = ""
         }
         if captureEnCours == nil {
             let capture = CaptureEntity()
@@ -335,16 +344,37 @@ final class ModeChantierViewModel {
             texteCommis = texteCommis.isEmpty ? dernierePartielle : texteCommis + " " + dernierePartielle
         }
         dernierePartielle = texte
-        // Update the text block in-place; keep all photo blocks untouched (Story 2.3).
         let texteComplet = texteCommis.isEmpty ? texte : texteCommis + " " + texte
-        var blocks = captureEnCours!.blocksData.toContentBlocks()
-        if let idx = blocks.firstIndex(where: { $0.type == .text }) {
-            blocks[idx].text = texteComplet
+
+        // INV1 fix: extract only the text spoken AFTER the last photo.
+        // SFSpeechRecognizer gives cumulative partials for the whole session, so we strip the
+        // prefix that was already committed when the photo was saved.
+        let segmentText: String
+        if committedTextAtPhoto.isEmpty {
+            segmentText = texteComplet
         } else {
-            // M2-fix: if photos already exist (taken before first text result), place text at an order
-            // strictly below the minimum photo order to avoid duplicate-0 collisions.
-            let textOrder = blocks.isEmpty ? 0 : (blocks.map(\.order).min() ?? 0) - 1
-            blocks.insert(ContentBlock(type: .text, text: texteComplet, order: textOrder), at: 0)
+            let prefixWithSpace = committedTextAtPhoto + " "
+            if texteComplet.hasPrefix(prefixWithSpace) {
+                segmentText = String(texteComplet.dropFirst(prefixWithSpace.count))
+            } else if texteComplet.count <= committedTextAtPhoto.count {
+                // Recognition hasn't yet moved past the committed prefix — nothing new yet.
+                segmentText = ""
+            } else {
+                // Prefix mismatch (e.g. hypothesis reset mid-segment) — use full text as fallback.
+                segmentText = texteComplet
+            }
+        }
+
+        // Update the text block for the current segment (identified by currentTextBlockOrder).
+        // Each speech segment between photos gets its own ContentBlock at a distinct order value.
+        var blocks = captureEnCours!.blocksData.toContentBlocks()
+        if segmentText.isEmpty {
+            // Nothing new yet — remove placeholder block if it was inserted prematurely.
+            blocks.removeAll { $0.order == currentTextBlockOrder && $0.type == .text }
+        } else if let idx = blocks.firstIndex(where: { $0.order == currentTextBlockOrder && $0.type == .text }) {
+            blocks[idx].text = segmentText
+        } else {
+            blocks.append(ContentBlock(type: .text, text: segmentText, order: currentTextBlockOrder))
         }
         captureEnCours!.blocksData = blocks.toData()
         do {
@@ -362,12 +392,21 @@ final class ModeChantierViewModel {
         let hasPhotos = blocks.contains { $0.type == .photo }
 
         if !transcription.isEmpty {
-            // Update text block, preserve photo blocks
+            // INV1 fix: update the CURRENT segment text block (not necessarily the first one).
             var updatedBlocks = blocks
-            if let idx = updatedBlocks.firstIndex(where: { $0.type == .text }) {
-                updatedBlocks[idx].text = transcription
+            let finalSegmentText: String
+            if committedTextAtPhoto.isEmpty {
+                finalSegmentText = transcription
             } else {
-                updatedBlocks.insert(ContentBlock(type: .text, text: transcription, order: 0), at: 0)
+                let withSpace = committedTextAtPhoto + " "
+                finalSegmentText = transcription.hasPrefix(withSpace)
+                    ? String(transcription.dropFirst(withSpace.count))
+                    : transcription
+            }
+            if let idx = updatedBlocks.firstIndex(where: { $0.order == currentTextBlockOrder && $0.type == .text }) {
+                updatedBlocks[idx].text = finalSegmentText
+            } else if !finalSegmentText.isEmpty {
+                updatedBlocks.append(ContentBlock(type: .text, text: finalSegmentText, order: currentTextBlockOrder))
             }
             capture.blocksData = updatedBlocks.toData()
             do {
@@ -395,6 +434,8 @@ final class ModeChantierViewModel {
         }
         texteCommis = ""
         dernierePartielle = ""
+        currentTextBlockOrder = 0
+        committedTextAtPhoto = ""
         captureEnCours = nil
     }
 
@@ -483,6 +524,11 @@ final class ModeChantierViewModel {
             captureEnCours!.blocksData = blocks.toData()
 
             try modelContext.save()
+
+            // INV1 fix: commit the current transcription as the prefix for the next text segment.
+            // Future speech will be placed in a new block AFTER this photo (order = nextOrder + 1).
+            committedTextAtPhoto = transcription
+            currentTextBlockOrder = nextOrder + 1
 
             // Haptic feedback — medium (NFR-U4); uses stored generator (prepare() called in prendrePhoto).
             haptiquePhoto.impactOccurred()

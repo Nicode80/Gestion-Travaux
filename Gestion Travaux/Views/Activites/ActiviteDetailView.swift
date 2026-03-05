@@ -112,7 +112,7 @@ struct ActiviteDetailView: View {
         .task { viewModel.load() }
         // FR37, FR46 — note originale complète
         .sheet(item: $selectedAstuce) { astuce in
-            CaptureDetailView(blocksData: astuce.blocksData)
+            CaptureDetailView(blocksData: astuce.blocksData, titre: "Astuce")
         }
     }
 
