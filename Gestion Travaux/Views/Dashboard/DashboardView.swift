@@ -98,9 +98,7 @@ struct DashboardView: View {
             // onDismiss fires after the animation completes — ensures ClassificationView is pushed
             // only once ModeChantierView is fully gone (C3-fix: eliminates race condition).
             .fullScreenCover(isPresented: $chantier.sessionActive, onDismiss: {
-                // Story 4.1: pop BriefingView so user lands back on Dashboard.
-                showBriefing = false
-                tachePourBriefing = nil
+                // showBriefing already cleared in lancerChantier (B-fix: avoids flash on dismiss).
                 if chantier.pendingClassification {
                     showClassification = true
                     chantier.pendingClassification = false
@@ -287,6 +285,10 @@ struct DashboardView: View {
     // MARK: - Actions
 
     private func lancerChantier(tache: TacheEntity) {
+        // B-fix: pop BriefingView immediately so the NavigationStack is already at Dashboard
+        // when fullScreenCover appears — avoids a flash of BriefingView on session end.
+        showBriefing = false
+        tachePourBriefing = nil
         viewModel.lancerChantier(tache: tache, chantier: chantier)
     }
 }

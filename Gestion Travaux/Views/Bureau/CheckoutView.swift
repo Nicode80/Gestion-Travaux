@@ -32,6 +32,7 @@ struct CheckoutView: View {
         }
         .navigationTitle("Check-out")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         // Confirmation alert before marking terminee (FR21)
         .alert("Marquer comme terminée ?", isPresented: $showTerminaisonAlert) {

@@ -35,6 +35,7 @@ struct RecapitulatifView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle("Récapitulatif")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .safeAreaInset(edge: .bottom) {
             validerButton
         }
