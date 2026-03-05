@@ -13,7 +13,7 @@ import NaturalLanguage
 
 final class BriefingEngine {
 
-    static let similarityThreshold: Double = 0.85
+    static let similarityThreshold: Double = 0.90
 
     private let similarityFn: (String, String) -> Double
 
@@ -42,7 +42,7 @@ final class BriefingEngine {
 
     // MARK: - Public API
 
-    /// Returns the best-matching candidate (original casing) and its similarity if ≥ 0.85.
+    /// Returns the best-matching candidate (original casing) and its similarity if ≥ 0.90.
     /// Exact case-insensitive matches are excluded — the caller handles those separately.
     /// Returns nil when input is empty, candidates is empty, or no match exceeds the threshold.
     func findSimilarEntity(name: String, candidates: [String]) -> (name: String, similarity: Double)? {

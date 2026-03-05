@@ -27,6 +27,8 @@ struct DashboardView: View {
     @State private var showCreation = false
     // Story 4.4: Note de Saison creation sheet (FR41).
     @State private var showNoteSaison = false
+    // QF1: direct access to TacheDetailView from the hero chevron.
+    @State private var showHeroDetail = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -80,6 +82,12 @@ struct DashboardView: View {
                     // Used by onReprendreExistante in TaskCreationView (task already exists)
                     .navigationDestination(for: TacheEntity.self) { tache in
                         TacheDetailView(tache: tache, modelContext: modelContext)
+                    }
+                    // QF1: hero chevron → TacheDetailView for the active task.
+                    .navigationDestination(isPresented: $showHeroDetail) {
+                        if let tache = viewModel.tacheHero {
+                            TacheDetailView(tache: tache, modelContext: modelContext)
+                        }
                     }
                     // IMPORTANT: onAppear inside the NavigationStack content (not on the stack
                     // itself) so that charger() re-fires every time the user navigates back to
@@ -186,14 +194,15 @@ struct DashboardView: View {
                         // Open TaskCreationView directly — on success, Hero updates
                         // and user stays on Dashboard (no TacheListView intermediary).
                         showCreation = true
-                    }
+                    },
+                    onVoirDetail: viewModel.tacheHero != nil ? { showHeroDetail = true } : nil
                 )
             }
             .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
 
-            // Story 4.1: BriefingCard — shown only when a hero task exists.
-            if let tache = viewModel.tacheHero {
+            // QF2: BriefingCard shown only when hero task has active alerts.
+            if let tache = viewModel.tacheHero, !tache.alertes.filter({ !$0.resolue }).isEmpty {
                 Section {
                     BriefingCard(tache: tache)
                 }
@@ -201,19 +210,12 @@ struct DashboardView: View {
                 .listRowBackground(Color.clear)
             }
 
-            // Browse section — enrichi Story 2.7 avec Tâches
-            Section("Explorer") {
+            // QF4: Explorer split into two sections — Chantier and Pratique.
+            Section("Chantier") {
                 NavigationLink {
                     TacheListView(modelContext: modelContext)
                 } label: {
                     Label("Tâches", systemImage: "checkmark.circle")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                }
-
-                NavigationLink {
-                    PieceListView(pieces: viewModel.pieces, modelContext: modelContext)
-                } label: {
-                    Label("Pièces", systemImage: "door.left.hand.open")
                         .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                 }
 
@@ -224,14 +226,15 @@ struct DashboardView: View {
                         .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                 }
 
-                // Story 4.2: Global alert view — one tap from Dashboard (FR46).
                 NavigationLink {
-                    AlerteListView(modelContext: modelContext)
+                    PieceListView(pieces: viewModel.pieces, modelContext: modelContext)
                 } label: {
-                    Label("Alertes", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                    Label("Pièces", systemImage: "door.left.hand.open")
+                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                 }
+            }
 
+            Section("Pratique") {
                 // Story 5.1: Liste de Courses — FR38, FR39, FR40.
                 NavigationLink {
                     ShoppingListView(modelContext: modelContext)
@@ -253,7 +256,14 @@ struct DashboardView: View {
                         }
                     }
                 }
-                .frame(minHeight: 44) // NFR-U1
+
+                // Story 4.2: Global alert view — one tap from Dashboard (FR46).
+                NavigationLink {
+                    AlerteListView(modelContext: modelContext)
+                } label: {
+                    Label("Alertes", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                }
 
                 // Story 4.4: Note de Saison creation (FR41).
                 Button {
@@ -262,7 +272,6 @@ struct DashboardView: View {
                     Label("Note de Saison", systemImage: "leaf.fill")
                         .foregroundStyle(Color.orange)
                 }
-                .frame(minHeight: 44) // NFR-U1
             }
         }
         .listStyle(.insetGrouped)

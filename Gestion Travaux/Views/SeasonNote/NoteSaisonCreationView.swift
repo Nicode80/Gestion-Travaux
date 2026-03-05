@@ -17,6 +17,7 @@ struct NoteSaisonCreationView: View {
 
     @State private var viewModel: NoteSaisonViewModel
     @State private var showConfirmation = false
+    @State private var showArchiverAlert = false
 
     init(modelContext: ModelContext, onSave: @escaping () -> Void) {
         self.modelContext = modelContext
@@ -36,6 +37,20 @@ struct NoteSaisonCreationView: View {
                     }
                 }
                 submitSection
+                // "Archiver et créer une nouvelle" — only shown when editing an existing note
+                if viewModel.noteActive != nil {
+                    Section {
+                        Button(role: .destructive) {
+                            showArchiverAlert = true
+                        } label: {
+                            Label("Archiver et créer une nouvelle note", systemImage: "archivebox")
+                                .frame(maxWidth: .infinity)
+                        }
+                    } footer: {
+                        Text("La note actuelle sera archivée et tu pourras en rédiger une nouvelle.")
+                            .font(.caption)
+                    }
+                }
                 archivesSection
             }
             .scrollContentBackground(.hidden)
@@ -49,11 +64,15 @@ struct NoteSaisonCreationView: View {
                         dismiss()
                     }
                 }
-                ToolbarItem(placement: .primaryAction) {
-                    micButton
+                // Mic only in creation mode — in edit mode use the iOS keyboard mic instead
+                if viewModel.noteActive == nil {
+                    ToolbarItem(placement: .primaryAction) {
+                        micButton
+                    }
                 }
             }
         }
+        .task { viewModel.charger() }
         .onDisappear {
             viewModel.stopVoiceInput()
         }
@@ -67,6 +86,14 @@ struct NoteSaisonCreationView: View {
             }
         } message: {
             Text("Elle s'affichera à ta prochaine reprise après une longue absence.")
+        }
+        .alert("Archiver la note actuelle ?", isPresented: $showArchiverAlert) {
+            Button("Archiver et créer une nouvelle", role: .destructive) {
+                viewModel.archiverEtCreerNouvelle()
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("La note actuelle sera archivée. Tu pourras ensuite en rédiger une nouvelle.")
         }
     }
 
@@ -88,13 +115,22 @@ struct NoteSaisonCreationView: View {
     private var submitSection: some View {
         Section {
             Button {
-                viewModel.createNote()
+                if viewModel.noteActive != nil {
+                    viewModel.modifierNote()
+                } else {
+                    viewModel.createNote()
+                }
             } label: {
-                Text("Enregistrer")
+                Text(viewModel.noteActive != nil ? "Enregistrer les modifications" : "Enregistrer")
                     .frame(maxWidth: .infinity)
                     .font(.headline)
             }
             .disabled(!viewModel.canSave)
+        } footer: {
+            if viewModel.noteActive == nil {
+                Text("Elle s'affichera à ta prochaine reprise après une longue absence.")
+                    .font(.caption)
+            }
         }
     }
 

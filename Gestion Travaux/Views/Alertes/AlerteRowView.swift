@@ -48,10 +48,6 @@ struct AlerteRowView: View {
                 }
 
                 Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
             }
             .contentShape(Rectangle())
         }
