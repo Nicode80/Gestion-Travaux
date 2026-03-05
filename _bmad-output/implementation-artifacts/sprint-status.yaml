@@ -81,11 +81,12 @@ development_status:
   4-2-vue-globale-des-alertes-et-drill-down-note-originale: done
   4-3-fiches-activites-astuces-accumulees-par-niveau: done
   4-4-note-de-saison-message-au-futur-soi: done
-  epic-4-retrospective: optional
+  4-5-archives-notes-de-saison: done
+  epic-4-retrospective: done
 
   # ─────────────────────────────────────────────────────
   # Epic 5 : Liste de Courses
   # ─────────────────────────────────────────────────────
   epic-5: in-progress
-  5-1-liste-de-courses-consultation-et-gestion: ready-for-dev
+  5-1-liste-de-courses-consultation-et-gestion: review
   epic-5-retrospective: optional

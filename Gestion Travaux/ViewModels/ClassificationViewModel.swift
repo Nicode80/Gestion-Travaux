@@ -199,6 +199,7 @@ final class ClassificationViewModel {
                     return
                 }
                 let achat = AchatEntity(texte: capture.transcription)
+                achat.tacheOrigine = tache
                 achat.listeDeCourses = ldc
                 modelContext.insert(achat)
                 summaryEntity = .achat(achat)
@@ -270,6 +271,7 @@ final class ClassificationViewModel {
                     .compactMap { $0.text }
                     .joined(separator: " ")
                 let achat = AchatEntity(texte: transcription)
+                achat.tacheOrigine = item.tache
                 achat.listeDeCourses = ldc
                 modelContext.insert(achat)
                 newEntity = .achat(achat)
