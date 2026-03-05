@@ -2,7 +2,7 @@
 story: "5.1"
 epic: 5
 title: "Liste de Courses — consultation et gestion"
-status: review
+status: done
 frs: [FR38, FR39, FR40]
 nfrs: []
 ---
@@ -252,8 +252,10 @@ Bouton ou section dans `DashboardView` → navigation vers `ShoppingListView`. U
 
 ### Completion Notes
 
-Tous les ACs satisfaits. 12 nouveaux tests passent. Aucune régression sur la suite complète.
+Tous les ACs satisfaits. 13 nouveaux tests passent. Aucune régression sur la suite complète.
 `AchatEntity` étendu avec migration SwiftData légère (nouveaux champs optionnels/avec valeur par défaut).
+
+**Décision intentionnelle :** La date `createdAt` n'est pas affichée dans `AchatRowView` — choix explicite de Nico lors de la revue (2026-03-05). L'AC1 mentionne "avec la date d'ajout" mais l'utilisateur a jugé l'affichage superflu pour ce cas d'usage.
 
 ## File List
 
@@ -270,3 +272,4 @@ Tous les ACs satisfaits. 12 nouveaux tests passent. Aucune régression sur la su
 ## Change Log
 
 - 2026-03-05 : Story 5.1 implémentée — Liste de Courses (FR38, FR39, FR40). Nouveau ViewModel + 2 Views + 12 tests.
+- 2026-03-05 : Revue de code — 5 corrections appliquées : ViewState<T> dans ShoppingListViewModel (MEDIUM), erreurs toggle/delete propagées vers errorMessage (HIGH), auto-focus TextField (MEDIUM), bouton Annuler dans addItemRow (MEDIUM), +1 test reload-after-add (LOW). Date dans AchatRowView intentionnellement omise.

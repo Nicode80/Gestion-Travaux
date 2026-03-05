@@ -13,6 +13,7 @@ final class ShoppingListViewModel {
 
     private let modelContext: ModelContext
 
+    private(set) var viewState: ViewState<Void> = .idle
     private(set) var achats: [AchatEntity] = []
 
     init(modelContext: ModelContext) {
@@ -22,10 +23,16 @@ final class ShoppingListViewModel {
     // MARK: - Data loading
 
     func load() {
-        let descriptor = FetchDescriptor<AchatEntity>(
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        achats = (try? modelContext.fetch(descriptor)) ?? []
+        if case .idle = viewState { viewState = .loading }
+        do {
+            let descriptor = FetchDescriptor<AchatEntity>(
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            )
+            achats = try modelContext.fetch(descriptor)
+            viewState = .success(())
+        } catch {
+            viewState = .failure("Impossible de charger la liste de courses. Réessayez.")
+        }
     }
 
     // MARK: - FR38 — Ajout manuel

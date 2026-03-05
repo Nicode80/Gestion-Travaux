@@ -231,6 +231,24 @@ struct ShoppingListViewModelTests {
         #expect(vm.achats.isEmpty)
     }
 
+    // MARK: load() reload-after-add
+
+    @Test("load() after multiple addItem() calls returns all items with correct count")
+    func loadAfterMultipleAdds() throws {
+        let context = try makeContextWithLDC()
+        let vm = ShoppingListViewModel(modelContext: context)
+
+        try vm.addItem(texte: "Vis")
+        try vm.addItem(texte: "Écrous")
+        try vm.addItem(texte: "Rondelles")
+
+        // Reload from a fresh ViewModel on the same context
+        let vm2 = ShoppingListViewModel(modelContext: context)
+        vm2.load()
+
+        #expect(vm2.achats.count == 3)
+    }
+
     // MARK: tacheOrigine (swipe game integration)
 
     @Test("AchatEntity created via swipe game retains tacheOrigine")

@@ -3,6 +3,7 @@
 //
 // Story 5.1: Centralized shopping list — browse, add manually (FR38), toggle (FR39), delete (FR40).
 // Displays task of origin for items created via the swipe game (Story 3.2).
+// Note: createdAt date intentionally omitted from AchatRowView per user decision.
 
 import SwiftUI
 import SwiftData
@@ -14,6 +15,7 @@ struct ShoppingListView: View {
     @State private var newItemText = ""
     @State private var itemToDelete: AchatEntity?
     @State private var errorMessage: String?
+    @FocusState private var isAddFieldFocused: Bool
 
     init(modelContext: ModelContext) {
         _viewModel = State(initialValue: ShoppingListViewModel(modelContext: modelContext))
@@ -21,10 +23,32 @@ struct ShoppingListView: View {
 
     var body: some View {
         Group {
-            if viewModel.achats.isEmpty && !showAddField {
-                emptyState
-            } else {
-                listContent
+            switch viewModel.viewState {
+            case .idle, .loading:
+                ProgressView("Chargement…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            case .failure(let message):
+                VStack(spacing: 16) {
+                    Image(systemName: "cart.badge.questionmark")
+                        .font(.largeTitle)
+                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                    Text(message)
+                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                        .multilineTextAlignment(.center)
+                    Button("Réessayer") { viewModel.load() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Color(hex: Constants.Couleurs.accent))
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            case .success:
+                if viewModel.achats.isEmpty && !showAddField {
+                    emptyState
+                } else {
+                    listContent
+                }
             }
         }
         .navigationTitle("Liste de courses")
@@ -46,7 +70,11 @@ struct ShoppingListView: View {
         )) {
             Button("Supprimer", role: .destructive) {
                 if let item = itemToDelete {
-                    try? viewModel.deleteItem(item)
+                    do {
+                        try viewModel.deleteItem(item)
+                    } catch {
+                        errorMessage = error.localizedDescription
+                    }
                 }
                 itemToDelete = nil
             }
@@ -61,6 +89,9 @@ struct ShoppingListView: View {
             Text(errorMessage ?? "")
         }
         .task { viewModel.load() }
+        .onChange(of: showAddField) { _, newValue in
+            if newValue { isAddFieldFocused = true }
+        }
     }
 
     // MARK: - Empty state
@@ -92,7 +123,11 @@ struct ShoppingListView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        try? viewModel.toggleItem(achat)
+                        do {
+                            try viewModel.toggleItem(achat)
+                        } catch {
+                            errorMessage = error.localizedDescription
+                        }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
@@ -113,10 +148,19 @@ struct ShoppingListView: View {
     private var addItemRow: some View {
         HStack {
             TextField("Nom de l'article…", text: $newItemText)
+                .focused($isAddFieldFocused)
                 .submitLabel(.done)
                 .onSubmit { submitNewItem() }
             Button("Ajouter") { submitNewItem() }
                 .disabled(newItemText.trimmingCharacters(in: .whitespaces).isEmpty)
+            Button {
+                showAddField = false
+                newItemText = ""
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
         }
     }
 
