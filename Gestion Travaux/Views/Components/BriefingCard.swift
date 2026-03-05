@@ -45,13 +45,9 @@ struct BriefingCard: View {
                 }
                 .buttonStyle(.plain)
 
-                if index < visibles.count - 1 || (!showAll && restantes > 0) {
-                    Divider().padding(.leading, 44)
-                }
             }
 
             if restantes > 0 {
-                Divider().padding(.leading, 44)
                 Button {
                     showAll.toggle()
                 } label: {
@@ -69,7 +65,7 @@ struct BriefingCard: View {
             }
         }
         .padding(.vertical, 4)
-        .background(Color(hex: Constants.Couleurs.backgroundCard))
+        .background(Color(hex: Constants.Couleurs.alerte).opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear { showAll = false }
         .sheet(item: $selectedAlerte) { alerte in

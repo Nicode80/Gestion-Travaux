@@ -25,12 +25,12 @@ struct HeroTaskCard: View {
     // MARK: - Card normale
 
     private func cardNormale(tache: TacheEntity) -> some View {
-        VStack(alignment: .center, spacing: 16) {
+        VStack(alignment: .center, spacing: 12) {
             Button(action: { onVoirDetail?() }) {
                 HStack(alignment: .top) {
                     VStack(alignment: .center, spacing: 6) {
                         Text(tache.titre)
-                            .font(.title2.bold())
+                            .font(.title3.bold())
                             .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
                             .multilineTextAlignment(.center)
 
@@ -68,26 +68,30 @@ struct HeroTaskCard: View {
 
             VStack(spacing: 10) {
                 Button(action: onLancer) {
-                    Label("Lancer le mode chantier", systemImage: "hammer.fill")
+                    Label("Mode Chantier", systemImage: "hammer.fill")
+                        .font(.headline.bold())
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                        .background(Color(hex: Constants.Couleurs.accent))
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .shadow(color: Color(hex: Constants.Couleurs.accent).opacity(0.4), radius: 6, x: 0, y: 3)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Color(hex: Constants.Couleurs.accent))
-                .frame(minHeight: 60)
+                .buttonStyle(.plain)
                 .accessibilityLabel("Lancer le mode chantier")
 
                 Button(action: onChanger) {
-                    Label("Changer de tâche", systemImage: "arrow.2.squarepath")
+                    Label("Changer de tâche", systemImage: "rectangle.2.swap")
                         .font(.subheadline)
                         .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
                 }
                 .buttonStyle(.plain)
-                .frame(minHeight: 60)
+                .frame(minHeight: 44)
                 .accessibilityLabel("Changer de tâche")
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(20)
+        .padding(16)
         .background(Color(hex: Constants.Couleurs.backgroundCard))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
