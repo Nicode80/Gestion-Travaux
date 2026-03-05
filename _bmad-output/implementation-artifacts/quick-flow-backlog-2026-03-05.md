@@ -48,10 +48,9 @@ puis reset complet de l'app pour tester le Mode Chantier ContentBlock.
 - Solution : reduire la hauteur, rendre plus compact tout en gardant les infos essentielles
 - Fichiers concernes : `DashboardView.swift`, composant hero
 
-**QF4 — Reorganiser la section "Explorer" (Dashboard)**
-- Probleme : Explorer est fourre-tout (tache, piece, activite, alerte, liste de courses, note de saison)
-- Solution : proposer une organisation plus claire — a definir avec l'agent en session (groupes, icons, ordre)
-- Fichiers concernes : `DashboardView.swift`
+**QF4 — Reorganiser la section "Explorer" (Dashboard)** ✅ FAIT — commit fb68f25
+- Section "Chantier" (Taches, Activites, Pieces) + section "Pratique" (Liste de courses, Alertes, Note de Saison)
+- Fichiers : `DashboardView.swift`
 
 **QF5 — Ameliorer TacheDetailView : remplacer compteurs par contenu**
 - Probleme actuel : la page affiche "Captures : 3 / Alertes : 2 / Notes : 1" — des chiffres inutiles
@@ -77,11 +76,8 @@ puis reset complet de l'app pour tester le Mode Chantier ContentBlock.
 
 ### PRIORITE BASSE — Detail & Affinement
 
-**QF6 — Recalibrer le seuil de detection de doublons (creation de tache)**
-- Probleme : trop strict — "Chambre EA Parquet" vs "Chambre EA Paco" declenche un faux positif
-- L'objectif etait de detecter des typos ("Paco" vs "Parquet"), pas des activites differentes
-- Solution : affiner le seuil ou l'algorithme de comparaison
-- Fichiers concernes : `TaskCreationViewModel.swift` (logique de detection doublon)
+**QF6 — Recalibrer le seuil de detection de doublons (creation de tache)** ✅ FAIT — commit 0629f06
+- Seuil 0.85 -> 0.90. Fichier : `BriefingEngine.swift`
 
 **QF10 — Taches liees dans FicheActivite : rendre collapsible**
 - Probleme : les taches liees prennent de la place alors que les astuces sont le contenu principal
@@ -93,12 +89,16 @@ puis reset complet de l'app pour tester le Mode Chantier ContentBlock.
 
 ## Investigation separee (apres Quick Flow)
 
-**INV1 — ContentBlock : ordre texte + photo dans les captures**
-- Symptome suspecte : apres une session texte -> photo -> texte -> photo, le rendu montre
-  texte1+texte2+texte3 groupes + photos a la fin, au lieu de texte1 / photo1 / texte2 / photo2
-- Test a faire : reset complet de l'app, session Mode Chantier controlee, verifier le rendu dans ClassificationView
-- Si confirme : investigation dans `AudioEngine.swift` / assemblage des `ContentBlock`
-- Complexite estimee : potentiellement elevee (logique de streaming audio + blocs)
+**INV1 — ContentBlock : ordre texte + photo dans les captures** ✅ FAIT — commit db0688f
+- Bug confirme et corrige. Voir `quick-flow-session-retro-2026-03-05.md` pour le detail technique.
+
+**Corrections UX post-test device** ✅ FAITES — commits 8fa1488, 0927ae6, 9681c3f
+- BriefingView : suppression chevrons trompeurs, lineLimit(2) sur previews alertes/astuces
+- DashboardView : overlay anti-flash (pendingClassification) en sortie de Mode Chantier
+- ClassificationView : auto-navigation vers RecapitulatifView (plus de page intermediaire)
+- Flux debrief : navigationBarBackButtonHidden(true) sur Classification + Recapitulatif + Checkout
+- RecapitulatifView : hint footer "Tape sur une capture pour modifier sa classification."
+- CaptureDetailView : parametre `titre` contextuel (Alerte / Astuce / Note)
 
 ---
 
