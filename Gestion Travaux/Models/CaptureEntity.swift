@@ -20,9 +20,6 @@ final class CaptureEntity {
 
     var tache: TacheEntity?
 
-    /// Whether this capture has been classified (Story 3.1+). Defaults to false.
-    var classifiee: Bool = false
-
     init() {}
 
     // MARK: - Computed helpers (not persisted)

@@ -3,7 +3,6 @@
 //
 // Provides NLP utilities:
 // – findSimilarEntity: fuzzy duplicate detection via NLEmbedding (Story 1.3)
-// Briefing generation logic (Story 4.1) will be added here as a second step.
 //
 // DESIGN: the similarity function is injected at init for testability.
 // Production uses NLEmbedding(french); tests inject a deterministic lambda.

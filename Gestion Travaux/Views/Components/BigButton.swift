@@ -25,8 +25,7 @@ struct BigButton: View {
     let state: BigButtonState
     let action: () -> Void
 
-    /// Scale driven by AVAudioRecorder.averagePower at ~60 fps (Story 2.2).
-    /// Fixed at 1.0 in this story.
+    /// Scale driven by audioEngine.averagePower at ~60 fps via ModeChantierViewModel.pulseTimer.
     var pulseScale: CGFloat = 1.0
 
     // MARK: Private helpers

@@ -46,7 +46,6 @@ final class ShoppingListViewModel {
         }
 
         let achat = AchatEntity(texte: trimmed)
-        achat.achete = false
         achat.listeDeCourses = ldc
         // tacheOrigine stays nil — manual entry has no associated task
         modelContext.insert(achat)

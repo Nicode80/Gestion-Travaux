@@ -1,7 +1,7 @@
 // ClassificationViewModel.swift
 // Gestion Travaux
 //
-// Story 3.1: Loads CaptureEntities where classifiee == false, sorted chronologically.
+// Story 3.1: Loads all CaptureEntities sorted chronologically (deleted on classification).
 // Tracks total / remaining counts for the progress bar (Story 3.1 AC3).
 // Story 3.2: classify(_:as:) routes each ClassificationType to the appropriate entity
 //            creation, deletes the source CaptureEntity, and reloads (NFR-R5: ≤100ms save).
@@ -137,7 +137,6 @@ final class ClassificationViewModel {
         if case .idle = viewState { viewState = .loading }
         do {
             let descriptor = FetchDescriptor<CaptureEntity>(
-                predicate: #Predicate { $0.classifiee == false },
                 sortBy: [SortDescriptor(\.createdAt, order: .forward)]
             )
             let loaded = try modelContext.fetch(descriptor)
@@ -310,9 +309,7 @@ final class ClassificationViewModel {
     /// Sets validationError with the appropriate message on failure so the view can show the right alert.
     func validateClassifications() -> Bool {
         do {
-            let remaining = try modelContext.fetch(
-                FetchDescriptor<CaptureEntity>(predicate: #Predicate { !$0.classifiee })
-            )
+            let remaining = try modelContext.fetch(FetchDescriptor<CaptureEntity>())
             if remaining.isEmpty {
                 validationError = nil
                 return true
@@ -402,6 +399,7 @@ final class ClassificationViewModel {
 
         let req = SFSpeechAudioBufferRecognitionRequest()
         req.shouldReportPartialResults = true
+        req.requiresOnDeviceRecognition = true  // offline-first — never send audio to Apple servers (NFR-R3)
         voiceAudio.request = req
 
         let audioState = voiceAudio

@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 
 @Observable
+@MainActor
 final class AlerteListViewModel {
 
     private let modelContext: ModelContext

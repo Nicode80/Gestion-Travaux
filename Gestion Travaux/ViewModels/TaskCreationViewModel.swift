@@ -265,6 +265,7 @@ final class TaskCreationViewModel {
 
         let req = SFSpeechAudioBufferRecognitionRequest()
         req.shouldReportPartialResults = true
+        req.requiresOnDeviceRecognition = true  // offline-first — never send audio to Apple servers (NFR-R3)
         audio.request = req
 
         // Capture audio container for the detached task (AudioState is @unchecked Sendable)
