@@ -543,4 +543,107 @@ struct CheckoutViewModelTests {
         // tacheCourante must be Tache B — the task active at end of session
         #expect(vm.tacheCourante?.titre == tacheB.titre)
     }
+
+    // MARK: - saveProchaineAction — duplicate ToDo detection (exact match)
+
+    @Test("saveProchaineAction sets alreadyUrgent when exact same title already urgent")
+    func saveProchaineActionExactMatchAlreadyUrgent() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Salon")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Salon — Peinture")
+        tache.piece = piece
+        context.insert(tache)
+
+        // Pre-existing urgent ToDo with the exact same title
+        let existing = ToDoEntity(titre: "Repeindre le plafond", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "Repeindre le plafond"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .alreadyUrgent(let todo, let titre) = vm.pendingToDoDecision else {
+            Issue.record("Expected .alreadyUrgent, got \(String(describing: vm.pendingToDoDecision))")
+            return
+        }
+        #expect(todo.id == existing.id)
+        #expect(titre == "Repeindre le plafond")
+    }
+
+    @Test("saveProchaineAction sets alreadyUrgent for case-insensitive exact match")
+    func saveProchaineActionExactMatchCaseInsensitive() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Cuisine")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Cuisine — Carrelage")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Poser le carrelage", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "poser le carrelage"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .alreadyUrgent = vm.pendingToDoDecision else {
+            Issue.record("Expected .alreadyUrgent for case-insensitive match")
+            return
+        }
+    }
+
+    @Test("saveProchaineAction sets upgradeToUrgent for exact match not yet urgent")
+    func saveProchaineActionExactMatchNotUrgent() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Buanderie")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Buanderie — Plomberie")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Réparer la fuite", priorite: .bientot, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "Réparer la fuite"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .upgradeToUrgent = vm.pendingToDoDecision else {
+            Issue.record("Expected .upgradeToUrgent for bientot exact match")
+            return
+        }
+    }
+
+    @Test("saveProchaineAction creates new ToDo when no match found")
+    func saveProchaineActionNoMatchCreatesToDo() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Chambre")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Chambre — Peinture")
+        tache.piece = piece
+        context.insert(tache)
+        try context.save()
+
+        vm.prochaineActionInput = "Peindre les murs"
+        vm.saveProchaineAction(for: tache)
+
+        #expect(vm.pendingToDoDecision == nil)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.count == 1)
+        #expect(todos[0].titre == "Peindre les murs")
+        #expect(todos[0].priorite == .urgent)
+    }
 }

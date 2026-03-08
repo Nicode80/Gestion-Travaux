@@ -428,16 +428,22 @@ final class ClassificationViewModel {
         pendingToDoDecision = nil
     }
 
-    /// Finds a semantically similar non-archived ToDo in the same piece using NLEmbedding (Story 6.1).
-    /// Distance ≤ 0.20 ≈ cosine similarity ≥ 0.80. Returns nil if NLEmbedding unavailable (e.g. simulator).
+    /// Finds a semantically similar non-archived ToDo in the same piece (Story 6.1).
+    /// 1. Exact match (case-insensitive) — always works, simulator-safe.
+    /// 2. NLEmbedding semantic similarity (distance ≤ 0.20) — device only, nil-safe.
     private func findSimilarToDo(titre: String, piece: PieceEntity) -> ToDoEntity? {
         guard let allTodos = try? modelContext.fetch(FetchDescriptor<ToDoEntity>(
             predicate: #Predicate { !$0.isArchived }
         )) else { return nil }
         let todosForPiece = allTodos.filter { $0.piece?.id == piece.id }
         guard !todosForPiece.isEmpty else { return nil }
+        let titreNorm = titre.lowercased().trimmingCharacters(in: .whitespaces)
+        // Pass 1: exact match (always reliable)
+        if let exact = todosForPiece.first(where: { $0.titre.lowercased().trimmingCharacters(in: .whitespaces) == titreNorm }) {
+            return exact
+        }
+        // Pass 2: semantic similarity via NLEmbedding (may be nil on simulator)
         guard let embedding = NLEmbedding.wordEmbedding(for: .french) else { return nil }
-        let titreNorm = titre.lowercased()
         return todosForPiece.first { todo in
             embedding.distance(between: titreNorm, and: todo.titre.lowercased()) <= 0.20
         }
