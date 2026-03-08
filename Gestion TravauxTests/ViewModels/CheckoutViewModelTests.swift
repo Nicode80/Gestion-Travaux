@@ -599,6 +599,56 @@ struct CheckoutViewModelTests {
         }
     }
 
+    @Test("saveProchaineAction detects match when article omitted (fixer rails == fixer les rails)")
+    func saveProchaineActionArticleOmitted() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Couloir")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Couloir — Rail")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Fixer les rails", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "fixer rails"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .alreadyUrgent = vm.pendingToDoDecision else {
+            Issue.record("Expected .alreadyUrgent — 'fixer rails' should match 'fixer les rails'")
+            return
+        }
+    }
+
+    @Test("saveProchaineAction does NOT match genuinely different items (poser vs fixer)")
+    func saveProchaineActionDifferentItemsNotMatched() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Couloir")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Couloir — Rail")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Poser les rails", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "fixer rails"
+        vm.saveProchaineAction(for: tache)
+
+        // "poser" and "fixer" are different actions → should NOT be detected as duplicate
+        #expect(vm.pendingToDoDecision == nil)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.count == 2)
+    }
+
     @Test("saveProchaineAction sets upgradeToUrgent for exact match not yet urgent")
     func saveProchaineActionExactMatchNotUrgent() throws {
         let container = try makeContainer()

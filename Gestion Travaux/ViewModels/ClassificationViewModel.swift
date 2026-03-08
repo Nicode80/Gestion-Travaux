@@ -12,7 +12,6 @@
 
 import Foundation
 import SwiftData
-import NaturalLanguage
 @preconcurrency import Speech
 @preconcurrency import AVFoundation
 
@@ -428,25 +427,55 @@ final class ClassificationViewModel {
         pendingToDoDecision = nil
     }
 
+    /// French stop words stripped before token comparison (articles, common prepositions).
+    private static let stopWordsFr: Set<String> = [
+        "le", "la", "les", "l", "un", "une", "des", "du", "de", "d",
+        "au", "aux", "en", "dans", "sur", "sous", "avec", "pour", "par",
+        "a", "et", "ou", "ce", "se", "sa", "son", "ses", "y", "ma", "mon"
+    ]
+
+    /// Lowercases, strips diacritics, removes stop words, returns meaningful tokens.
+    private static func normaliserTokens(_ text: String) -> Set<String> {
+        let base = text
+            .lowercased()
+            .folding(options: .diacriticInsensitive, locale: .current)
+        let tokens = base.components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { $0.count > 1 }
+        return Set(tokens.filter { !stopWordsFr.contains($0) })
+    }
+
+    /// True if two titles are similar enough to be considered duplicates.
+    /// Pass 1: exact match (case-insensitive, diacritics-insensitive).
+    /// Pass 2: Jaccard ≥ 0.70 on meaningful tokens (handles "fixer les rails" == "fixer rails").
+    /// Pass 3: Jaro-Winkler ≥ 0.88 on sorted tokens joined (handles typos / reordering).
+    private static func titresSimilaires(_ a: String, _ b: String) -> Bool {
+        let normA = a.lowercased().folding(options: .diacriticInsensitive, locale: .current)
+            .trimmingCharacters(in: .whitespaces)
+        let normB = b.lowercased().folding(options: .diacriticInsensitive, locale: .current)
+            .trimmingCharacters(in: .whitespaces)
+        if normA == normB { return true }
+
+        let tokA = normaliserTokens(a)
+        let tokB = normaliserTokens(b)
+        guard !tokA.isEmpty, !tokB.isEmpty else { return false }
+
+        let intersection = tokA.intersection(tokB)
+        let jaccard = Double(intersection.count) / Double(tokA.union(tokB).count)
+        if jaccard >= 0.70 { return true }
+
+        let joinA = tokA.sorted().joined(separator: " ")
+        let joinB = tokB.sorted().joined(separator: " ")
+        return BriefingEngine.jaroWinklerSimilarity(joinA, joinB) >= 0.88
+    }
+
     /// Finds a semantically similar non-archived ToDo in the same piece (Story 6.1).
-    /// 1. Exact match (case-insensitive) — always works, simulator-safe.
-    /// 2. NLEmbedding semantic similarity (distance ≤ 0.20) — device only, nil-safe.
     private func findSimilarToDo(titre: String, piece: PieceEntity) -> ToDoEntity? {
         guard let allTodos = try? modelContext.fetch(FetchDescriptor<ToDoEntity>(
             predicate: #Predicate { !$0.isArchived }
         )) else { return nil }
         let todosForPiece = allTodos.filter { $0.piece?.id == piece.id }
         guard !todosForPiece.isEmpty else { return nil }
-        let titreNorm = titre.lowercased().trimmingCharacters(in: .whitespaces)
-        // Pass 1: exact match (always reliable)
-        if let exact = todosForPiece.first(where: { $0.titre.lowercased().trimmingCharacters(in: .whitespaces) == titreNorm }) {
-            return exact
-        }
-        // Pass 2: semantic similarity via NLEmbedding (may be nil on simulator)
-        guard let embedding = NLEmbedding.wordEmbedding(for: .french) else { return nil }
-        return todosForPiece.first { todo in
-            embedding.distance(between: titreNorm, and: todo.titre.lowercased()) <= 0.20
-        }
+        return todosForPiece.first { ClassificationViewModel.titresSimilaires(titre, $0.titre) }
     }
 
     /// Marks the task as terminee and clears prochaineAction (no pending action makes sense on a done task).
