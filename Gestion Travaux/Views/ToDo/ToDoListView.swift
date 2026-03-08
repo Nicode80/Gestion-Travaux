@@ -14,6 +14,7 @@ struct ToDoListView: View {
     private let modelContext: ModelContext
     @State private var viewModel: ToDoViewModel
     @State private var showArchive = false
+    @State private var selectedToDo: ToDoEntity?
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -54,7 +55,8 @@ struct ToDoListView: View {
                                     onComplete: { viewModel.toggleComplete(todo) },
                                     onChangerPriorite: { priorite in
                                         viewModel.changerPriorite(todo, priorite: priorite)
-                                    }
+                                    },
+                                    onTap: { selectedToDo = todo }
                                 )
                             }
                         }
@@ -97,6 +99,9 @@ struct ToDoListView: View {
             Text(viewModel.errorMessage ?? "")
         }
         .onAppear { viewModel.charger() }
+        .sheet(item: $selectedToDo) { todo in
+            ToDoDetailSheet(todo: todo)
+        }
     }
 
     // MARK: - Filters

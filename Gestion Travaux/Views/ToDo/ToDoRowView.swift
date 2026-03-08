@@ -11,6 +11,7 @@ struct ToDoRowView: View {
     let todo: ToDoEntity
     let onComplete: () -> Void
     let onChangerPriorite: (PrioriteToDo) -> Void
+    let onTap: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -24,19 +25,24 @@ struct ToDoRowView: View {
             .frame(minWidth: 44, minHeight: 44)
             .accessibilityLabel(todo.estFaite ? "Décocher" : "Cocher")
 
-            // Titre
-            VStack(alignment: .leading, spacing: 2) {
-                Text(todo.titre)
-                    .font(.body)
-                    .foregroundStyle(todo.estFaite ? Color.secondary : Color(hex: Constants.Couleurs.textePrimaire))
-                    .strikethrough(todo.estFaite, color: .secondary)
+            // Titre — tappable pour voir le détail
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(todo.titre)
+                        .font(.body)
+                        .foregroundStyle(todo.estFaite ? Color.secondary : Color(hex: Constants.Couleurs.textePrimaire))
+                        .strikethrough(todo.estFaite, color: .secondary)
+                        .multilineTextAlignment(.leading)
 
-                if let nom = todo.piece?.nom {
-                    Text(nom)
-                        .font(.caption)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    if let nom = todo.piece?.nom {
+                        Text(nom)
+                            .font(.caption)
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .buttonStyle(.plain)
 
             Spacer()
 
