@@ -21,7 +21,7 @@ struct ClassificationClassifyTests {
         return try ModelContainer(
             for: MaisonEntity.self, PieceEntity.self, TacheEntity.self,
                 ActiviteEntity.self, AlerteEntity.self, AstuceEntity.self,
-                NoteEntity.self, AchatEntity.self, CaptureEntity.self,
+                ToDoEntity.self, AchatEntity.self, CaptureEntity.self,
                 ListeDeCoursesEntity.self, NoteSaisonEntity.self,
             configurations: config
         )
@@ -99,41 +99,76 @@ struct ClassificationClassifyTests {
         #expect(remaining.isEmpty)
     }
 
-    // MARK: - Note
+    // MARK: - ToDo (Story 6.1)
 
-    @Test("classify note creates NoteEntity with matching blocksData")
-    func classifyNoteCreatesEntity() throws {
+    @Test("classify toDo creates ToDoEntity linked to piece with correct priority")
+    func classifyToDoCreatesEntity() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
-        let expectedData = Data([7, 8, 9])
+        let piece = PieceEntity(nom: "Salon")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Peinture Salon")
+        tache.piece = piece
+        context.insert(tache)
         let capture = CaptureEntity()
-        capture.blocksData = expectedData
+        capture.tache = tache
         context.insert(capture)
         try context.save()
 
-        vm.classify(capture, as: .note)
+        vm.classify(capture, as: .toDo(.bientot))
 
-        let notes = try context.fetch(FetchDescriptor<NoteEntity>())
-        #expect(notes.count == 1)
-        #expect(notes[0].blocksData == expectedData)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.count == 1)
+        #expect(todos[0].priorite == .bientot)
+        #expect(todos[0].piece?.nom == "Salon")
+        #expect(todos[0].source == .swipeGame)
     }
 
-    @Test("classify note deletes the source CaptureEntity")
-    func classifyNoteDeletesCapture() throws {
+    @Test("classify toDo deletes the source CaptureEntity")
+    func classifyToDoDeletesCapture() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
+        let piece = PieceEntity(nom: "Cuisine")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Tache cuisine")
+        tache.piece = piece
+        context.insert(tache)
         let capture = CaptureEntity()
+        capture.tache = tache
         context.insert(capture)
         try context.save()
 
-        vm.classify(capture, as: .note)
+        vm.classify(capture, as: .toDo(.urgent))
 
         let remaining = try context.fetch(FetchDescriptor<CaptureEntity>())
         #expect(remaining.isEmpty)
+    }
+
+    @Test("classify toDo without piece sets classificationError and preserves capture")
+    func classifyToDoWithoutPieceSetsError() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        // Tache without piece
+        let tache = TacheEntity(titre: "Tache sans pièce")
+        context.insert(tache)
+        let capture = CaptureEntity()
+        capture.tache = tache
+        context.insert(capture)
+        try context.save()
+
+        vm.classify(capture, as: .toDo(.urgent))
+
+        #expect(vm.classificationError != nil)
+        let remaining = try context.fetch(FetchDescriptor<CaptureEntity>())
+        #expect(remaining.count == 1)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.isEmpty)
     }
 
     // MARK: - Achat

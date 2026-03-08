@@ -181,9 +181,21 @@ struct RecapitulatifView: View {
                 itemARecorriger = nil
             }
         }
-        if case .note = current {} else {
-            Button("📝 NOTE") {
-                viewModel.reclassify(item: item, newType: .note)
+        if case .toDo(let p) = current, p == .urgent {} else {
+            Button("✅ TO DO — Urgent") {
+                viewModel.reclassify(item: item, newType: .toDo(.urgent))
+                itemARecorriger = nil
+            }
+        }
+        if case .toDo(let p) = current, p == .bientot {} else {
+            Button("✅ TO DO — Bientôt") {
+                viewModel.reclassify(item: item, newType: .toDo(.bientot))
+                itemARecorriger = nil
+            }
+        }
+        if case .toDo(let p) = current, p == .unJour {} else {
+            Button("✅ TO DO — Un jour") {
+                viewModel.reclassify(item: item, newType: .toDo(.unJour))
                 itemARecorriger = nil
             }
         }
@@ -202,10 +214,10 @@ struct RecapitulatifView: View {
 
     private func typeColor(for item: ClassificationSummaryItem) -> Color {
         switch item.entity {
-        case .alerte: return Color(hex: Constants.Couleurs.alerte)
-        case .astuce: return Color(hex: Constants.Couleurs.astuce)
-        case .note:   return Color(hex: Constants.Couleurs.texteSecondaire)
-        case .achat:  return Color(hex: Constants.Couleurs.achat)
+        case .alerte:         return Color(hex: Constants.Couleurs.alerte)
+        case .astuce:         return Color(hex: Constants.Couleurs.astuce)
+        case .toDo(let todo): return todo.priorite.couleur
+        case .achat:          return Color(hex: Constants.Couleurs.achat)
         }
     }
 }

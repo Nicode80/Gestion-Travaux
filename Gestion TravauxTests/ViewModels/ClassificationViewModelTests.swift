@@ -1,8 +1,9 @@
 // ClassificationViewModelTests.swift
 // Gestion TravauxTests
 //
-// Story 3.1: Tests for ClassificationViewModel — loading unclassified captures,
+// Story 3.1: Tests for ClassificationViewModel — loading captures,
 // chronological sort, progress tracking, and CaptureEntity computed helpers.
+// Classified captures are DELETED from the store (no `classifiee` flag).
 
 import Testing
 import Foundation
@@ -19,7 +20,7 @@ private func makeContainer() throws -> ModelContainer {
         ActiviteEntity.self,
         AlerteEntity.self,
         AstuceEntity.self,
-        NoteEntity.self,
+        ToDoEntity.self,
         AchatEntity.self,
         CaptureEntity.self,
         NoteSaisonEntity.self,
@@ -30,13 +31,11 @@ private func makeContainer() throws -> ModelContainer {
 }
 
 private func makeCapture(
-    classifiee: Bool = false,
     createdAt: Date = Date(),
     blocks: [ContentBlock] = [],
     tache: TacheEntity? = nil
 ) -> CaptureEntity {
     let capture = CaptureEntity()
-    capture.classifiee = classifiee
     capture.createdAt = createdAt
     capture.blocksData = blocks.toData()
     capture.tache = tache
@@ -107,22 +106,27 @@ struct ClassificationViewModelTests {
         #expect(viewModel.classified == 0)
     }
 
-    @Test("charger() loads only unclassified captures")
-    func chargerUnclassifiedOnly() throws {
+    @Test("charger() loads remaining captures after one is deleted (classified)")
+    func chargerAfterClassification() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let nonClassee = makeCapture(classifiee: false)
-        let classee = makeCapture(classifiee: true)
-        context.insert(nonClassee)
-        context.insert(classee)
+        let c1 = makeCapture()
+        let c2 = makeCapture()
+        context.insert(c1)
+        context.insert(c2)
         try context.save()
 
         let viewModel = ClassificationViewModel(modelContext: context)
         viewModel.charger()
+        #expect(viewModel.captures.count == 2)
 
+        // Simulate classification: delete c1
+        context.delete(c1)
+        try context.save()
+
+        viewModel.charger()
         #expect(viewModel.captures.count == 1)
-        #expect(viewModel.captures.first?.classifiee == false)
     }
 
     @Test("charger() sorts captures by createdAt ascending")
@@ -159,8 +163,8 @@ struct ClassificationViewModelTests {
         viewModel.charger()
         #expect(viewModel.total == 2)
 
-        // Simulate classification: mark one as classified
-        c1.classifiee = true
+        // Simulate classification: delete c1 from store
+        context.delete(c1)
         try context.save()
 
         // Second charger() call — total should remain 2 (set only on first load)
@@ -202,7 +206,8 @@ struct ClassificationViewModelTests {
         viewModel.charger()
         #expect(viewModel.classified == 0)
 
-        c1.classifiee = true
+        // Simulate classification by deleting c1
+        context.delete(c1)
         try context.save()
         viewModel.charger()
 
@@ -272,19 +277,5 @@ struct ClassificationViewModelTests {
     func firstPhotoPathNilWhenEmpty() throws {
         let capture = makeCapture(blocks: [])
         #expect(capture.firstPhotoPath == nil)
-    }
-
-    // MARK: - CaptureEntity.classifiee default
-
-    @Test("CaptureEntity.classifiee defaults to false")
-    func classifieeDefaultsFalse() throws {
-        let container = try makeContainer()
-        let context = ModelContext(container)
-
-        let capture = CaptureEntity()
-        context.insert(capture)
-        try context.save()
-
-        #expect(capture.classifiee == false)
     }
 }
