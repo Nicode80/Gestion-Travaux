@@ -242,6 +242,34 @@ struct DashboardView: View {
             }
 
             Section("Pratique") {
+                // Story 6.1: ToDo List — always navigable; badge shows urgent count + total when non-zero.
+                NavigationLink {
+                    ToDoListView(modelContext: modelContext)
+                } label: {
+                    HStack {
+                        Label("To Do", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        Spacer()
+                        if viewModel.totalToDosActifs > 0 {
+                            HStack(spacing: 4) {
+                                if viewModel.nombreToDosUrgents > 0 {
+                                    Text("\(viewModel.nombreToDosUrgents) urgent\(viewModel.nombreToDosUrgents > 1 ? "s" : "")")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(Color(hex: Constants.Couleurs.alerte))
+                                        .clipShape(Capsule())
+                                }
+                                Text("\(viewModel.totalToDosActifs)")
+                                    .font(.caption)
+                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            }
+                        }
+                    }
+                }
+
                 // Story 5.1: Liste de Courses — FR38, FR39, FR40.
                 NavigationLink {
                     ShoppingListView(modelContext: modelContext)

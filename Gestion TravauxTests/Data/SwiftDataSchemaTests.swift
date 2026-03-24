@@ -19,7 +19,7 @@ private func makeContainer(inMemory: Bool = true) throws -> ModelContainer {
         ActiviteEntity.self,
         AlerteEntity.self,
         AstuceEntity.self,
-        NoteEntity.self,
+        ToDoEntity.self,
         AchatEntity.self,
         CaptureEntity.self,
         NoteSaisonEntity.self,

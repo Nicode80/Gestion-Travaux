@@ -9,12 +9,14 @@ briefCount: 1
 researchCount: 0
 brainstormingCount: 1
 projectDocsCount: 0
-lastEdited: '2026-02-21'
+lastEdited: '2026-03-08'
 editHistory:
   - date: '2026-02-21'
     changes: 'Élimination implementation leakage (7 FRs), ajout métriques testables NFRs (15 NFRs), allègement densité User Journeys, ajout date frontmatter'
   - date: '2026-02-21'
     changes: 'Fixes résiduels post-validation : NFR-P2/P3 Xcode→outil de profilage, NFR-R7 iOS→OS, NFR-S4 biométrie iOS→plateforme'
+  - date: '2026-03-08'
+    changes: 'Remplacement NoteEntity par ToDoEntity suite test terrain réel : FR15 révisé (NOTE → TO DO + priorité), FR20 étendu (checkout crée ToDo automatiquement), section titre mise à jour, 9 nouveaux FRs (FR61-FR69) pour la ToDo List par Pièce. NoteEntity abandonnée (trop situationnelle, sans priorité). Total : 69 FRs.'
 classification:
   projectType: mobile_app
   platform: ios
@@ -1217,7 +1219,7 @@ Atteindre **3 des 4 critères Go/No-Go** après **3 mois d'usage réel** (sessio
 
 **FR14:** L'utilisateur peut classifier une capture par swipe droit comme ASTUCE et choisir le niveau de criticité (Critique/Importante/Utile)
 
-**FR15:** L'utilisateur peut classifier une capture par swipe haut comme NOTE (contexte général)
+**FR15:** L'utilisateur peut classifier une capture par swipe haut comme TO DO (prochaine chose à faire dans la pièce) et choisir le niveau de priorité (Urgent / Bientôt / Un jour) *(révisé 2026-03-08 : NOTE → TO DO, lié à la pièce et non à la tâche — voir story 6.1)*
 
 **FR16:** L'utilisateur peut classifier une capture par swipe bas comme ACHAT (ajout à liste de courses)
 
@@ -1227,7 +1229,7 @@ Atteindre **3 des 4 critères Go/No-Go** après **3 mois d'usage réel** (sessio
 
 **FR19:** L'utilisateur peut valider définitivement toutes les classifications de la session
 
-**FR20:** L'utilisateur peut définir la prochaine action pour une tâche au moment du check-out
+**FR20:** L'utilisateur peut définir la prochaine action pour une tâche au moment du check-out — le système crée automatiquement un ToDo correspondant dans la pièce (avec détection de similarité pour éviter les doublons) *(étendu 2026-03-08 — voir story 6.1)*
 
 **FR21:** L'utilisateur peut marquer une tâche comme terminée au moment du check-out
 
@@ -1249,7 +1251,7 @@ Atteindre **3 des 4 critères Go/No-Go** après **3 mois d'usage réel** (sessio
 
 **FR29:** Le système peut proposer automatiquement la dernière tâche active à l'ouverture de l'app (via la Hero Task Card du Dashboard)
 
-### Système d'Information (ALERTES, ASTUCES, Notes)
+### Système d'Information (ALERTES, ASTUCES, ToDos)
 
 **FR30:** Le système peut stocker des ALERTES temporelles liées à une tâche spécifique
 
@@ -1320,6 +1322,28 @@ Atteindre **3 des 4 critères Go/No-Go** après **3 mois d'usage réel** (sessio
 **FR59:** Le système peut proposer un fallback de saisie manuelle si permission microphone refusée
 
 **FR60:** Le système peut activer un mode économie batterie en mode chantier
+
+### ToDo List par Pièce *(ajouté 2026-03-08 — remplace NoteEntity — story 6.1)*
+
+> **Contexte :** NoteEntity (notes libres sans priorité, liées à une tâche) a été abandonnée suite au premier test terrain. Trop situationnelle, sans lien avec le vrai besoin : "quelles sont les prochaines choses à faire dans cette pièce ?". ToDoEntity répond à ce besoin avec priorités et complétion animée.
+
+**FR61:** Le système peut créer un ToDo lié à une pièce, avec un titre et un niveau de priorité (Urgent / Bientôt / Un jour)
+
+**FR62:** Le système peut créer automatiquement un ToDo lors du swipe ↑ en Mode Bureau (classification), après sélection du niveau de priorité dans un bottom sheet
+
+**FR63:** Le système peut créer automatiquement un ToDo lors du check-out (prochaine action), avec détection de similarité pour éviter les doublons — si similaire trouvé, l'utilisateur choisit de le passer en Urgent ou de créer un séparé
+
+**FR64:** L'utilisateur peut consulter la liste de tous ses ToDos actifs, triés par priorité (Urgent en tête), avec filtres combinables par priorité et par pièce
+
+**FR65:** L'utilisateur peut modifier le niveau de priorité d'un ToDo directement depuis la vue liste
+
+**FR66:** L'utilisateur peut cocher un ToDo comme fait — l'item reste visible avec style barré pendant 2 secondes puis disparaît avec une animation (comportement identique à l'app Rappels iOS)
+
+**FR67:** Le système peut archiver les ToDos complétés dans une archive consultable, accessible depuis la vue liste
+
+**FR68:** Le système peut afficher une section "To Do" sur le dashboard, présentant le nombre d'items Urgents et le total, avec navigation vers la vue liste
+
+**FR69:** L'utilisateur peut filtrer l'archive des ToDos par pièce
 
 ---
 

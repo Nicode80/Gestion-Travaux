@@ -14,6 +14,7 @@ struct ShoppingListView: View {
     @State private var showAddField = false
     @State private var newItemText = ""
     @State private var itemToDelete: AchatEntity?
+    @State private var showConfirmVider = false
     @State private var errorMessage: String?
     @FocusState private var isAddFieldFocused: Bool
 
@@ -56,13 +57,35 @@ struct ShoppingListView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showAddField = true
-                } label: {
-                    Image(systemName: "plus")
+                HStack {
+                    if viewModel.hasCheckedItems {
+                        Button {
+                            showConfirmVider = true
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .accessibilityLabel("Vider les articles cochés")
+                    }
+                    Button {
+                        showAddField = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("Ajouter un article")
                 }
-                .accessibilityLabel("Ajouter un article")
             }
+        }
+        .alert("Vider les articles cochés ?", isPresented: $showConfirmVider) {
+            Button("Vider", role: .destructive) {
+                do {
+                    try viewModel.deleteCheckedItems()
+                } catch {
+                    errorMessage = error.localizedDescription
+                }
+            }
+            Button("Annuler", role: .cancel) {}
+        } message: {
+            Text("Les articles cochés seront supprimés définitivement. Les articles non cochés restent.")
         }
         .alert("Supprimer cet article ?", isPresented: Binding(
             get: { itemToDelete != nil },

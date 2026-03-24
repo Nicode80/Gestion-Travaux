@@ -26,6 +26,12 @@ final class DashboardViewModel {
     /// Number of unchecked shopping items — drives the badge on the Liste de Courses row.
     private(set) var nombreAchatsEnAttente: Int = 0
 
+    /// Number of urgent active ToDos — drives the priority count in the dashboard section.
+    private(set) var nombreToDosUrgents: Int = 0
+
+    /// Total number of active (non-archived) ToDos.
+    private(set) var totalToDosActifs: Int = 0
+
     var tacheHero: TacheEntity? { tachesActives.first }
 
     init(modelContext: ModelContext) {
@@ -70,6 +76,13 @@ final class DashboardViewModel {
                 FetchDescriptor<AchatEntity>(predicate: #Predicate { !$0.achete })
             )
             nombreAchatsEnAttente = achats.count
+
+            // Story 6.1: count active (non-archived) ToDos for the dashboard section.
+            let tousLesTodos = try modelContext.fetch(
+                FetchDescriptor<ToDoEntity>(predicate: #Predicate { !$0.isArchived })
+            )
+            totalToDosActifs = tousLesTodos.count
+            nombreToDosUrgents = tousLesTodos.filter { $0.priorite == .urgent }.count
 
             // Trigger season note display when ≥2-month gap is first detected (FR42).
             // The flag persists in UserDefaults so the card stays visible across consecutive

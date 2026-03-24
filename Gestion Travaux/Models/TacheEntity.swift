@@ -22,9 +22,6 @@ final class TacheEntity {
     @Relationship(deleteRule: .cascade, inverse: \AlerteEntity.tache)
     var alertes: [AlerteEntity] = []
 
-    @Relationship(deleteRule: .cascade, inverse: \NoteEntity.tache)
-    var notes: [NoteEntity] = []
-
     @Relationship(deleteRule: .cascade, inverse: \CaptureEntity.tache)
     var captures: [CaptureEntity] = []
 

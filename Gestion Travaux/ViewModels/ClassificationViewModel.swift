@@ -7,6 +7,7 @@
 //            creation, deletes the source CaptureEntity, and reloads (NFR-R5: ≤100ms save).
 // Story 3.3: Adds ClassificationSummaryItem tracking, reclassify, validateClassifications,
 //            saveProchaineAction, markTaskAsTerminee, and one-shot voice input for checkout.
+// Story 6.1: Replaces .note with .toDo(PrioriteToDo). Adds ToDo duplicate detection at checkout.
 // ModelContext injected via init — never accessed from @Environment in the VM.
 
 import Foundation
@@ -14,14 +15,20 @@ import SwiftData
 @preconcurrency import Speech
 @preconcurrency import AVFoundation
 
-// MARK: - Supporting types (Story 3.3)
+// MARK: - Supporting types (Story 3.3 / 6.1)
 
 /// Wraps the entity created for a classified capture so it can be deleted on reclassification.
 enum ClassifiedEntity {
     case alerte(AlerteEntity)
     case astuce(AstuceEntity)
-    case note(NoteEntity)
+    case toDo(ToDoEntity)
     case achat(AchatEntity)
+}
+
+/// Represents a pending decision about a similar ToDo found at checkout (Story 6.1).
+enum ToDoCheckoutDecision {
+    case upgradeToUrgent(todo: ToDoEntity, titreSimilaire: String)
+    case alreadyUrgent(todo: ToDoEntity, titreSimilaire: String)
 }
 
 /// A single row in RecapitulatifView — built as captures are classified.
@@ -38,7 +45,7 @@ struct ClassificationSummaryItem: Identifiable {
         switch entity {
         case .alerte:           return .alerte
         case .astuce(let e):    return .astuce(e.niveau)
-        case .note:             return .note
+        case .toDo(let e):      return .toDo(e.priorite)
         case .achat:            return .achat
         }
     }
@@ -47,7 +54,7 @@ struct ClassificationSummaryItem: Identifiable {
         switch entity {
         case .alerte:   return "🚨"
         case .astuce:   return "💡"
-        case .note:     return "📝"
+        case .toDo:     return "✅"
         case .achat:    return "🛒"
         }
     }
@@ -56,7 +63,7 @@ struct ClassificationSummaryItem: Identifiable {
         switch entity {
         case .alerte:               return "ALERTE"
         case .astuce(let e):        return "ASTUCE (\(e.niveau.libelle))"
-        case .note:                 return "NOTE"
+        case .toDo(let e):          return "TO DO (\(e.priorite.libelle))"
         case .achat:                return "ACHAT"
         }
     }
@@ -117,6 +124,15 @@ final class ClassificationViewModel {
 
     private(set) var isRecordingProchaineAction = false
 
+    // MARK: - Story 6.1: ToDo checkout decision
+
+    /// Non-nil when a similar ToDo is found at checkout — drives alerts in CheckoutView.
+    private(set) var pendingToDoDecision: ToDoCheckoutDecision? = nil
+
+    /// Titre and task stored while awaiting user decision on duplicate ToDo.
+    private var pendingToDoTitre: String = ""
+    private var pendingToDoTache: TacheEntity? = nil
+
     @ObservationIgnored private let voiceAudio = CheckoutAudioState()
 
     // Tracks whether charger() has run at least once so total is set only on first load.
@@ -142,7 +158,7 @@ final class ClassificationViewModel {
             let loaded = try modelContext.fetch(descriptor)
             if !initialLoadDone {
                 total = loaded.count
-                tacheCourante = loaded.first?.tache
+                tacheCourante = loaded.last?.tache
                 initialLoadDone = true
             }
             captures = loaded
@@ -184,13 +200,21 @@ final class ClassificationViewModel {
                 summaryEntity = .astuce(astuce)
                 destination = "Activité : " + (activite?.nom ?? "Sans activité")
 
-            case .note:
-                let note = NoteEntity()
-                note.blocksData = blocksData
-                note.tache = tache
-                modelContext.insert(note)
-                summaryEntity = .note(note)
-                destination = tache?.titre ?? "Sans tâche"
+            case .toDo(let priorite):
+                guard let piece = tache?.piece else {
+                    classificationError = "Impossible de créer un To Do : pièce introuvable."
+                    return
+                }
+                let todo = ToDoEntity(
+                    titre: capture.transcription.isEmpty ? capturePreview : capture.transcription,
+                    priorite: priorite,
+                    piece: piece,
+                    source: .swipeGame,
+                    blocksData: blocksData
+                )
+                modelContext.insert(todo)
+                summaryEntity = .toDo(todo)
+                destination = piece.nom
 
             case .achat:
                 guard let ldc = try modelContext.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first else {
@@ -252,13 +276,24 @@ final class ClassificationViewModel {
                 newEntity = .astuce(astuce)
                 newDestination = "Activité : " + (item.activite?.nom ?? "Sans activité")
 
-            case .note:
-                let note = NoteEntity()
-                note.blocksData = item.blocksData
-                note.tache = item.tache
-                modelContext.insert(note)
-                newEntity = .note(note)
-                newDestination = item.tache?.titre ?? "Sans tâche"
+            case .toDo(let priorite):
+                guard let piece = item.tache?.piece else {
+                    reclassifyError = "Impossible de créer un To Do : pièce introuvable."
+                    return
+                }
+                let todo = ToDoEntity(
+                    titre: item.blocksData.toContentBlocks()
+                        .filter { $0.type == .text }
+                        .compactMap { $0.text }
+                        .joined(separator: " "),
+                    priorite: priorite,
+                    piece: piece,
+                    source: .swipeGame,
+                    blocksData: item.blocksData
+                )
+                modelContext.insert(todo)
+                newEntity = .toDo(todo)
+                newDestination = piece.nom
 
             case .achat:
                 guard let ldc = try modelContext.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first else {
@@ -281,7 +316,7 @@ final class ClassificationViewModel {
             switch item.entity {
             case .alerte(let e): modelContext.delete(e)
             case .astuce(let e): modelContext.delete(e)
-            case .note(let e):   modelContext.delete(e)
+            case .toDo(let e):   modelContext.delete(e)
             case .achat(let e):  modelContext.delete(e)
             }
 
@@ -325,7 +360,10 @@ final class ClassificationViewModel {
 
     // MARK: - Checkout actions (Story 3.3 — FR20, FR21)
 
-    /// Saves the next action text on the task and persists.
+    /// Saves the next action text on the task, then checks for a similar ToDo in the piece (Story 6.1).
+    /// If a similar ToDo is found, sets pendingToDoDecision for the view to handle via alert.
+    /// If no similar ToDo, creates one immediately with .urgent priority.
+    /// CheckoutView should call onComplete() only when pendingToDoDecision == nil after this call.
     func saveProchaineAction(for tache: TacheEntity) {
         let trimmed = prochaineActionInput.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
@@ -335,6 +373,115 @@ final class ClassificationViewModel {
             checkoutError = nil
         } catch {
             checkoutError = "Impossible d'enregistrer la prochaine action. Réessayez."
+            return
+        }
+        // Story 6.1: create or check existing ToDo for this piece
+        guard let piece = tache.piece else { return }
+        pendingToDoTitre = trimmed
+        pendingToDoTache = tache
+        if let similar = findSimilarToDo(titre: trimmed, piece: piece) {
+            if similar.priorite == .urgent {
+                pendingToDoDecision = .alreadyUrgent(todo: similar, titreSimilaire: similar.titre)
+            } else {
+                pendingToDoDecision = .upgradeToUrgent(todo: similar, titreSimilaire: similar.titre)
+            }
+        } else {
+            let todo = ToDoEntity(titre: trimmed, priorite: .urgent, piece: piece, source: .checkout)
+            modelContext.insert(todo)
+            do {
+                try modelContext.save()
+            } catch {
+                classificationError = "Impossible d'enregistrer le To Do. Réessayez."
+            }
+        }
+    }
+
+    /// Upgrades the pending similar ToDo to .urgent (user chose "Oui, Urgent").
+    func upgradeToDoToUrgent() {
+        guard case .upgradeToUrgent(let todo, _) = pendingToDoDecision else { return }
+        todo.priorite = .urgent
+        do {
+            try modelContext.save()
+        } catch {
+            classificationError = "Impossible de mettre à jour la priorité. Réessayez."
+        }
+        pendingToDoDecision = nil
+    }
+
+    /// Creates a new separate ToDo (user chose "Créer séparé" or "Non, créer séparé").
+    func creerToDoSepare() {
+        guard let tache = pendingToDoTache, let piece = tache.piece else {
+            pendingToDoDecision = nil
+            return
+        }
+        let todo = ToDoEntity(titre: pendingToDoTitre, priorite: .urgent, piece: piece, source: .checkout)
+        modelContext.insert(todo)
+        do {
+            try modelContext.save()
+        } catch {
+            classificationError = "Impossible de créer le To Do. Réessayez."
+        }
+        pendingToDoDecision = nil
+    }
+
+    /// Dismisses the pending decision without creating a new ToDo (user chose "OK" on already-urgent alert).
+    func dismissPendingToDoDecision() {
+        pendingToDoDecision = nil
+    }
+
+    /// French stop words stripped before token comparison (articles, common prepositions).
+    private static let stopWordsFr: Set<String> = [
+        "le", "la", "les", "l", "un", "une", "des", "du", "de", "d",
+        "au", "aux", "en", "dans", "sur", "sous", "avec", "pour", "par",
+        "a", "et", "ou", "ce", "se", "sa", "son", "ses", "y", "ma", "mon"
+    ]
+
+    /// Lowercases, strips diacritics, removes stop words, returns meaningful tokens.
+    private static func normaliserTokens(_ text: String) -> Set<String> {
+        let base = text
+            .lowercased()
+            .folding(options: .diacriticInsensitive, locale: .current)
+        let tokens = base.components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { $0.count > 1 }
+        return Set(tokens.filter { !stopWordsFr.contains($0) })
+    }
+
+    /// True if two titles are similar enough to be considered duplicates.
+    /// Pass 1: exact match (case-insensitive, diacritics-insensitive).
+    /// Pass 2: Jaccard ≥ 0.70 on meaningful tokens (handles "fixer les rails" == "fixer rails").
+    /// Pass 3: Jaro-Winkler ≥ 0.88 on sorted tokens joined (handles typos / reordering).
+    private static func titresSimilaires(_ a: String, _ b: String) -> Bool {
+        let normA = a.lowercased().folding(options: .diacriticInsensitive, locale: .current)
+            .trimmingCharacters(in: .whitespaces)
+        let normB = b.lowercased().folding(options: .diacriticInsensitive, locale: .current)
+            .trimmingCharacters(in: .whitespaces)
+        if normA == normB { return true }
+
+        let tokA = normaliserTokens(a)
+        let tokB = normaliserTokens(b)
+        guard !tokA.isEmpty, !tokB.isEmpty else { return false }
+
+        let intersection = tokA.intersection(tokB)
+        let jaccard = Double(intersection.count) / Double(tokA.union(tokB).count)
+        if jaccard >= 0.70 { return true }
+
+        let joinA = tokA.sorted().joined(separator: " ")
+        let joinB = tokB.sorted().joined(separator: " ")
+        return BriefingEngine.jaroWinklerSimilarity(joinA, joinB) >= 0.88
+    }
+
+    /// Finds a semantically similar non-archived ToDo in the same piece (Story 6.1).
+    private func findSimilarToDo(titre: String, piece: PieceEntity) -> ToDoEntity? {
+        do {
+            let allTodos = try modelContext.fetch(FetchDescriptor<ToDoEntity>(
+                predicate: #Predicate { !$0.isArchived }
+            ))
+            let todosForPiece = allTodos.filter { $0.piece?.id == piece.id }
+            guard !todosForPiece.isEmpty else { return nil }
+            return todosForPiece.first { ClassificationViewModel.titresSimilaires(titre, $0.titre) }
+        } catch {
+            classificationError = "Impossible de vérifier les ToDo existants. Réessayez."
+            return nil
         }
     }
 

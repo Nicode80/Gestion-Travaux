@@ -59,6 +59,57 @@ struct CheckoutView: View {
         } message: {
             Text(viewModel.checkoutError ?? "")
         }
+        // Story 6.1: alert when a similar non-urgent ToDo is found → offer to upgrade
+        .alert(
+            "C'est déjà dans tes ToDo",
+            isPresented: Binding(
+                get: {
+                    if case .upgradeToUrgent = viewModel.pendingToDoDecision { return true }
+                    return false
+                },
+                set: { if !$0 { viewModel.dismissPendingToDoDecision() } }
+            )
+        ) {
+            Button("Oui, Urgent") {
+                viewModel.upgradeToDoToUrgent()
+                onComplete()
+            }
+            Button("Non, créer séparé") {
+                viewModel.creerToDoSepare()
+                onComplete()
+            }
+            Button("Annuler", role: .cancel) {
+                viewModel.dismissPendingToDoDecision()
+            }
+        } message: {
+            if case .upgradeToUrgent(_, let titre) = viewModel.pendingToDoDecision {
+                Text("\"\(titre)\" est déjà dans tes ToDo. Le passer en Urgent ?")
+            }
+        }
+        // Story 6.1: alert when a similar ToDo already at .urgent is found
+        .alert(
+            "C'est déjà dans tes ToDo en Urgent",
+            isPresented: Binding(
+                get: {
+                    if case .alreadyUrgent = viewModel.pendingToDoDecision { return true }
+                    return false
+                },
+                set: { if !$0 { viewModel.dismissPendingToDoDecision() } }
+            )
+        ) {
+            Button("OK") {
+                viewModel.dismissPendingToDoDecision()
+                onComplete()
+            }
+            Button("Créer séparé") {
+                viewModel.creerToDoSepare()
+                onComplete()
+            }
+        } message: {
+            if case .alreadyUrgent(_, let titre) = viewModel.pendingToDoDecision {
+                Text("\"\(titre)\" est déjà dans tes ToDo en Urgent.")
+            }
+        }
         .onDisappear {
             viewModel.stopVoiceInputForProchaineAction()
         }
@@ -99,7 +150,8 @@ struct CheckoutView: View {
             Button {
                 guard let tache = viewModel.tacheCourante else { return }
                 viewModel.saveProchaineAction(for: tache)
-                if viewModel.checkoutError == nil {
+                // Navigate only when no ToDo duplicate decision is pending (Story 6.1)
+                if viewModel.checkoutError == nil && viewModel.pendingToDoDecision == nil {
                     onComplete()
                 }
             } label: {

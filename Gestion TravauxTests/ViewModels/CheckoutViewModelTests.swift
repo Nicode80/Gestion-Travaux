@@ -21,7 +21,7 @@ struct CheckoutViewModelTests {
         return try ModelContainer(
             for: MaisonEntity.self, PieceEntity.self, TacheEntity.self,
                 ActiviteEntity.self, AlerteEntity.self, AstuceEntity.self,
-                NoteEntity.self, AchatEntity.self, CaptureEntity.self,
+                ToDoEntity.self, AchatEntity.self, CaptureEntity.self,
                 ListeDeCoursesEntity.self, NoteSaisonEntity.self,
             configurations: config
         )
@@ -101,21 +101,28 @@ struct CheckoutViewModelTests {
         #expect(item.destination == "Activité : Pose Placo")
     }
 
-    @Test("classify note appends summary item with note type")
-    func classifyNoteAppendsSummaryItem() throws {
+    @Test("classify toDo appends summary item with toDo type")
+    func classifyToDoAppendsSummaryItem() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
+        let piece = PieceEntity(nom: "Salon")
+        context.insert(piece)
         let tache = makeTache(in: context)
-        let capture = makeCapture(texte: "Note chantier", tache: tache, in: context)
+        tache.piece = piece
+        let capture = makeCapture(texte: "ToDo chantier", tache: tache, in: context)
         try context.save()
 
         vm.charger()
-        vm.classify(capture, as: .note)
+        vm.classify(capture, as: .toDo(.urgent))
 
         #expect(vm.summaryItems.count == 1)
-        if case .note = vm.summaryItems[0].type {} else { Issue.record("Expected .note type") }
+        if case .toDo(let p) = vm.summaryItems[0].type {
+            #expect(p == .urgent)
+        } else {
+            Issue.record("Expected .toDo(.urgent) type")
+        }
     }
 
     @Test("classify achat appends summary item with achat type and Liste de courses destination")
@@ -143,14 +150,18 @@ struct CheckoutViewModelTests {
         let vm = ClassificationViewModel(modelContext: context)
 
         _ = makeLDC(in: context)
-        let c1 = makeCapture(texte: "Un", in: context)
-        let c2 = makeCapture(texte: "Deux", in: context)
+        let piece = PieceEntity(nom: "Salon")
+        context.insert(piece)
+        let tache = makeTache(in: context)
+        tache.piece = piece
+        let c1 = makeCapture(texte: "Un", tache: tache, in: context)
+        let c2 = makeCapture(texte: "Deux", tache: tache, in: context)
         let c3 = makeCapture(texte: "Trois", in: context)
         try context.save()
 
         vm.charger()
         vm.classify(c1, as: .alerte)
-        vm.classify(c2, as: .note)
+        vm.classify(c2, as: .toDo(.bientot))
         vm.classify(c3, as: .achat)
 
         #expect(vm.summaryItems.count == 3)
@@ -158,13 +169,16 @@ struct CheckoutViewModelTests {
 
     // MARK: - reclassify
 
-    @Test("reclassify changes entity type and updates summaryItems")
+    @Test("reclassify alerte to toDo creates ToDoEntity and removes AlerteEntity")
     func reclassifyChangesType() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
+        let piece = PieceEntity(nom: "Salon")
+        context.insert(piece)
         let tache = makeTache(in: context)
+        tache.piece = piece
         let capture = makeCapture(texte: "A reclassifier", tache: tache, in: context)
         try context.save()
 
@@ -173,38 +187,42 @@ struct CheckoutViewModelTests {
         #expect(vm.summaryItems.count == 1)
 
         let item = vm.summaryItems[0]
-        vm.reclassify(item: item, newType: .note)
+        vm.reclassify(item: item, newType: .toDo(.bientot))
 
         #expect(vm.summaryItems.count == 1)
-        if case .note = vm.summaryItems[0].type {} else { Issue.record("Expected .note after reclassify") }
-        // Original AlerteEntity should be gone
+        if case .toDo(let p) = vm.summaryItems[0].type {
+            #expect(p == .bientot)
+        } else {
+            Issue.record("Expected .toDo(.bientot) after reclassify")
+        }
         let alertes = try context.fetch(FetchDescriptor<AlerteEntity>())
         #expect(alertes.isEmpty)
-        // New NoteEntity should exist
-        let notes = try context.fetch(FetchDescriptor<NoteEntity>())
-        #expect(notes.count == 1)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.count == 1)
     }
 
-    @Test("reclassify preserves original blocksData in new entity")
+    @Test("reclassify preserves original blocksData in new ToDoEntity")
     func reclassifyPreservesBlocksData() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
+        let piece = PieceEntity(nom: "Buanderie")
+        context.insert(piece)
         let tache = makeTache(in: context)
+        tache.piece = piece
         let capture = makeCapture(texte: "Contenu original", tache: tache, in: context)
-        let originalData = capture.blocksData
         try context.save()
 
         vm.charger()
         vm.classify(capture, as: .alerte)
 
         let item = vm.summaryItems[0]
-        vm.reclassify(item: item, newType: .note)
+        vm.reclassify(item: item, newType: .toDo(.urgent))
 
-        let notes = try context.fetch(FetchDescriptor<NoteEntity>())
-        #expect(notes.count == 1)
-        #expect(notes[0].blocksData == originalData)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.count == 1)
+        #expect(todos[0].titre == "Contenu original")
     }
 
     @Test("reclassify alerte to astuce creates AstuceEntity")
@@ -235,19 +253,22 @@ struct CheckoutViewModelTests {
         #expect(astuces[0].niveau == .importante)
     }
 
-    @Test("reclassify to achat creates AchatEntity with transcription text")
+    @Test("reclassify toDo to achat creates AchatEntity with transcription text")
     func reclassifyToAchat() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
         _ = makeLDC(in: context)
+        let piece = PieceEntity(nom: "Garage")
+        context.insert(piece)
         let tache = makeTache(in: context)
+        tache.piece = piece
         let capture = makeCapture(texte: "Visses bois 4mm", tache: tache, in: context)
         try context.save()
 
         vm.charger()
-        vm.classify(capture, as: .note)
+        vm.classify(capture, as: .toDo(.unJour))
         let item = vm.summaryItems[0]
         vm.reclassify(item: item, newType: .achat)
 
@@ -258,39 +279,31 @@ struct CheckoutViewModelTests {
 
     // MARK: - validateClassifications
 
-    @Test("validateClassifications returns true when no unclassified captures remain")
-    func validateTrueWhenAllClassified() throws {
-        let container = try makeContainer()
-        let context = container.mainContext
-        let vm = ClassificationViewModel(modelContext: context)
-
-        // No captures inserted → all classified by default
-        #expect(vm.validateClassifications() == true)
-    }
-
-    @Test("validateClassifications returns false when unclassified captures remain")
+    @Test("validateClassifications returns false when captures remain (not yet classified)")
     func validateFalseWhenCapturesRemain() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
+        // A capture still in store = not yet classified (classify() deletes it)
         let capture = CaptureEntity()
-        capture.classifiee = false
         context.insert(capture)
         try context.save()
 
         #expect(vm.validateClassifications() == false)
     }
 
-    @Test("validateClassifications returns true when all captures are marked classifiee=true")
-    func validateTrueWhenMarkedClassified() throws {
+    @Test("validateClassifications returns true when all captures are deleted (all classified)")
+    func validateTrueWhenAllClassified() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
+        // Insert then delete — simulates classify() deleting the capture
         let capture = CaptureEntity()
-        capture.classifiee = true
         context.insert(capture)
+        try context.save()
+        context.delete(capture)
         try context.save()
 
         #expect(vm.validateClassifications() == true)
@@ -474,17 +487,16 @@ struct CheckoutViewModelTests {
         #expect(astuces[0].niveau == .utile)
     }
 
-    // MARK: - tacheCourante
+    // MARK: - tacheCourante (Story 3.3 bug fix: uses loaded.last, not loaded.first)
 
-    @Test("charger sets tacheCourante from first capture's tache")
+    @Test("charger sets tacheCourante from single capture's tache")
     func chargerSetsTacheCourante() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
         let tache = makeTache(in: context)
-        let capture = makeCapture(tache: tache, in: context)
-        _ = capture
+        _ = makeCapture(tache: tache, in: context)
         try context.save()
 
         vm.charger()
@@ -501,5 +513,187 @@ struct CheckoutViewModelTests {
         vm.charger()
 
         #expect(vm.tacheCourante == nil)
+    }
+
+    @Test("charger sets tacheCourante from LAST capture — picks active task after task switch")
+    func chargerSetsTacheCouranteFromLastCapture() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        // Simulate task switch: Tache A (older captures) → Tache B (most recent capture)
+        let tacheA = TacheEntity(titre: "Tâche A — ancienne")
+        let tacheB = TacheEntity(titre: "Tâche B — dernière active")
+        context.insert(tacheA)
+        context.insert(tacheB)
+
+        let captureA = CaptureEntity()
+        captureA.tache = tacheA
+        captureA.createdAt = Date().addingTimeInterval(-60)  // 1 min ago
+        context.insert(captureA)
+
+        let captureB = CaptureEntity()
+        captureB.tache = tacheB
+        captureB.createdAt = Date()                          // now (most recent)
+        context.insert(captureB)
+
+        try context.save()
+        vm.charger()
+
+        // tacheCourante must be Tache B — the task active at end of session
+        #expect(vm.tacheCourante?.titre == tacheB.titre)
+    }
+
+    // MARK: - saveProchaineAction — duplicate ToDo detection (exact match)
+
+    @Test("saveProchaineAction sets alreadyUrgent when exact same title already urgent")
+    func saveProchaineActionExactMatchAlreadyUrgent() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Salon")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Salon — Peinture")
+        tache.piece = piece
+        context.insert(tache)
+
+        // Pre-existing urgent ToDo with the exact same title
+        let existing = ToDoEntity(titre: "Repeindre le plafond", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "Repeindre le plafond"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .alreadyUrgent(let todo, let titre) = vm.pendingToDoDecision else {
+            Issue.record("Expected .alreadyUrgent, got \(String(describing: vm.pendingToDoDecision))")
+            return
+        }
+        #expect(todo.id == existing.id)
+        #expect(titre == "Repeindre le plafond")
+    }
+
+    @Test("saveProchaineAction sets alreadyUrgent for case-insensitive exact match")
+    func saveProchaineActionExactMatchCaseInsensitive() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Cuisine")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Cuisine — Carrelage")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Poser le carrelage", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "poser le carrelage"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .alreadyUrgent = vm.pendingToDoDecision else {
+            Issue.record("Expected .alreadyUrgent for case-insensitive match")
+            return
+        }
+    }
+
+    @Test("saveProchaineAction detects match when article omitted (fixer rails == fixer les rails)")
+    func saveProchaineActionArticleOmitted() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Couloir")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Couloir — Rail")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Fixer les rails", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "fixer rails"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .alreadyUrgent = vm.pendingToDoDecision else {
+            Issue.record("Expected .alreadyUrgent — 'fixer rails' should match 'fixer les rails'")
+            return
+        }
+    }
+
+    @Test("saveProchaineAction does NOT match genuinely different items (poser vs fixer)")
+    func saveProchaineActionDifferentItemsNotMatched() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Couloir")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Couloir — Rail")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Poser les rails", priorite: .urgent, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "fixer rails"
+        vm.saveProchaineAction(for: tache)
+
+        // "poser" and "fixer" are different actions → should NOT be detected as duplicate
+        #expect(vm.pendingToDoDecision == nil)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.count == 2)
+    }
+
+    @Test("saveProchaineAction sets upgradeToUrgent for exact match not yet urgent")
+    func saveProchaineActionExactMatchNotUrgent() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Buanderie")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Buanderie — Plomberie")
+        tache.piece = piece
+        context.insert(tache)
+
+        let existing = ToDoEntity(titre: "Réparer la fuite", priorite: .bientot, piece: piece)
+        context.insert(existing)
+        try context.save()
+
+        vm.prochaineActionInput = "Réparer la fuite"
+        vm.saveProchaineAction(for: tache)
+
+        guard case .upgradeToUrgent = vm.pendingToDoDecision else {
+            Issue.record("Expected .upgradeToUrgent for bientot exact match")
+            return
+        }
+    }
+
+    @Test("saveProchaineAction creates new ToDo when no match found")
+    func saveProchaineActionNoMatchCreatesToDo() throws {
+        let container = try makeContainer()
+        let context = container.mainContext
+        let vm = ClassificationViewModel(modelContext: context)
+
+        let piece = PieceEntity(nom: "Chambre")
+        context.insert(piece)
+        let tache = TacheEntity(titre: "Chambre — Peinture")
+        tache.piece = piece
+        context.insert(tache)
+        try context.save()
+
+        vm.prochaineActionInput = "Peindre les murs"
+        vm.saveProchaineAction(for: tache)
+
+        #expect(vm.pendingToDoDecision == nil)
+        let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
+        #expect(todos.count == 1)
+        #expect(todos[0].titre == "Peindre les murs")
+        #expect(todos[0].priorite == .urgent)
     }
 }

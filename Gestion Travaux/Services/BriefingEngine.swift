@@ -83,6 +83,7 @@ final class BriefingEngine {
         for i in 0..<n {
             let lo = max(0, i - matchWindow)
             let hi = min(i + matchWindow + 1, m)
+            guard hi > lo else { continue }
             for j in lo..<hi where !bMatched[j] && a[i] == b[j] {
                 aMatched[i] = true
                 bMatched[j] = true

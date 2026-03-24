@@ -68,6 +68,18 @@ Liste centralisée des achats : ajout manuel ou via classification, toggle coch�
 
 ---
 
+## Epic 6 — ToDo List par Pièce *(ajouté 2026-03-08)*
+
+Remplacement de NoteEntity par ToDoEntity suite à test terrain. Liste de prochaines choses à faire par pièce, avec priorités et complétion animée.
+
+> **Contexte :** NoteEntity (notes libres liées à une TacheEntity, sans priorité) n'a pas répondu aux besoins réels du chantier. ToDoEntity (liée à PieceEntity, 3 priorités, archive) correspond mieux au workflow terrain.
+
+| Story | Titre | FRs | NFRs |
+|-------|-------|-----|------|
+| [6.1](story-6.1-todo-list.md) | ToDo List par Pièce — remplacement NoteEntity | FR-TD1→TD9 | NFR-P3, NFR-R5, NFR-U6 |
+
+---
+
 ## Couverture des FRs
 
 | FR | Story | FR | Story | FR | Story |

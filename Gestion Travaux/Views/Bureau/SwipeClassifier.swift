@@ -4,10 +4,10 @@
 // Story 3.2: Main swipe-game component for classifying a single CaptureEntity.
 // Displays 4 ArcCrescentViews at each edge (always visible), with a draggable CaptureCard
 // on top. Detecting a swipe direction (±15° tolerance, NFR-U6) triggers:
-//   - left  → onClassified(.alerte)   — card flies out left
+//   - left  → onClassified(.alerte)          — card flies out left
 //   - right → CriticitéSheet + onClassified(.astuce(niveau))
-//   - up    → onClassified(.note)     — card flies out upward
-//   - down  → onClassified(.achat)    — card flies out downward
+//   - up    → PrioriteSheet + onClassified(.toDo(priorite))  [Story 6.1]
+//   - down  → onClassified(.achat)           — card flies out downward
 // Haptic feedback via .sensoryFeedback on every confirmed classification (NFR-P8 < 100ms).
 
 import SwiftUI
@@ -58,6 +58,7 @@ struct SwipeClassifier: View {
     @State private var dragOffset: CGSize = .zero
     @State private var activeDirection: SwipeDirection?
     @State private var showCriticitéSheet = false
+    @State private var showPrioriteSheet = false
     // Toggle to trigger .sensoryFeedback on confirmed classification (NFR-P8 < 100ms)
     @State private var hapticTrigger = false
 
@@ -79,7 +80,7 @@ struct SwipeClassifier: View {
                 )
                 ArcCrescentView(
                     direction: .up,
-                    label: "NOTE",
+                    label: "TO DO",
                     color: Color(hex: Constants.Couleurs.texteSecondaire),
                     isActive: activeDirection == .up
                 )
@@ -117,6 +118,12 @@ struct SwipeClassifier: View {
                 onClassified(.astuce(niveau))
             }
         }
+        .sheet(isPresented: $showPrioriteSheet) {
+            PrioriteSheet { priorite in
+                hapticTrigger.toggle()
+                onClassified(.toDo(priorite))
+            }
+        }
         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
@@ -150,10 +157,19 @@ struct SwipeClassifier: View {
                 dragOffset = .zero
             }
             activeDirection = nil
-            // Small delay so the spring settles before the sheet appears
             Task { @MainActor in
                 try? await Task.sleep(nanoseconds: 150_000_000)
                 showCriticitéSheet = true
+            }
+        } else if direction == .up {
+            // TO DO: snap card back, then show priorité sheet (Story 6.1)
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                dragOffset = .zero
+            }
+            activeDirection = nil
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                showPrioriteSheet = true
             }
         } else {
             // Immediate classification: fire haptic via state toggle, fly card out, then call back
@@ -179,9 +195,9 @@ struct SwipeClassifier: View {
                 dragOffset = .zero
                 switch direction {
                 case .left:  onClassified(.alerte)
-                case .up:    onClassified(.note)
+                case .up:    break  // handled above by PrioriteSheet
                 case .down:  onClassified(.achat)
-                case .right: break  // handled above
+                case .right: break  // handled above by CriticitéSheet
                 }
             }
         }

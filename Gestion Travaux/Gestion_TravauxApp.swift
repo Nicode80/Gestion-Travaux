@@ -21,7 +21,7 @@ struct Gestion_TravauxApp: App {
             ActiviteEntity.self,
             AlerteEntity.self,
             AstuceEntity.self,
-            NoteEntity.self,
+            ToDoEntity.self,
             AchatEntity.self,
             CaptureEntity.self,
             NoteSaisonEntity.self,

@@ -13,7 +13,6 @@ struct TacheDetailView: View {
     private let modelContext: ModelContext
 
     @State private var selectedAlerte: AlerteEntity?
-    @State private var selectedNote: NoteEntity?
 
     init(tache: TacheEntity, modelContext: ModelContext) {
         self.tache = tache
@@ -69,21 +68,8 @@ struct TacheDetailView: View {
                     )
                 }
 
-                // Notes
-                if !tache.notes.isEmpty {
-                    let notes = tache.notes.sorted { $0.createdAt > $1.createdAt }
-                    contenuSection(
-                        titre: "NOTES",
-                        icone: "note.text",
-                        couleurIcone: Color(hex: Constants.Couleurs.texteSecondaire),
-                        fondColor: Color(hex: Constants.Couleurs.backgroundCard),
-                        items: notes.map { ($0.preview.isEmpty ? "Note" : $0.preview, $0.blocksData) },
-                        onTap: { index in selectedNote = notes[index] }
-                    )
-                }
-
-                if alertesActives.isEmpty && tache.notes.isEmpty {
-                    Text("Aucun contenu pour cette tâche.")
+                if alertesActives.isEmpty {
+                    Text("Aucune alerte pour cette tâche.")
                         .font(.subheadline)
                         .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -99,9 +85,6 @@ struct TacheDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedAlerte) { alerte in
             CaptureDetailView(blocksData: alerte.blocksData, titre: "Alerte")
-        }
-        .sheet(item: $selectedNote) { note in
-            CaptureDetailView(blocksData: note.blocksData, titre: "Note")
         }
     }
 

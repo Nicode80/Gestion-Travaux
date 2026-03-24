@@ -128,3 +128,26 @@ Corrections appliquées lors de la revue d'intégration 1.1 + 1.2 :
 
 - 2026-02-23 : Implémentation complète story 1.1 — schéma SwiftData, 11 entités, singletons, tests.
 - 2026-02-23 : Revue d'intégration 1.1+1.2 — try? silencieux corrigé, Item.swift supprimé, StatutTache.libelle centralisé. Build OK, 27/27 tests passés.
+
+---
+
+## ⚠️ Révision schéma (2026-03-08) — NoteEntity → ToDoEntity
+
+**Suite à un test terrain réel, le schéma SwiftData a été modifié (story 6.1) :**
+
+- **`NoteEntity` est supprimée** — supprimer `Models/NoteEntity.swift` et toutes ses références
+- **`ToDoEntity` est ajoutée** — nouvelle entité liée à `PieceEntity` (pas `TacheEntity`)
+- **`PieceEntity`** reçoit une nouvelle relation `todos: [ToDoEntity]`
+- **`TacheEntity`** perd sa relation `notes: [NoteEntity]`
+- **`ModelContainer`** dans `GestionTravauxApp.swift` doit être mis à jour : retirer `NoteEntity.self`, ajouter `ToDoEntity.self`
+- **`SwiftDataSchemaTests.swift`** : supprimer les tests NoteEntity, ajouter tests ToDoEntity
+
+**Migration :** app en MVP/TestFlight, aucune préservation des données NoteEntity existantes requise. SwiftData gère la migration légère automatiquement.
+
+**Nouvelles énumérations dans `Enumerations.swift` :**
+```swift
+enum PrioriteToDo: String, Codable { case urgent, bientot, unJour }
+enum SourceToDo:   String, Codable { case manuel, swipeGame, checkout }
+```
+
+**Voir story 6.1 pour l'implémentation complète.**

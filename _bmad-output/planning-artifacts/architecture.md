@@ -31,7 +31,7 @@ _Ce document se construit collaborativement étape par étape. Les sections sont
 | Capture Terrain / Mode Chantier | FR1–11 | Élevé — audio + photo + état global |
 | Classification Bureau | FR12–21 | Moyen — swipe game + persistance |
 | Gestion des tâches | FR22–29 | Moyen — cycle de vie + fuzzy matching |
-| ALERTES, ASTUCES, Notes, Achats | FR30–40 | Moyen — modèle de contenu en blocs |
+| ALERTES, ASTUCES, ToDos, Achats | FR30–40 | Moyen — modèle de contenu en blocs |
 | Briefing & Reprise | FR41–46 | Moyen — logique temporelle |
 | Navigation & Structure | FR47–51 | Bas — hiérarchie classique |
 | Persistence & Données | FR52–56 | Élevé — fiabilité critique |
@@ -158,12 +158,12 @@ iOS native — Swift 6.2 + SwiftUI + iOS 18+ minimum
 | Entité | Relations | Notes |
 |--------|-----------|-------|
 | `MaisonEntity` | → `[PieceEntity]`, → `NoteSaisonEntity?` | Singleton (1 maison) |
-| `PieceEntity` | → `MaisonEntity`, → `[TacheEntity]` | |
-| `TacheEntity` | → `PieceEntity`, → `ActiviteEntity`, → `[AlerteEntity]`, → `[NoteEntity]`, → `[CaptureEntity]` | Statut : enum `.active / .terminee` · `prochaineAction: String?` |
+| `PieceEntity` | → `MaisonEntity`, → `[TacheEntity]`, → `[ToDoEntity]` | |
+| `TacheEntity` | → `PieceEntity`, → `ActiviteEntity`, → `[AlerteEntity]`, → `[CaptureEntity]` | Statut : enum `.active / .terminee` · `prochaineAction: String?` |
 | `ActiviteEntity` | → `[TacheEntity]`, → `[AstuceEntity]` | Transversal toutes pièces |
 | `AlerteEntity` | → `TacheEntity` | Temporelle, consultable tant que la tâche existe |
 | `AstuceEntity` | → `ActiviteEntity` | Permanente · niveaux `.critique / .importante / .utile` |
-| `NoteEntity` | → `TacheEntity` | Contexte situationnel de la tâche |
+| `ToDoEntity` | → `PieceEntity` | priorite : `.urgent / .bientot / .unJour` · estFaite/isArchived · source : swipeGame/checkout/manuel *(remplace NoteEntity — voir story 6.1)* |
 | `AchatEntity` | → `ListeDeCoursesEntity` | |
 | `ListeDeCoursesEntity` | → `[AchatEntity]` | Singleton |
 | `NoteSaisonEntity` | → `MaisonEntity` | 1:many · chaque fin de saison crée un nouvel enregistrement, la plus récente est affichée · déclenchée par action explicite + absence ≥ 2 mois |
@@ -182,7 +182,7 @@ struct ContentBlock: Codable {
 // Stocké comme Data (JSON encodé) dans chaque entité parent via var blocksData: Data
 ```
 
-Entités utilisant ce modèle : `AlerteEntity`, `AstuceEntity`, `NoteEntity`, `AchatEntity`, `NoteSaisonEntity`, `CaptureEntity`. Aucune relation SwiftData inter-entités pour les blocs — tableau Swift ordonné, drag & drop = réordonnancement du tableau, édition = modification d'un value type.
+Entités utilisant ce modèle : `AlerteEntity`, `AstuceEntity`, `AchatEntity`, `NoteSaisonEntity`, `CaptureEntity`. *(NoteEntity supprimée — story 6.1. ToDoEntity utilise un simple `titre: String`, pas de ContentBlocks.)* Aucune relation SwiftData inter-entités pour les blocs — tableau Swift ordonné, drag & drop = réordonnancement du tableau, édition = modification d'un value type.
 
 **Photos :** stockées dans `Documents/captures/` (dossier privé de l'app, non accessible depuis l'app Photo, inclus dans backup iCloud automatique). `photoLocalPath` = chemin relatif depuis la racine Documents.
 
@@ -192,7 +192,7 @@ Entités utilisant ce modèle : `AlerteEntity`, `AstuceEntity`, `NoteEntity`, `A
 |-------|-----------|-------|---------------|
 | ← Gauche | `AlerteEntity` | `TacheEntity` active | Supprimée |
 | → Droite + niveau | `AstuceEntity` | `ActiviteEntity` | Supprimée |
-| ↑ Haut | `NoteEntity` | `TacheEntity` active | Supprimée |
+| ↑ Haut + priorité | `ToDoEntity` | `PieceEntity` de la tâche active | Supprimée |
 | ↓ Bas | `AchatEntity` | `ListeDeCoursesEntity` | Supprimée |
 
 **Audio :** fichier audio supprimé après validation de la classification. Transcription = seule source de vérité textuelle. Texte édité écrase sans historique.
@@ -475,7 +475,7 @@ GestionTravaux/
 │   ├── ActiviteEntity.swift
 │   ├── AlerteEntity.swift
 │   ├── AstuceEntity.swift
-│   ├── NoteEntity.swift
+│   ├── ToDoEntity.swift              ← remplace NoteEntity (story 6.1)
 │   ├── AchatEntity.swift
 │   ├── CaptureEntity.swift
 │   ├── NoteSaisonEntity.swift
@@ -586,7 +586,7 @@ TERRAIN (capture)
 SOIR (classification)
   ClassificationView (swipe game)
     → ClassificationViewModel.classify(capture, type)
-    → Crée AlerteEntity / AstuceEntity / NoteEntity / AchatEntity
+    → Crée AlerteEntity / AstuceEntity / ToDoEntity / AchatEntity
     → Supprime CaptureEntity + fichier audio temporaire
     → modelContext.save()
 
@@ -711,7 +711,7 @@ if try modelContext.fetch(FetchDescriptor<MaisonEntity>()).isEmpty {
 
 **Areas for Future Enhancement (hors MVP V1) :**
 - V3 : Reformulation IA des captures (remplace édition manuelle)
-- V2+ : `NoteEntity` liée à `ActiviteEntity` (actuellement `TacheEntity` uniquement pour MVP)
+- V2+ : Notes libres (si besoin validé terrain) — concept différent des ToDos, non lié à une tâche/pièce
 - V2+ : XCUITests pour le swipe game (overhead justifié à partir de V2)
 - V2+ : Synchronisation iCloud (SwiftData CloudKit) si usage multi-device
 
@@ -730,3 +730,12 @@ Séquence en 10 étapes recommandée (section Core Decisions). Commencer par :
 1. Schéma SwiftData complet (11 entités) dans `/Models/`
 2. First launch initialization dans `GestionTravauxApp.swift`
 3. `ModeChantierState` + structure NavigationStack de base
+
+---
+
+## Changelog Architecture
+
+| Date | Changement |
+|------|-----------|
+| 2026-02-22 | Document initial — architecture complète validée |
+| 2026-03-08 | **NoteEntity supprimée, ToDoEntity ajoutée** (story 6.1) : suite à test terrain réel, NoteEntity (liée à TacheEntity, sans priorité) remplacée par ToDoEntity (liée à PieceEntity, 3 niveaux de priorité Urgent/Bientôt/Un jour, complétion animée, archive). Swipe ↑ : "NOTE" → "TO DO" avec bottom sheet priorité. Checkout crée automatiquement un ToDo. PieceEntity → [ToDoEntity] ajouté. |
