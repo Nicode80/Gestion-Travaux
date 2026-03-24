@@ -239,3 +239,24 @@ func markTaskAsTerminee() {
 
 - 2026-03-03 : Story 3.3 implémentée — RecapitulatifView + CheckoutView + reclassification + validation + checkout (prochaine action / terminée). Voice one-shot pour prochaine action. 23 tests ajoutés, 0 régression.
 - 2026-03-03 : Code review — 4 fixes appliqués : (1) guard let tacheCourante dans CheckoutView (force-unwrap crash), (2) reclassify() create-before-delete pour éviter entité orpheline, (3) validateClassifications() distingue erreur SwiftData vs captures restantes, (4) 3 tests ajoutés (reclassify sans LDC × 2 + reclassify ASTUCE niveau). 26 tests, 0 régression.
+
+---
+
+## ⚠️ Révision post-implémentation (2026-03-08) — Checkout : création automatique d'un ToDo
+
+**Suite à un test terrain réel, le checkout crée maintenant aussi un `ToDoEntity` (voir story 6.1).**
+
+**Ce qui change dans `saveProchaineAction()` :**
+
+`TacheEntity.prochaineAction` est **toujours mis à jour** (comportement inchangé pour le briefing).
+
+En **plus**, le texte saisi déclenche la logique suivante :
+1. Vérifier si un `ToDoEntity` similaire existe déjà pour la même `PieceEntity` (similarité `NLEmbedding` ≥ 0.80)
+2. Si similaire trouvé → alert "C'est déjà dans tes ToDo : [titre]. Le passer en Urgent ?"
+   - [Oui, Urgent] → met à jour la priorité si elle était `.bientot` ou `.unJour`
+   - [Non, créer séparé] → crée un nouveau `ToDoEntity` en `.urgent`
+3. Si aucun similaire → crée un nouveau `ToDoEntity` (titre = texte saisi, priorité `.urgent`, source `.checkout`, lié à `PieceEntity` de la tâche)
+
+**Tests `CheckoutViewModelTests` à mettre à jour :** ajouter couverture de la création de ToDo et de la détection de similarité.
+
+**Voir story 6.1 pour l'implémentation complète.**

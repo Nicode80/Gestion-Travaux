@@ -33,9 +33,16 @@ final class ToDoViewModel {
 
     private(set) var pieces: [PieceEntity] = []
 
-    // MARK: - Error
+    // MARK: - View state
 
-    var errorMessage: String? = nil
+    /// Unified view state: .idle → .loading (first charger) → .success / .failure.
+    /// Also used for CRUD operation errors (.failure) — same pattern as DashboardViewModel.
+    private(set) var viewState: ViewState<Void> = .idle
+
+    /// Dismisses a .failure state (called by the view's error alert dismiss handler).
+    func dismissError() {
+        if case .failure = viewState { viewState = .idle }
+    }
 
     // MARK: - Init
 
@@ -46,6 +53,7 @@ final class ToDoViewModel {
     // MARK: - Loading
 
     func charger() {
+        if case .idle = viewState { viewState = .loading }
         do {
             let tousLesTodos = try modelContext.fetch(FetchDescriptor<ToDoEntity>())
             todos = tousLesTodos
@@ -65,9 +73,9 @@ final class ToDoViewModel {
             )
 
             appliquerFiltres()
-            errorMessage = nil
+            viewState = .success(())
         } catch {
-            errorMessage = "Impossible de charger les ToDo. Réessayez."
+            viewState = .failure("Impossible de charger les ToDo. Réessayez.")
         }
     }
 
@@ -99,7 +107,22 @@ final class ToDoViewModel {
             try modelContext.save()
             charger()
         } catch {
-            errorMessage = "Impossible de modifier la priorité. Réessayez."
+            viewState = .failure("Impossible de modifier la priorité. Réessayez.")
+        }
+    }
+
+    // MARK: - Creation
+
+    func ajouterToDo(titre: String, priorite: PrioriteToDo, piece: PieceEntity) {
+        let trimmed = titre.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let todo = ToDoEntity(titre: trimmed, priorite: priorite, piece: piece, source: .manuel)
+        modelContext.insert(todo)
+        do {
+            try modelContext.save()
+            charger()
+        } catch {
+            viewState = .failure("Impossible de créer le To Do. Réessayez.")
         }
     }
 
@@ -112,20 +135,20 @@ final class ToDoViewModel {
         do {
             try modelContext.save()
         } catch {
-            errorMessage = "Impossible d'enregistrer la complétion. Réessayez."
+            viewState = .failure("Impossible d'enregistrer la complétion. Réessayez.")
             return
         }
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(2))
-            withAnimation(.easeOut(duration: 0.3)) {
-                todo.isArchived = true
-            }
+            todo.isArchived = true
             do {
                 try modelContext.save()
             } catch {
-                errorMessage = "Impossible d'archiver la tâche. Réessayez."
+                viewState = .failure("Impossible d'archiver la tâche. Réessayez.")
             }
-            charger()
+            withAnimation(.easeOut(duration: 0.3)) {
+                charger()
+            }
         }
     }
 }

@@ -63,7 +63,7 @@ afin de ne jamais oublier ce qui reste à faire dans chaque pièce de mon chanti
 
 **Given** Nico saisit une prochaine action dans CheckoutView
 **When** il valide
-**Then** le système vérifie s'il existe déjà un `ToDoEntity` similaire pour la même `PieceEntity` (similarité via `NLEmbedding` cosinus ≥ 0.80)
+**Then** le système vérifie s'il existe déjà un `ToDoEntity` similaire pour la même `PieceEntity` (similarité via comparaison en 3 passes : exact match insensible à la casse/accents → Jaccard ≥ 0.70 sur tokens significatifs (stop words FR exclus) → Jaro-Winkler ≥ 0.88 sur tokens triés ; NLEmbedding non utilisé car non disponible de façon fiable en offline)
 **And** si similaire trouvé et priorité `.bientot` ou `.unJour` : une alert s'affiche "C'est déjà dans tes ToDo : [titre existant]. Le passer en Urgent ?"
   - [Oui, Urgent] → priorité mise à jour vers `.urgent`
   - [Non, créer séparé] → crée un nouveau `ToDoEntity` en `.urgent`
@@ -423,6 +423,7 @@ func toggleComplete(_ todo: ToDoEntity) {
 - `Gestion Travaux/Views/ToDo/ToDoListView.swift`
 - `Gestion Travaux/Views/ToDo/ToDoRowView.swift`
 - `Gestion Travaux/Views/ToDo/ToDoArchiveView.swift`
+- `Gestion Travaux/Views/ToDo/ToDoDetailSheet.swift`
 - `Gestion Travaux/ViewModels/ToDoViewModel.swift`
 - `Gestion TravauxTests/ViewModels/ToDoViewModelTests.swift`
 
@@ -454,3 +455,4 @@ func toggleComplete(_ todo: ToDoEntity) {
 - 2026-03-08 : Story créée suite à test terrain réel. Décision de remplacer `NoteEntity` par `ToDoEntity`. Concept validé en session d'analyse avec Mary (Business Analyst BMAD).
 - 2026-03-08 : AC checkout affiné — cas "similaire déjà Urgent" : alert avec [OK] + [Créer séparé] pour gérer les faux positifs de détection. Sections Dev Notes, Dev Agent Record, File List ajoutées. Statut passé à `ready-for-dev`.
 - 2026-03-08 : Implémentation complète. BUILD SUCCEEDED. 264/265 tests passés (1 régression préexistante non liée). Statut → done.
+- 2026-03-12 : Code review (AI adversarial). Corrections : (1) `ToDoViewModel.errorMessage: String?` → `ViewState<Void>` + `dismissError()` conforme au pattern architecture ; (2) `findSimilarToDo` : `try?` silencieux → `do/catch` avec `classificationError` ; (3) Commentaire DashboardView corrigé ; (4) `ToDoDetailSheet.swift` ajouté au File List ; (5) AC similarité mise à jour pour documenter l'algorithme Jaccard+Jaro-Winkler effectivement implémenté.

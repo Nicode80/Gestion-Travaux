@@ -242,7 +242,7 @@ struct DashboardView: View {
             }
 
             Section("Pratique") {
-                // Story 6.1: ToDo List — section visible when there are active ToDos.
+                // Story 6.1: ToDo List — always navigable; badge shows urgent count + total when non-zero.
                 NavigationLink {
                     ToDoListView(modelContext: modelContext)
                 } label: {

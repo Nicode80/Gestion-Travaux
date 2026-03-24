@@ -10,6 +10,10 @@ struct ToDoDetailSheet: View {
 
     let todo: ToDoEntity
 
+    private var contentBlocks: [ContentBlock] {
+        todo.blocksData.toContentBlocks().sorted { $0.order < $1.order }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -24,42 +28,41 @@ struct ToDoDetailSheet: View {
                         .background(todo.priorite.couleur)
                         .clipShape(Capsule())
 
-                    // Full title
-                    Text(todo.titre)
-                        .font(.title3)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    // Rich content (text + photos) if available, otherwise plain title
+                    if contentBlocks.isEmpty {
+                        Text(todo.titre)
+                            .font(.title3)
+                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        LazyVStack(alignment: .leading, spacing: 12) {
+                            ForEach(contentBlocks) { block in
+                                switch block.type {
+                                case .text:
+                                    Text(block.text ?? "")
+                                        .font(.body)
+                                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                case .photo:
+                                    if let path = block.photoLocalPath {
+                                        PhotoView(path: path)
+                                            .frame(maxWidth: .infinity)
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     Divider()
 
-                    // Piece + date
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let nom = todo.piece?.nom {
-                            HStack(spacing: 6) {
-                                Image(systemName: "house")
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                                Text(nom)
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                            }
-                            .font(.subheadline)
-                        }
-
-                        HStack(spacing: 6) {
-                            Image(systemName: "calendar")
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                            Text(todo.dateCreation.formatted(date: .long, time: .omitted))
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                        }
-                        .font(.subheadline)
-
-                        HStack(spacing: 6) {
-                            Image(systemName: sourceIcone)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                            Text(sourceLibelle)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                        }
-                        .font(.subheadline)
+                    HStack(spacing: 6) {
+                        Image(systemName: "calendar")
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        Text(todo.dateCreation.formatted(date: .long, time: .omitted))
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
                     }
+                    .font(.subheadline)
                 }
                 .padding()
             }
@@ -71,19 +74,4 @@ struct ToDoDetailSheet: View {
         .presentationDragIndicator(.visible)
     }
 
-    private var sourceIcone: String {
-        switch todo.source {
-        case .manuel:    return "hand.tap"
-        case .swipeGame: return "hand.draw"
-        case .checkout:  return "checkmark.seal"
-        }
-    }
-
-    private var sourceLibelle: String {
-        switch todo.source {
-        case .manuel:    return "Créé manuellement"
-        case .swipeGame: return "Classifié en Mode Bureau"
-        case .checkout:  return "Prochaine action (check-out)"
-        }
-    }
 }

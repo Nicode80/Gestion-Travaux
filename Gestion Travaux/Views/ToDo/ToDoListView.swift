@@ -91,12 +91,12 @@ struct ToDoListView: View {
             ToDoArchiveView(viewModel: viewModel)
         }
         .alert("Erreur", isPresented: Binding(
-            get: { viewModel.errorMessage != nil },
-            set: { if !$0 { viewModel.errorMessage = nil } }
+            get: { if case .failure = viewModel.viewState { return true }; return false },
+            set: { if !$0 { viewModel.dismissError() } }
         )) {
-            Button("OK", role: .cancel) { viewModel.errorMessage = nil }
+            Button("OK", role: .cancel) { viewModel.dismissError() }
         } message: {
-            Text(viewModel.errorMessage ?? "")
+            if case .failure(let msg) = viewModel.viewState { Text(msg) }
         }
         .onAppear { viewModel.charger() }
         .sheet(item: $selectedToDo) { todo in

@@ -67,6 +67,19 @@ final class ShoppingListViewModel {
         try modelContext.save()
         achats.removeAll { $0.id == achat.id }
     }
+
+    // MARK: - Vider les cochés
+
+    func deleteCheckedItems() throws {
+        let coches = achats.filter { $0.achete }
+        coches.forEach { modelContext.delete($0) }
+        try modelContext.save()
+        achats.removeAll { $0.achete }
+    }
+
+    var hasCheckedItems: Bool {
+        achats.contains { $0.achete }
+    }
 }
 
 // MARK: - Errors

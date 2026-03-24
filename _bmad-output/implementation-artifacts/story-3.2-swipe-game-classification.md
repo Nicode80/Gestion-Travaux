@@ -274,3 +274,23 @@ Story 3.2 complète. 14 tests SwipeClassifierTests créés et passants. Aucune r
 
 - 2026-03-03 : Story 3.2 implémentée — Swipe Game classification par direction. 4 composants créés (SwipeClassifier, ArcCrescentView, CriticitéSheet, tests direction). ClassificationViewModel étendu avec `classify(_:as:)`. ClassificationView migrée de liste vers single-card swipe.
 - 2026-03-03 : Code review (AI adversarial) — 3 fixes appliqués : (1) guard ListeDeCoursesEntity nil dans classify(.achat) évite perte silencieuse de données ; (2) DispatchQueue.main.asyncAfter remplacé par Task { @MainActor in } (Swift 6 idiomatique) ; (3) 4 tests UP/DOWN boundary ajoutés dans SwipeClassifierTests + nouveau ClassificationViewModelTests (8 tests).
+
+---
+
+## ⚠️ Révision post-implémentation (2026-03-08) — Swipe ↑ : NOTE → TO DO
+
+**Suite à un test terrain réel, le concept de `NoteEntity` a été remplacé par `ToDoEntity` (voir story 6.1).**
+
+**Ce qui change pour le swipe ↑ :**
+- Le label de l'arc ↑ passe de **"NOTE"** à **"TO DO"** (même couleur gris `#6C6C70`, même design)
+- Au lieu de créer une `NoteEntity` liée à `TacheEntity`, on crée une `ToDoEntity` liée à la `PieceEntity` de la tâche active
+- Après le swipe ↑, un **bottom sheet de sélection de priorité** s'affiche (même pattern que ASTUCE) : [🔴 Urgent] [🟠 Bientôt] [🔵 Un jour]
+- `classifyAsNote()` est **supprimée** du ClassificationViewModel
+- `ClassificationType.note` est remplacé par `ClassificationType.toDo(PrioriteToDo)`
+
+**Code à supprimer :**
+- `classifyAsNote()` dans `ClassificationViewModel.swift`
+- Toute référence à `NoteEntity` dans `ClassificationViewModel` et `RecapitulatifView`
+- `Models/NoteEntity.swift`
+
+**Voir story 6.1 pour l'implémentation complète.**

@@ -209,7 +209,8 @@ final class ClassificationViewModel {
                     titre: capture.transcription.isEmpty ? capturePreview : capture.transcription,
                     priorite: priorite,
                     piece: piece,
-                    source: .swipeGame
+                    source: .swipeGame,
+                    blocksData: blocksData
                 )
                 modelContext.insert(todo)
                 summaryEntity = .toDo(todo)
@@ -287,7 +288,8 @@ final class ClassificationViewModel {
                         .joined(separator: " "),
                     priorite: priorite,
                     piece: piece,
-                    source: .swipeGame
+                    source: .swipeGame,
+                    blocksData: item.blocksData
                 )
                 modelContext.insert(todo)
                 newEntity = .toDo(todo)
@@ -470,12 +472,17 @@ final class ClassificationViewModel {
 
     /// Finds a semantically similar non-archived ToDo in the same piece (Story 6.1).
     private func findSimilarToDo(titre: String, piece: PieceEntity) -> ToDoEntity? {
-        guard let allTodos = try? modelContext.fetch(FetchDescriptor<ToDoEntity>(
-            predicate: #Predicate { !$0.isArchived }
-        )) else { return nil }
-        let todosForPiece = allTodos.filter { $0.piece?.id == piece.id }
-        guard !todosForPiece.isEmpty else { return nil }
-        return todosForPiece.first { ClassificationViewModel.titresSimilaires(titre, $0.titre) }
+        do {
+            let allTodos = try modelContext.fetch(FetchDescriptor<ToDoEntity>(
+                predicate: #Predicate { !$0.isArchived }
+            ))
+            let todosForPiece = allTodos.filter { $0.piece?.id == piece.id }
+            guard !todosForPiece.isEmpty else { return nil }
+            return todosForPiece.first { ClassificationViewModel.titresSimilaires(titre, $0.titre) }
+        } catch {
+            classificationError = "Impossible de vérifier les ToDo existants. Réessayez."
+            return nil
+        }
     }
 
     /// Marks the task as terminee and clears prochaineAction (no pending action makes sense on a done task).

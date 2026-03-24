@@ -154,6 +154,12 @@ final class AudioEngine: AudioEngineProtocol {
                     self.avEngine.prepare()
                     try self.avEngine.start()
 
+                    // Resume the continuation BEFORE hopping to MainActor.
+                    // The caller (demarrer) is awaiting this continuation on the main thread,
+                    // so calling MainActor.run here would deadlock (main thread waits for
+                    // continuation, MainActor.run waits for main thread).
+                    continuation.resume()
+
                     // SFSpeechRecognizer.recognitionTask(with:) must be called on @MainActor
                     await MainActor.run { [weak self] in
                         guard let self, let recognizer = self.speechRecognizer else { return }
@@ -176,8 +182,6 @@ final class AudioEngine: AudioEngineProtocol {
                         self.isRecording = true
                         self.transcriptionEnCours = ""
                     }
-
-                    continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
                 }

@@ -12,6 +12,7 @@ struct ToDoArchiveView: View {
     let viewModel: ToDoViewModel
 
     @State private var filtrePiece: PieceEntity? = nil
+    @State private var selectedTodo: ToDoEntity? = nil
 
     var body: some View {
         let archives = viewModel.todosArchives.filter { todo in
@@ -45,26 +46,31 @@ struct ToDoArchiveView: View {
             } else {
                 Section {
                     ForEach(archives) { todo in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(todo.titre)
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .strikethrough(true, color: .secondary)
-                            HStack {
-                                if let nom = todo.piece?.nom {
-                                    Text(nom)
-                                        .font(.caption)
-                                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
-                                }
-                                Spacer()
-                                if let date = todo.dateFaite {
-                                    Text(date.formatted(.relative(presentation: .named)))
-                                        .font(.caption)
-                                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        Button {
+                            selectedTodo = todo
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(todo.titre)
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                                    .strikethrough(true, color: .secondary)
+                                HStack {
+                                    if let nom = todo.piece?.nom {
+                                        Text(nom)
+                                            .font(.caption)
+                                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                    }
+                                    Spacer()
+                                    if let date = todo.dateFaite {
+                                        Text(date.formatted(.relative(presentation: .named)))
+                                            .font(.caption)
+                                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                    }
                                 }
                             }
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
+                        .buttonStyle(.plain)
                     }
                 } header: {
                     Text("\(archives.count) ToDo\(archives.count > 1 ? "s" : "") complété\(archives.count > 1 ? "s" : "")")
@@ -77,6 +83,9 @@ struct ToDoArchiveView: View {
         .navigationTitle("Archive ToDo")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { viewModel.charger() }
+        .sheet(item: $selectedTodo) { todo in
+            ToDoDetailSheet(todo: todo)
+        }
     }
 
     private func filtreButton(_ piece: PieceEntity?, label: String) -> some View {

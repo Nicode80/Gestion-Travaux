@@ -11,6 +11,9 @@ import SwiftData
 final class ToDoEntity {
     var id: UUID = UUID()
     var titre: String
+    /// JSON-encoded [ContentBlock] — stores the original capture content (text + photos).
+    /// Empty for checkout-created todos (text only).
+    var blocksData: Data = Data()
     var priorite: PrioriteToDo
     var estFaite: Bool = false
     var dateFaite: Date?
@@ -21,10 +24,11 @@ final class ToDoEntity {
     @Relationship(deleteRule: .nullify)
     var piece: PieceEntity?
 
-    init(titre: String, priorite: PrioriteToDo, piece: PieceEntity, source: SourceToDo = .manuel) {
+    init(titre: String, priorite: PrioriteToDo, piece: PieceEntity, source: SourceToDo = .manuel, blocksData: Data = Data()) {
         self.titre = titre
         self.priorite = priorite
         self.piece = piece
         self.source = source
+        self.blocksData = blocksData
     }
 }
