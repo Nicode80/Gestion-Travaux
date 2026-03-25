@@ -1,6 +1,6 @@
 # Gestion Travaux — Index des Stories
 
-18 stories · 5 epics · 60 FRs couverts
+21 stories · 7 epics · 77 FRs couverts
 
 ---
 
@@ -80,6 +80,18 @@ Remplacement de NoteEntity par ToDoEntity suite à test terrain. Liste de procha
 
 ---
 
+## Epic 7 — Retours Terrain V1 *(ajouté 2026-03-24)*
+
+Améliorations issues de la première utilisation intensive : ToDos accessibles depuis la vue tâche, édition des fiches pour corriger les erreurs de transcription, pause automatique de la musique pendant la dictée.
+
+| Story | Titre | FRs | NFRs |
+|-------|-------|-----|------|
+| [7.1](story-7.1-todos-dans-tache.md) | ToDos dans la vue Tâche — consultation et ajout depuis TacheDetailView | FR70, FR71 | NFR-P3, NFR-U1 |
+| [7.2](story-7.2-edition-fiches.md) | Édition des fiches — ToDo, Alerte, Astuce, Achat | FR72, FR73, FR74, FR75 | NFR-R5, NFR-U9 |
+| [7.3](story-7.3-pause-audio-musique.md) | Pause musique pendant la dictée — interruption AVAudioSession | FR76, FR77 | NFR-R3, NFR-P2 |
+
+---
+
 ## Couverture des FRs
 
 | FR | Story | FR | Story | FR | Story |
@@ -106,7 +118,18 @@ Remplacement de NoteEntity par ToDoEntity suite à test terrain. Liste de procha
 | FR20 | 3.3 | FR41 | 4.4 | | |
 | FR21 | 3.3 | FR42 | 4.4 | | |
 
-**60/60 FRs couverts.**
+**60/60 FRs originaux couverts.**
+
+**Epic 7 — FR70 à FR77 :**
+
+| FR | Story | FR | Story |
+|----|-------|----|-------|
+| FR70 | 7.1 | FR74 | 7.2 |
+| FR71 | 7.1 | FR75 | 7.2 |
+| FR72 | 7.2 | FR76 | 7.3 |
+| FR73 | 7.2 | FR77 | 7.3 |
+
+**77/77 FRs couverts au total.**
 
 ---
 
@@ -133,3 +156,9 @@ Les stories sont conçues pour être implémentées dans l'ordre numérique. Cha
 - Story 2.7 (refonte dashboard) : à implémenter après Epic 2, avant Epic 3
 - Story 3.2 (swipe game) crée les AlerteEntity/AstuceEntity lus par Epic 4
 - Story 3.3 (check-out) met à jour `TacheEntity.statut` utilisé par 1.4 et 4.1
+
+**Epic 7 — Dépendances :**
+- Story 7.1 : dépend de 6.1 (ToDoEntity, relation PieceEntity.todos, ToDoViewModel) — sans migration SwiftData
+- Story 7.2 : dépend de 3.2, 4.2, 4.3, 5.1, 6.1 — toutes les entités et vues existent déjà
+- Story 7.3 : dépend de 2.2 (AudioEngine) et 2.4 (gestion interruptions) — test obligatoire story 2.3 non-régression
+- Les stories 7.1, 7.2 et 7.3 sont indépendantes entre elles et peuvent être implémentées en parallèle
