@@ -15,6 +15,9 @@ struct ToDoListView: View {
     @State private var viewModel: ToDoViewModel
     @State private var showArchive = false
     @State private var selectedToDo: ToDoEntity?
+    @State private var todoAEditer: ToDoEntity?
+    @State private var texteEdition = ""
+    @Environment(ModeChantierState.self) private var chantier
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -58,6 +61,17 @@ struct ToDoListView: View {
                                     },
                                     onTap: { selectedToDo = todo }
                                 )
+                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                                    if !chantier.boutonVert {
+                                        Button {
+                                            texteEdition = todo.titre
+                                            todoAEditer = todo
+                                        } label: {
+                                            Label("Modifier", systemImage: "pencil")
+                                        }
+                                        .tint(Color(hex: Constants.Couleurs.accent))
+                                    }
+                                }
                             }
                         }
                     }
@@ -98,9 +112,31 @@ struct ToDoListView: View {
         } message: {
             if case .failure(let msg) = viewModel.viewState { Text(msg) }
         }
+        .alert("Erreur", isPresented: Binding(
+            get: { viewModel.editError != nil },
+            set: { if !$0 { viewModel.dismissEditError() } }
+        )) {
+            Button("Réessayer") {
+                if let todo = todoAEditer {
+                    viewModel.modifierTitre(todo, nouveauTitre: texteEdition)
+                }
+            }
+            Button("Annuler", role: .cancel) { viewModel.dismissEditError() }
+        } message: {
+            Text(viewModel.editError ?? "")
+        }
         .onAppear { viewModel.charger() }
         .sheet(item: $selectedToDo) { todo in
             ToDoDetailSheet(todo: todo)
+        }
+        .sheet(item: $todoAEditer) { todo in
+            EditTexteSheet(
+                titre: "Modifier le To Do",
+                texte: $texteEdition,
+                texteOriginal: todo.titre,
+                onValider: { viewModel.modifierTitre(todo, nouveauTitre: texteEdition) },
+                onAnnuler: {}
+            )
         }
     }
 

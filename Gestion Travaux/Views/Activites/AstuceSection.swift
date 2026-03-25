@@ -14,6 +14,7 @@ struct AstuceSection: View {
     let icon: String
     let astuces: [AstuceEntity]
     let onTap: (AstuceEntity) -> Void
+    var onModifier: ((AstuceEntity) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -34,6 +35,15 @@ struct AstuceSection: View {
             ForEach(astuces) { astuce in
                 AstuceRowView(astuce: astuce)
                     .onTapGesture { onTap(astuce) }
+                    .contextMenu {
+                        if let onModifier {
+                            Button {
+                                onModifier(astuce)
+                            } label: {
+                                Label("Modifier", systemImage: "pencil")
+                            }
+                        }
+                    }
             }
         }
     }

@@ -102,5 +102,5 @@ development_status:
   # ─────────────────────────────────────────────────────
   epic-7: in-progress
   7-1-todos-dans-la-vue-tache: done
-  7-2-edition-des-fiches-todo-alerte-astuce-achat: ready-for-dev
+  7-2-edition-des-fiches-todo-alerte-astuce-achat: review
   7-3-pause-musique-pendant-la-dictee: ready-for-dev

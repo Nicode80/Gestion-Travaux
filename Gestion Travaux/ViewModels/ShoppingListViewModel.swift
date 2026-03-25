@@ -60,6 +60,16 @@ final class ShoppingListViewModel {
         try modelContext.save()
     }
 
+    // MARK: - FR Edition (Story 7.2)
+
+    func modifierAchat(_ achat: AchatEntity, nouveauTexte: String) throws {
+        let trimmed = nouveauTexte.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        achat.texte = trimmed
+        try modelContext.save()
+        load()
+    }
+
     // MARK: - FR40 — Suppression
 
     func deleteItem(_ achat: AchatEntity) throws {

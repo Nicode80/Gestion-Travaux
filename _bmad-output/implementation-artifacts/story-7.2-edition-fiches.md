@@ -197,3 +197,81 @@ func modifierTexte(_ alerte: AlerteEntity, nouveauTexte: String) { ... }
 - Story 6.1 (done) : `ToDoEntity` — disponible
 - Stories 3.2, 4.2, 4.3, 5.1 (done) : entités Alerte, Astuce, Achat et leurs vues — disponibles
 - Aucune migration SwiftData nécessaire (les propriétés à modifier existent déjà)
+
+---
+
+## Tasks / Subtasks
+
+- [x] Task 1 : Composants d'édition réutilisables
+  - [x] 1.1 Créer `Views/Components/EditTexteSheet.swift` — `@Binding var texte`, titre paramétrable, bouton Enregistrer désactivé si vide, callbacks `onValider` / `onAnnuler`
+  - [x] 1.2 Créer `Views/Components/EditAstuceSheet.swift` — `TextEditor` + sélecteur `AstuceLevel`, même guards vide
+
+- [x] Task 2 : Édition des ToDo
+  - [x] 2.1 Ajouter `modifierTitre(_ todo:, nouveauTitre:)` dans `ToDoViewModel` (update + save + charger + erreur)
+  - [x] 2.2 Ajouter swipe action "Modifier" (leading) dans `ToDoListView` → ouvre `EditTexteSheet` en sheet
+  - [x] 2.3 Désactiver swipe "Modifier" quand `boutonVert == true`
+
+- [x] Task 3 : Édition des Alertes
+  - [x] 3.1 Ajouter `modifierTexte(_ alerte:, nouveauTexte:)` dans `AlerteListViewModel` (reconstruit blocks + save + reload)
+  - [x] 3.2 Ajouter swipe action "Modifier" dans `AlerteListView` (ForEach alertes) → ouvre `EditTexteSheet`
+  - [x] 3.3 Désactiver swipe "Modifier" quand `boutonVert == true`
+
+- [x] Task 4 : Édition des Astuces
+  - [x] 4.1 Injecter `ModelContext` dans `ActiviteDetailViewModel` + ajouter `modifierAstuce(_ astuce:, nouveauTexte:, niveau:)`
+  - [x] 4.2 Ajouter context menu "Modifier" sur `AstuceRowView` dans `AstuceSection` (context menu = seul geste disponible hors List)
+  - [x] 4.3 Brancher `EditAstuceSheet` dans `ActiviteDetailView` via `@State private var astuceAEditer`
+  - [x] 4.4 Désactiver context menu quand `boutonVert == true`
+
+- [x] Task 5 : Édition des Achats
+  - [x] 5.1 Ajouter `modifierAchat(_ achat:, nouveauTexte:)` dans `ShoppingListViewModel` (update + save + reload)
+  - [x] 5.2 Ajouter swipe action "Modifier" (leading) dans `ShoppingListView` → ouvre `EditTexteSheet`
+  - [x] 5.3 Désactiver swipe "Modifier" quand `boutonVert == true`
+
+- [x] Task 6 : Messages d'erreur
+  - [x] 6.1 Chaque vue modifiée affiche `.alert` "Impossible de modifier cette fiche. Réessayez." avec boutons "Réessayer" et "Annuler" sur erreur save
+
+---
+
+## Dev Agent Record
+
+### Implementation Plan
+
+- Composants `EditTexteSheet` et `EditAstuceSheet` : nouveau fichiers dans `Views/Components/`
+- Pattern swipe : `.swipeActions(edge: .leading)` pour les actions "Modifier" (vert, icône pencil)
+- `boutonVert` lockdown : `@Environment(ModeChantierState.self)` ajouté dans chaque vue concernée
+- `ActiviteDetailViewModel` : ajout `modelContext` via init (règle architecturale)
+- Astuces dans ScrollView : context menu au lieu de swipe (AstuceRowView n'est pas dans une List)
+
+### Debug Log
+
+### Completion Notes
+
+Implémentation complète des AC. Deux composants génériques créés (`EditTexteSheet`, `EditAstuceSheet`) couvrant les 4 entités. Pattern swipe action `.leading` pour ToDo, Alerte, Achat ; context menu (long press) pour Astuces (non présentes dans une `List`). `boutonVert` lockdown respecté via `@Environment(ModeChantierState.self)` dans toutes les vues modifiées. `ActiviteDetailViewModel` reçoit maintenant `ModelContext` via `init` (règle architecturale). Erreurs d'édition séparées des erreurs de chargement (`editError` distinct de `loadError`/`viewState`) avec alerte Réessayer + Annuler. BUILD SUCCEEDED — zéro erreur de compilation.
+
+---
+
+## File List
+
+- `Gestion Travaux/Views/Components/EditTexteSheet.swift` (nouveau)
+- `Gestion Travaux/Views/Components/EditAstuceSheet.swift` (nouveau)
+- `Gestion Travaux/ViewModels/ToDoViewModel.swift` (modifié)
+- `Gestion Travaux/Views/ToDo/ToDoListView.swift` (modifié)
+- `Gestion Travaux/ViewModels/AlerteListViewModel.swift` (modifié)
+- `Gestion Travaux/Views/Alertes/AlerteListView.swift` (modifié)
+- `Gestion Travaux/ViewModels/ActiviteDetailViewModel.swift` (modifié)
+- `Gestion Travaux/Views/Activites/AstuceSection.swift` (modifié)
+- `Gestion Travaux/Views/Activites/ActiviteDetailView.swift` (modifié)
+- `Gestion Travaux/ViewModels/ShoppingListViewModel.swift` (modifié)
+- `Gestion Travaux/Views/Shopping/ShoppingListView.swift` (modifié)
+
+---
+
+## Change Log
+
+- 2026-03-25 : Implémentation story 7.2 — édition des fiches ToDo, Alerte, Astuce, Achat. Nouveaux composants `EditTexteSheet` et `EditAstuceSheet`. Swipe action "Modifier" (leading) sur ToDo, Alerte, Achat. Context menu "Modifier" sur Astuces. Lockdown `boutonVert`. Gestion d'erreur avec Réessayer + Annuler.
+
+---
+
+## Status
+
+review

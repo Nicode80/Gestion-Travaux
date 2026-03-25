@@ -13,13 +13,17 @@ struct ActiviteDetailView: View {
 
     @State private var viewModel: ActiviteDetailViewModel
     @State private var selectedAstuce: AstuceEntity?
+    @State private var astuceAEditer: AstuceEntity?
+    @State private var texteEditionAstuce = ""
+    @State private var niveauEditionAstuce: AstuceLevel = .utile
     @State private var tachesExpanded = false
+    @Environment(ModeChantierState.self) private var chantier
 
     private let modelContext: ModelContext
     private let showDismissButton: Bool
 
     init(activite: ActiviteEntity, modelContext: ModelContext, showDismissButton: Bool = false) {
-        _viewModel = State(initialValue: ActiviteDetailViewModel(activite: activite))
+        _viewModel = State(initialValue: ActiviteDetailViewModel(activite: activite, modelContext: modelContext))
         self.modelContext = modelContext
         self.showDismissButton = showDismissButton
     }
@@ -55,10 +59,14 @@ struct ActiviteDetailView: View {
                         subtitle: "À lire avant chaque session",
                         color: Color(hex: Constants.Couleurs.astuce),
                         icon: "exclamationmark.triangle.fill",
-                        astuces: viewModel.astucesCritiques
-                    ) { astuce in
-                        selectedAstuce = astuce
-                    }
+                        astuces: viewModel.astucesCritiques,
+                        onTap: { astuce in selectedAstuce = astuce },
+                        onModifier: chantier.boutonVert ? nil : { astuce in
+                            texteEditionAstuce = astuce.preview
+                            niveauEditionAstuce = astuce.niveau
+                            astuceAEditer = astuce
+                        }
+                    )
                 }
 
                 if !viewModel.astucesImportantes.isEmpty {
@@ -67,10 +75,14 @@ struct ActiviteDetailView: View {
                         subtitle: "Bonnes pratiques",
                         color: Color(hex: Constants.Couleurs.astuceImportante),
                         icon: "lightbulb.fill",
-                        astuces: viewModel.astucesImportantes
-                    ) { astuce in
-                        selectedAstuce = astuce
-                    }
+                        astuces: viewModel.astucesImportantes,
+                        onTap: { astuce in selectedAstuce = astuce },
+                        onModifier: chantier.boutonVert ? nil : { astuce in
+                            texteEditionAstuce = astuce.preview
+                            niveauEditionAstuce = astuce.niveau
+                            astuceAEditer = astuce
+                        }
+                    )
                 }
 
                 if !viewModel.astucesUtiles.isEmpty {
@@ -79,10 +91,14 @@ struct ActiviteDetailView: View {
                         subtitle: "Infos pratiques complémentaires",
                         color: Color(hex: Constants.Couleurs.astuceUtile),
                         icon: "info.circle.fill",
-                        astuces: viewModel.astucesUtiles
-                    ) { astuce in
-                        selectedAstuce = astuce
-                    }
+                        astuces: viewModel.astucesUtiles,
+                        onTap: { astuce in selectedAstuce = astuce },
+                        onModifier: chantier.boutonVert ? nil : { astuce in
+                            texteEditionAstuce = astuce.preview
+                            niveauEditionAstuce = astuce.niveau
+                            astuceAEditer = astuce
+                        }
+                    )
                 }
 
                 if viewModel.totalCount == 0 {
@@ -113,6 +129,31 @@ struct ActiviteDetailView: View {
         // FR37, FR46 — note originale complète
         .sheet(item: $selectedAstuce) { astuce in
             CaptureDetailView(blocksData: astuce.blocksData, titre: "Astuce")
+        }
+        .sheet(item: $astuceAEditer) { astuce in
+            EditAstuceSheet(
+                texte: $texteEditionAstuce,
+                niveau: $niveauEditionAstuce,
+                texteOriginal: astuce.preview,
+                niveauOriginal: astuce.niveau,
+                onValider: {
+                    viewModel.modifierAstuce(astuce, nouveauTexte: texteEditionAstuce, niveau: niveauEditionAstuce)
+                },
+                onAnnuler: {}
+            )
+        }
+        .alert("Erreur", isPresented: Binding(
+            get: { viewModel.editError != nil },
+            set: { if !$0 { viewModel.editError = nil } }
+        )) {
+            Button("Réessayer") {
+                if let astuce = astuceAEditer {
+                    viewModel.modifierAstuce(astuce, nouveauTexte: texteEditionAstuce, niveau: niveauEditionAstuce)
+                }
+            }
+            Button("Annuler", role: .cancel) { viewModel.editError = nil }
+        } message: {
+            Text(viewModel.editError ?? "")
         }
     }
 
