@@ -94,5 +94,13 @@ development_status:
   # ─────────────────────────────────────────────────────
   # Epic 6 : ToDo List par Pièce
   # ─────────────────────────────────────────────────────
-  epic-6: in-progress
+  epic-6: done
   6-1-todo-list-par-piece-remplacement-noteentity: done
+
+  # ─────────────────────────────────────────────────────
+  # Epic 7 : Retours Terrain V1
+  # ─────────────────────────────────────────────────────
+  epic-7: in-progress
+  7-1-todos-dans-la-vue-tache: done
+  7-2-edition-des-fiches-todo-alerte-astuce-achat: ready-for-dev
+  7-3-pause-musique-pendant-la-dictee: ready-for-dev

@@ -361,6 +361,15 @@ Ce document fournit la décomposition complète en epics et stories pour Gestion
 | FR58 | Epic 2 | Permission caméra au premier usage |
 | FR59 | Epic 2 | Fallback saisie manuelle si micro refusé |
 | FR60 | Epic 2 | Mode économie batterie en mode chantier |
+| FR61–FR69 | Epic 6 | ToDo List par Pièce (voir story 6.1) |
+| FR70 | Epic 7 | ToDos actifs de la pièce dans la fiche tâche |
+| FR71 | Epic 7 | Créer un ToDo depuis la fiche tâche |
+| FR72 | Epic 7 | Modifier le titre d'un ToDoEntity |
+| FR73 | Epic 7 | Modifier le texte d'une AlerteEntity |
+| FR74 | Epic 7 | Modifier le texte et le niveau d'une AstuceEntity |
+| FR75 | Epic 7 | Modifier le texte d'un AchatEntity |
+| FR76 | Epic 7 | Interrompre les apps audio au démarrage dictée |
+| FR77 | Epic 7 | Notifier les apps audio à l'arrêt dictée |
 
 ## Epic List
 
@@ -383,6 +392,14 @@ L'utilisateur peut reconstituer le contexte complet d'une tâche en < 2 minutes 
 ### Epic 5 : Liste de Courses
 L'utilisateur peut gérer une liste centralisée de tous les achats à faire — ajoutés manuellement ou automatiquement depuis les captures classées "Achat" — et les cocher au fur et à mesure.
 **FRs couverts :** FR38, FR39, FR40
+
+### Epic 6 : ToDo List par Pièce *(ajouté 2026-03-08)*
+Remplacement de NoteEntity par ToDoEntity suite à test terrain. Liste de prochaines choses à faire par pièce, avec priorités et complétion animée.
+**FRs couverts :** FR61–FR69
+
+### Epic 7 : Retours Terrain V1 *(ajouté 2026-03-24)*
+Améliorations issues de la première utilisation intensive : accès aux ToDos depuis la vue tâche, édition des fiches pour corriger les erreurs de transcription vocale, pause automatique de la musique tierce pendant la dictée.
+**FRs couverts :** FR70, FR71, FR72, FR73, FR74, FR75, FR76, FR77
 
 ---
 

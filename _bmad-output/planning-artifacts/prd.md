@@ -9,7 +9,7 @@ briefCount: 1
 researchCount: 0
 brainstormingCount: 1
 projectDocsCount: 0
-lastEdited: '2026-03-08'
+lastEdited: '2026-03-24'
 editHistory:
   - date: '2026-02-21'
     changes: 'Élimination implementation leakage (7 FRs), ajout métriques testables NFRs (15 NFRs), allègement densité User Journeys, ajout date frontmatter'
@@ -17,6 +17,8 @@ editHistory:
     changes: 'Fixes résiduels post-validation : NFR-P2/P3 Xcode→outil de profilage, NFR-R7 iOS→OS, NFR-S4 biométrie iOS→plateforme'
   - date: '2026-03-08'
     changes: 'Remplacement NoteEntity par ToDoEntity suite test terrain réel : FR15 révisé (NOTE → TO DO + priorité), FR20 étendu (checkout crée ToDo automatiquement), section titre mise à jour, 9 nouveaux FRs (FR61-FR69) pour la ToDo List par Pièce. NoteEntity abandonnée (trop situationnelle, sans priorité). Total : 69 FRs.'
+  - date: '2026-03-24'
+    changes: 'Retours terrain V1 : 8 nouveaux FRs (FR70-FR77) pour Epic 7 — ToDos dans vue Tâche (FR70-FR71), édition des fiches (FR72-FR75), pause musique pendant dictée (FR76-FR77). Total : 77 FRs.'
 classification:
   projectType: mobile_app
   platform: ios
@@ -1344,6 +1346,32 @@ Atteindre **3 des 4 critères Go/No-Go** après **3 mois d'usage réel** (sessio
 **FR68:** Le système peut afficher une section "To Do" sur le dashboard, présentant le nombre d'items Urgents et le total, avec navigation vers la vue liste
 
 **FR69:** L'utilisateur peut filtrer l'archive des ToDos par pièce
+
+### Retours Terrain V1 *(ajouté 2026-03-24 — story 7.1, 7.2, 7.3)*
+
+> **Contexte :** Suite à la première utilisation intensive de l'app en conditions réelles, trois frictions ont été identifiées : impossibilité de créer des ToDos depuis la vue tâche, impossibilité de corriger les erreurs de transcription, et incompatibilité avec l'écoute musicale pendant la dictée.
+
+#### ToDos dans la vue Tâche
+
+**FR70:** L'utilisateur peut voir, dans la fiche détail d'une tâche, la liste des ToDos actifs et non archivés de la pièce associée, triés par priorité
+
+**FR71:** L'utilisateur peut créer un nouveau ToDo depuis la fiche détail d'une tâche, sans naviguer vers la vue Pièce ou la liste ToDo globale
+
+#### Édition des fiches
+
+**FR72:** L'utilisateur peut modifier le titre d'un ToDoEntity existant depuis la liste ToDo
+
+**FR73:** L'utilisateur peut modifier le texte principal d'une AlerteEntity existante (premier bloc texte dans `blocksData` — les photos de la capture originale sont préservées)
+
+**FR74:** L'utilisateur peut modifier le texte principal et le niveau de criticité d'une AstuceEntity existante
+
+**FR75:** L'utilisateur peut modifier le texte d'un AchatEntity existant depuis la liste de courses
+
+#### Gestion audio en Mode Chantier
+
+**FR76:** Quand l'enregistrement démarre (bouton vert), le système interrompt automatiquement la lecture audio des applications tierces (Apple Music, Spotify, YouTube Music, etc.), permettant une transcription sans interférence sonore
+
+**FR77:** Quand l'enregistrement s'arrête (bouton rouge ou fin de session), le système notifie les applications tierces pour qu'elles reprennent leur lecture
 
 ---
 
