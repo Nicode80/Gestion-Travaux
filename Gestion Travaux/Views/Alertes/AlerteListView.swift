@@ -50,18 +50,16 @@ struct AlerteListView: View {
                 ForEach(viewModel.alertesGroupedByTache, id: \.0?.persistentModelID) { (tache, alertes) in
                     Section(tache?.titre ?? "Sans tâche") {
                         ForEach(alertes) { alerte in
-                            AlerteRowView(alerte: alerte)
-                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                    if !chantier.boutonVert {
-                                        Button {
-                                            texteEdition = alerte.preview
-                                            alerteAEditer = alerte
-                                        } label: {
-                                            Label("Modifier", systemImage: "pencil")
-                                        }
-                                        .tint(Color(hex: Constants.Couleurs.accent))
+                            AlerteRowView(
+                                alerte: alerte,
+                                onModifier: chantier.boutonVert ? nil : {
+                                    Task { @MainActor in
+                                        try? await Task.sleep(for: .milliseconds(350))
+                                        texteEdition = alerte.preview
+                                        alerteAEditer = alerte
                                     }
                                 }
+                            )
                         }
                     }
                 }

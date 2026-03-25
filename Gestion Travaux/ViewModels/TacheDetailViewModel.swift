@@ -115,6 +115,41 @@ final class TacheDetailViewModel {
         }
     }
 
+    // MARK: - Edition des fiches (Story 7.2)
+
+    func modifierTitreToDo(_ todo: ToDoEntity, nouveauTitre: String) {
+        let trimmed = nouveauTitre.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        todo.titre = trimmed
+        do {
+            try modelContext.save()
+        } catch {
+            errorMessage = "Impossible de modifier cette fiche. Réessayez."
+        }
+    }
+
+    func modifierTexteAlerte(_ alerte: AlerteEntity, nouveauTexte: String) {
+        let trimmed = nouveauTexte.trimmingCharacters(in: .whitespacesAndNewlines)
+        var blocks = alerte.blocksData.toContentBlocks()
+        if let index = blocks.firstIndex(where: { $0.type == .text }) {
+            blocks[index] = ContentBlock(
+                id: blocks[index].id,
+                type: .text,
+                text: trimmed,
+                order: blocks[index].order,
+                timestamp: blocks[index].timestamp
+            )
+        } else {
+            blocks.insert(ContentBlock(type: .text, text: trimmed, order: 0, timestamp: Date()), at: 0)
+        }
+        alerte.blocksData = blocks.toData()
+        do {
+            try modelContext.save()
+        } catch {
+            errorMessage = "Impossible de modifier cette fiche. Réessayez."
+        }
+    }
+
     /// Marks the task as terminée and saves.
     /// Rolls back in-memory mutation if save() fails so the button remains available for retry.
     func terminer() {

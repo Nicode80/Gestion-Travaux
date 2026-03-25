@@ -14,6 +14,7 @@ struct ActiviteDetailView: View {
     @State private var viewModel: ActiviteDetailViewModel
     @State private var selectedAstuce: AstuceEntity?
     @State private var astuceAEditer: AstuceEntity?
+    @State private var pendingEditAstuce: AstuceEntity?
     @State private var texteEditionAstuce = ""
     @State private var niveauEditionAstuce: AstuceLevel = .utile
     @State private var tachesExpanded = false
@@ -60,12 +61,7 @@ struct ActiviteDetailView: View {
                         color: Color(hex: Constants.Couleurs.astuce),
                         icon: "exclamationmark.triangle.fill",
                         astuces: viewModel.astucesCritiques,
-                        onTap: { astuce in selectedAstuce = astuce },
-                        onModifier: chantier.boutonVert ? nil : { astuce in
-                            texteEditionAstuce = astuce.preview
-                            niveauEditionAstuce = astuce.niveau
-                            astuceAEditer = astuce
-                        }
+                        onTap: { astuce in selectedAstuce = astuce }
                     )
                 }
 
@@ -76,12 +72,7 @@ struct ActiviteDetailView: View {
                         color: Color(hex: Constants.Couleurs.astuceImportante),
                         icon: "lightbulb.fill",
                         astuces: viewModel.astucesImportantes,
-                        onTap: { astuce in selectedAstuce = astuce },
-                        onModifier: chantier.boutonVert ? nil : { astuce in
-                            texteEditionAstuce = astuce.preview
-                            niveauEditionAstuce = astuce.niveau
-                            astuceAEditer = astuce
-                        }
+                        onTap: { astuce in selectedAstuce = astuce }
                     )
                 }
 
@@ -92,12 +83,7 @@ struct ActiviteDetailView: View {
                         color: Color(hex: Constants.Couleurs.astuceUtile),
                         icon: "info.circle.fill",
                         astuces: viewModel.astucesUtiles,
-                        onTap: { astuce in selectedAstuce = astuce },
-                        onModifier: chantier.boutonVert ? nil : { astuce in
-                            texteEditionAstuce = astuce.preview
-                            niveauEditionAstuce = astuce.niveau
-                            astuceAEditer = astuce
-                        }
+                        onTap: { astuce in selectedAstuce = astuce }
                     )
                 }
 
@@ -126,9 +112,24 @@ struct ActiviteDetailView: View {
             }
         }
         .task { viewModel.load() }
-        // FR37, FR46 — note originale complète
+        // FR37, FR46 — note originale complète. Bouton ✏️ si pas en lockdown.
         .sheet(item: $selectedAstuce) { astuce in
-            CaptureDetailView(blocksData: astuce.blocksData, titre: "Astuce")
+            CaptureDetailView(
+                blocksData: astuce.blocksData,
+                titre: "Astuce",
+                onModifier: chantier.boutonVert ? nil : {
+                    pendingEditAstuce = astuce
+                    selectedAstuce = nil
+                }
+            )
+        }
+        .onChange(of: selectedAstuce) { _, new in
+            if new == nil, let pending = pendingEditAstuce {
+                texteEditionAstuce = pending.preview
+                niveauEditionAstuce = pending.niveau
+                astuceAEditer = pending
+                pendingEditAstuce = nil
+            }
         }
         .sheet(item: $astuceAEditer) { astuce in
             EditAstuceSheet(

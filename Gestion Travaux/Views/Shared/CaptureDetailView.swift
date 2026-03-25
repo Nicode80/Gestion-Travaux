@@ -12,6 +12,10 @@ struct CaptureDetailView: View {
     let blocksData: Data
     /// Display title shown in the navigation bar. Defaults to "Capture".
     var titre: String = "Capture"
+    /// When non-nil, a pencil button appears in the toolbar. Tap calls onModifier then dismisses.
+    var onModifier: (() -> Void)? = nil
+
+    @Environment(\.dismiss) private var dismiss
 
     private var contentBlocks: [ContentBlock] {
         blocksData.toContentBlocks().sorted { $0.order < $1.order }
@@ -52,6 +56,18 @@ struct CaptureDetailView: View {
             .background(Color(hex: Constants.Couleurs.backgroundBureau))
             .navigationTitle(titre)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if let onModifier {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            onModifier()
+                            dismiss()
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                    }
+                }
+            }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)

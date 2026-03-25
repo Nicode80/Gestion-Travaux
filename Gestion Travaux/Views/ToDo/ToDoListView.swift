@@ -61,17 +61,6 @@ struct ToDoListView: View {
                                     },
                                     onTap: { selectedToDo = todo }
                                 )
-                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                                    if !chantier.boutonVert {
-                                        Button {
-                                            texteEdition = todo.titre
-                                            todoAEditer = todo
-                                        } label: {
-                                            Label("Modifier", systemImage: "pencil")
-                                        }
-                                        .tint(Color(hex: Constants.Couleurs.accent))
-                                    }
-                                }
                             }
                         }
                     }
@@ -127,7 +116,13 @@ struct ToDoListView: View {
         }
         .onAppear { viewModel.charger() }
         .sheet(item: $selectedToDo) { todo in
-            ToDoDetailSheet(todo: todo)
+            ToDoDetailSheet(
+                todo: todo,
+                onModifier: chantier.boutonVert ? nil : {
+                    texteEdition = todo.titre
+                    todoAEditer = todo
+                }
+            )
         }
         .sheet(item: $todoAEditer) { todo in
             EditTexteSheet(

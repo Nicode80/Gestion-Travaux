@@ -15,8 +15,11 @@ struct PieceDetailView: View {
 
     @State private var viewModel: ToDoViewModel
     @State private var selectedTodo: ToDoEntity? = nil
+    @State private var texteEditionToDo = ""
+    @State private var todoAEditer: ToDoEntity?
     @State private var autresTodosExpanded = false
     @State private var showAddTodo = false
+    @Environment(ModeChantierState.self) private var chantier
 
     init(piece: PieceEntity, modelContext: ModelContext) {
         self.piece = piece
@@ -127,7 +130,22 @@ struct PieceDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { viewModel.charger() }
         .sheet(item: $selectedTodo) { todo in
-            ToDoDetailSheet(todo: todo)
+            ToDoDetailSheet(
+                todo: todo,
+                onModifier: chantier.boutonVert ? nil : {
+                    texteEditionToDo = todo.titre
+                    todoAEditer = todo
+                }
+            )
+        }
+        .sheet(item: $todoAEditer) { todo in
+            EditTexteSheet(
+                titre: "Modifier le To Do",
+                texte: $texteEditionToDo,
+                texteOriginal: todo.titre,
+                onValider: { viewModel.modifierTitre(todo, nouveauTitre: texteEditionToDo) },
+                onAnnuler: {}
+            )
         }
         .sheet(isPresented: $showAddTodo) {
             AjouterToDoSheet(piece: piece, viewModel: viewModel)

@@ -9,6 +9,10 @@ import SwiftUI
 struct ToDoDetailSheet: View {
 
     let todo: ToDoEntity
+    /// When non-nil, a pencil button appears in the toolbar. Tap calls onModifier then dismisses.
+    var onModifier: (() -> Void)? = nil
+
+    @Environment(\.dismiss) private var dismiss
 
     private var contentBlocks: [ContentBlock] {
         todo.blocksData.toContentBlocks().sorted { $0.order < $1.order }
@@ -69,6 +73,18 @@ struct ToDoDetailSheet: View {
             .background(Color(hex: Constants.Couleurs.backgroundBureau))
             .navigationTitle("To Do")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if let onModifier {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            onModifier()
+                            dismiss()
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                    }
+                }
+            }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)

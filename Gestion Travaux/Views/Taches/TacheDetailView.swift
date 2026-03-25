@@ -16,6 +16,10 @@ struct TacheDetailView: View {
     @State private var vm: TacheDetailViewModel
     @State private var selectedAlerte: AlerteEntity?
     @State private var selectedToDo: ToDoEntity?
+    @State private var texteEditionAlerte = ""
+    @State private var alerteAEditer: AlerteEntity?
+    @State private var texteEditionToDo = ""
+    @State private var todoAEditer: ToDoEntity?
     @Environment(ModeChantierState.self) private var chantier
 
     init(tache: TacheEntity, modelContext: ModelContext) {
@@ -94,7 +98,23 @@ struct TacheDetailView: View {
         .navigationTitle(tache.titre)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedAlerte) { alerte in
-            CaptureDetailView(blocksData: alerte.blocksData, titre: "Alerte")
+            CaptureDetailView(
+                blocksData: alerte.blocksData,
+                titre: "Alerte",
+                onModifier: chantier.boutonVert ? nil : {
+                    texteEditionAlerte = alerte.preview
+                    alerteAEditer = alerte
+                }
+            )
+        }
+        .sheet(item: $alerteAEditer) { alerte in
+            EditTexteSheet(
+                titre: "Modifier l'alerte",
+                texte: $texteEditionAlerte,
+                texteOriginal: alerte.preview,
+                onValider: { vm.modifierTexteAlerte(alerte, nouveauTexte: texteEditionAlerte) },
+                onAnnuler: {}
+            )
         }
         .sheet(isPresented: $vm.showAjoutToDo) {
             AjoutToDoSheet { titre, priorite in
@@ -102,7 +122,22 @@ struct TacheDetailView: View {
             }
         }
         .sheet(item: $selectedToDo) { todo in
-            ToDoDetailSheet(todo: todo)
+            ToDoDetailSheet(
+                todo: todo,
+                onModifier: chantier.boutonVert ? nil : {
+                    texteEditionToDo = todo.titre
+                    todoAEditer = todo
+                }
+            )
+        }
+        .sheet(item: $todoAEditer) { todo in
+            EditTexteSheet(
+                titre: "Modifier le To Do",
+                texte: $texteEditionToDo,
+                texteOriginal: todo.titre,
+                onValider: { vm.modifierTitreToDo(todo, nouveauTitre: texteEditionToDo) },
+                onAnnuler: {}
+            )
         }
         .alert(
             "Erreur",
