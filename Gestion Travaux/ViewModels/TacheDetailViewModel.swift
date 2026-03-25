@@ -128,21 +128,8 @@ final class TacheDetailViewModel {
         }
     }
 
-    func modifierTexteAlerte(_ alerte: AlerteEntity, nouveauTexte: String) {
-        let trimmed = nouveauTexte.trimmingCharacters(in: .whitespacesAndNewlines)
-        var blocks = alerte.blocksData.toContentBlocks()
-        if let index = blocks.firstIndex(where: { $0.type == .text }) {
-            blocks[index] = ContentBlock(
-                id: blocks[index].id,
-                type: .text,
-                text: trimmed,
-                order: blocks[index].order,
-                timestamp: blocks[index].timestamp
-            )
-        } else {
-            blocks.insert(ContentBlock(type: .text, text: trimmed, order: 0, timestamp: Date()), at: 0)
-        }
-        alerte.blocksData = blocks.toData()
+    func modifierTexteAlerte(_ alerte: AlerteEntity, nouveauxBlocks: [ContentBlock]) {
+        alerte.blocksData = nouveauxBlocks.toData()
         do {
             try modelContext.save()
         } catch {

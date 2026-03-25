@@ -15,7 +15,6 @@ struct ActiviteDetailView: View {
     @State private var selectedAstuce: AstuceEntity?
     @State private var astuceAEditer: AstuceEntity?
     @State private var pendingEditAstuce: AstuceEntity?
-    @State private var texteEditionAstuce = ""
     @State private var niveauEditionAstuce: AstuceLevel = .utile
     @State private var tachesExpanded = false
     @Environment(ModeChantierState.self) private var chantier
@@ -125,34 +124,26 @@ struct ActiviteDetailView: View {
         }
         .onChange(of: selectedAstuce) { _, new in
             if new == nil, let pending = pendingEditAstuce {
-                texteEditionAstuce = pending.preview
                 niveauEditionAstuce = pending.niveau
                 astuceAEditer = pending
                 pendingEditAstuce = nil
             }
         }
         .sheet(item: $astuceAEditer) { astuce in
-            EditAstuceSheet(
-                texte: $texteEditionAstuce,
-                niveau: $niveauEditionAstuce,
-                texteOriginal: astuce.preview,
-                niveauOriginal: astuce.niveau,
-                onValider: {
-                    viewModel.modifierAstuce(astuce, nouveauTexte: texteEditionAstuce, niveau: niveauEditionAstuce)
-                },
-                onAnnuler: {}
+            EditRichContentSheet(
+                blocksData: astuce.blocksData,
+                titre: "Modifier l'astuce",
+                niveauInitial: niveauEditionAstuce,
+                onValider: { blocks, niveau in
+                    viewModel.modifierAstuce(astuce, nouveauxBlocks: blocks, niveau: niveau ?? niveauEditionAstuce)
+                }
             )
         }
         .alert("Erreur", isPresented: Binding(
             get: { viewModel.editError != nil },
             set: { if !$0 { viewModel.editError = nil } }
         )) {
-            Button("Réessayer") {
-                if let astuce = astuceAEditer {
-                    viewModel.modifierAstuce(astuce, nouveauTexte: texteEditionAstuce, niveau: niveauEditionAstuce)
-                }
-            }
-            Button("Annuler", role: .cancel) { viewModel.editError = nil }
+            Button("OK", role: .cancel) { viewModel.editError = nil }
         } message: {
             Text(viewModel.editError ?? "")
         }

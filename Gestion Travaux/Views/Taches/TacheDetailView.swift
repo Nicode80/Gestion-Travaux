@@ -16,7 +16,6 @@ struct TacheDetailView: View {
     @State private var vm: TacheDetailViewModel
     @State private var selectedAlerte: AlerteEntity?
     @State private var selectedToDo: ToDoEntity?
-    @State private var texteEditionAlerte = ""
     @State private var alerteAEditer: AlerteEntity?
     @State private var texteEditionToDo = ""
     @State private var todoAEditer: ToDoEntity?
@@ -102,18 +101,15 @@ struct TacheDetailView: View {
                 blocksData: alerte.blocksData,
                 titre: "Alerte",
                 onModifier: chantier.boutonVert ? nil : {
-                    texteEditionAlerte = alerte.preview
                     alerteAEditer = alerte
                 }
             )
         }
         .sheet(item: $alerteAEditer) { alerte in
-            EditTexteSheet(
+            EditRichContentSheet(
+                blocksData: alerte.blocksData,
                 titre: "Modifier l'alerte",
-                texte: $texteEditionAlerte,
-                texteOriginal: alerte.preview,
-                onValider: { vm.modifierTexteAlerte(alerte, nouveauTexte: texteEditionAlerte) },
-                onAnnuler: {}
+                onValider: { blocks, _ in vm.modifierTexteAlerte(alerte, nouveauxBlocks: blocks) }
             )
         }
         .sheet(isPresented: $vm.showAjoutToDo) {

@@ -13,7 +13,6 @@ struct AlerteListView: View {
     private let modelContext: ModelContext
     @State private var viewModel: AlerteListViewModel
     @State private var alerteAEditer: AlerteEntity?
-    @State private var texteEdition = ""
     @Environment(ModeChantierState.self) private var chantier
 
     init(modelContext: ModelContext) {
@@ -55,7 +54,6 @@ struct AlerteListView: View {
                                 onModifier: chantier.boutonVert ? nil : {
                                     Task { @MainActor in
                                         try? await Task.sleep(for: .milliseconds(350))
-                                        texteEdition = alerte.preview
                                         alerteAEditer = alerte
                                     }
                                 }
@@ -82,24 +80,17 @@ struct AlerteListView: View {
             Text(viewModel.loadError ?? "")
         }
         .sheet(item: $alerteAEditer) { alerte in
-            EditTexteSheet(
+            EditRichContentSheet(
+                blocksData: alerte.blocksData,
                 titre: "Modifier l'alerte",
-                texte: $texteEdition,
-                texteOriginal: alerte.preview,
-                onValider: { viewModel.modifierTexte(alerte, nouveauTexte: texteEdition) },
-                onAnnuler: {}
+                onValider: { blocks, _ in viewModel.modifierBlocks(alerte, nouveauxBlocks: blocks) }
             )
         }
         .alert("Erreur", isPresented: Binding(
             get: { viewModel.editError != nil },
             set: { if !$0 { viewModel.editError = nil } }
         )) {
-            Button("Réessayer") {
-                if let alerte = alerteAEditer {
-                    viewModel.modifierTexte(alerte, nouveauTexte: texteEdition)
-                }
-            }
-            Button("Annuler", role: .cancel) { viewModel.editError = nil }
+            Button("OK", role: .cancel) { viewModel.editError = nil }
         } message: {
             Text(viewModel.editError ?? "")
         }
