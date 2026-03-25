@@ -105,12 +105,7 @@ struct ToDoListView: View {
             get: { viewModel.editError != nil },
             set: { if !$0 { viewModel.dismissEditError() } }
         )) {
-            Button("Réessayer") {
-                if let todo = todoAEditer {
-                    viewModel.modifierTitre(todo, nouveauTitre: texteEdition)
-                }
-            }
-            Button("Annuler", role: .cancel) { viewModel.dismissEditError() }
+            Button("OK", role: .cancel) { viewModel.dismissEditError() }
         } message: {
             Text(viewModel.editError ?? "")
         }

@@ -150,6 +150,14 @@ struct PieceDetailView: View {
         .sheet(isPresented: $showAddTodo) {
             AjouterToDoSheet(piece: piece, viewModel: viewModel)
         }
+        .alert("Erreur", isPresented: Binding(
+            get: { viewModel.editError != nil },
+            set: { if !$0 { viewModel.dismissEditError() } }
+        )) {
+            Button("OK", role: .cancel) { viewModel.dismissEditError() }
+        } message: {
+            Text(viewModel.editError ?? "")
+        }
     }
 }
 

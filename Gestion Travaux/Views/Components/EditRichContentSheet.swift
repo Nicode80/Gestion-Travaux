@@ -5,6 +5,8 @@
 // Text blocks render as independent TextEditors; photo blocks are displayed read-only.
 // Optional AstuceLevel picker appears when niveauInitial is non-nil (astuces only).
 // "Enregistrer" is disabled when all text blocks are unchanged and niveau is unchanged.
+// Edge case: if blocksData has no text block (photos only), an empty TextEditor is shown
+// and saving creates a new first text block (prepended before existing photo blocks).
 
 import SwiftUI
 
@@ -21,6 +23,8 @@ struct EditRichContentSheet: View {
 
     // Per-block editable text keyed by block UUID.
     @State private var texteParBloc: [UUID: String] = [:]
+    /// Used only when blocksData contains no text block (photos only) — holds the new first text block.
+    @State private var texteNouveauBloc: String = ""
     @State private var niveau: AstuceLevel = .utile
 
     // Sorted blocks derived from blocksData — stable across renders.
@@ -33,6 +37,10 @@ struct EditRichContentSheet: View {
     }
 
     private var peutValider: Bool {
+        // Edge case: no existing text blocks — enable save when new text is non-empty.
+        if textBlocks.isEmpty {
+            return !texteNouveauBloc.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
         // Every text block must remain non-empty.
         let allNonEmpty = textBlocks.allSatisfy { block in
             !(texteParBloc[block.id]?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
@@ -58,7 +66,16 @@ struct EditRichContentSheet: View {
                         niveauSection
                     }
 
-                    // Blocks
+                    // If no text blocks exist, show an empty editor to create the first one.
+                    if textBlocks.isEmpty {
+                        TextEditor(text: $texteNouveauBloc)
+                            .frame(minHeight: 80)
+                            .padding(8)
+                            .background(Color(hex: Constants.Couleurs.backgroundCard))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+
+                    // Existing blocks (photos always shown; text blocks shown when non-empty).
                     ForEach(sortedBlocks) { block in
                         switch block.type {
                         case .text:
@@ -183,7 +200,27 @@ struct EditRichContentSheet: View {
     // MARK: - Reconstruct blocks
 
     private func reconstituteBlocks() -> [ContentBlock] {
-        sortedBlocks.map { block in
+        // Edge case: no existing text blocks — prepend a new one before the photo blocks.
+        if textBlocks.isEmpty {
+            let nouveauBloc = ContentBlock(
+                type: .text,
+                text: texteNouveauBloc.trimmingCharacters(in: .whitespacesAndNewlines),
+                order: 0,
+                timestamp: Date()
+            )
+            let photosDecales = sortedBlocks.enumerated().map { i, block in
+                ContentBlock(
+                    id: block.id,
+                    type: block.type,
+                    text: block.text,
+                    photoLocalPath: block.photoLocalPath,
+                    order: i + 1,
+                    timestamp: block.timestamp
+                )
+            }
+            return [nouveauBloc] + photosDecales
+        }
+        return sortedBlocks.map { block in
             guard block.type == .text, let updatedText = texteParBloc[block.id] else {
                 return block
             }

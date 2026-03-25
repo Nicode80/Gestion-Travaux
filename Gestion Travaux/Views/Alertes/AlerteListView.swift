@@ -52,10 +52,7 @@ struct AlerteListView: View {
                             AlerteRowView(
                                 alerte: alerte,
                                 onModifier: chantier.boutonVert ? nil : {
-                                    Task { @MainActor in
-                                        try? await Task.sleep(for: .milliseconds(350))
-                                        alerteAEditer = alerte
-                                    }
+                                    alerteAEditer = alerte
                                 }
                             )
                         }

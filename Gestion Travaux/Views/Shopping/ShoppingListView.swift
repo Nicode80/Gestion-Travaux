@@ -138,17 +138,7 @@ struct ShoppingListView: View {
             get: { achatEditError != nil },
             set: { if !$0 { achatEditError = nil } }
         )) {
-            Button("Réessayer") {
-                if let achat = achatAEditer {
-                    do {
-                        try viewModel.modifierAchat(achat, nouveauTexte: texteEdition)
-                        achatEditError = nil
-                    } catch {
-                        achatEditError = "Impossible de modifier cette fiche. Réessayez."
-                    }
-                }
-            }
-            Button("Annuler", role: .cancel) { achatEditError = nil }
+            Button("OK", role: .cancel) { achatEditError = nil }
         } message: {
             Text(achatEditError ?? "")
         }
