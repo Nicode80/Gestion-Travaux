@@ -23,9 +23,23 @@ final class AlerteListViewModel {
 
     /// Non-nil when a SwiftData fetch error occurred; shown to the user as an error state.
     var loadError: String? = nil
+    /// Non-nil when an edit save error occurred (Story 7.2).
+    var editError: String? = nil
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
+    }
+
+    // MARK: - Edition (Story 7.2)
+
+    func modifierBlocks(_ alerte: AlerteEntity, nouveauxBlocks: [ContentBlock]) {
+        alerte.blocksData = nouveauxBlocks.toData()
+        do {
+            try modelContext.save()
+            load()
+        } catch {
+            editError = "Impossible de modifier cette fiche. Réessayez."
+        }
     }
 
     func load() {

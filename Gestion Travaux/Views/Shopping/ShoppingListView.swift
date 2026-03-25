@@ -14,9 +14,13 @@ struct ShoppingListView: View {
     @State private var showAddField = false
     @State private var newItemText = ""
     @State private var itemToDelete: AchatEntity?
+    @State private var achatAEditer: AchatEntity?
+    @State private var texteEdition = ""
     @State private var showConfirmVider = false
     @State private var errorMessage: String?
+    @State private var achatEditError: String?
     @FocusState private var isAddFieldFocused: Bool
+    @Environment(ModeChantierState.self) private var chantier
 
     init(modelContext: ModelContext) {
         _viewModel = State(initialValue: ShoppingListViewModel(modelContext: modelContext))
@@ -115,6 +119,29 @@ struct ShoppingListView: View {
         .onChange(of: showAddField) { _, newValue in
             if newValue { isAddFieldFocused = true }
         }
+        .sheet(item: $achatAEditer) { achat in
+            EditTexteSheet(
+                titre: "Modifier l'article",
+                texte: $texteEdition,
+                texteOriginal: achat.texte,
+                onValider: {
+                    do {
+                        try viewModel.modifierAchat(achat, nouveauTexte: texteEdition)
+                    } catch {
+                        achatEditError = "Impossible de modifier cette fiche. Réessayez."
+                    }
+                },
+                onAnnuler: {}
+            )
+        }
+        .alert("Erreur", isPresented: Binding(
+            get: { achatEditError != nil },
+            set: { if !$0 { achatEditError = nil } }
+        )) {
+            Button("OK", role: .cancel) { achatEditError = nil }
+        } message: {
+            Text(achatEditError ?? "")
+        }
     }
 
     // MARK: - Empty state
@@ -150,6 +177,17 @@ struct ShoppingListView: View {
                             try viewModel.toggleItem(achat)
                         } catch {
                             errorMessage = error.localizedDescription
+                        }
+                    }
+                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                        if !chantier.boutonVert {
+                            Button {
+                                texteEdition = achat.texte
+                                achatAEditer = achat
+                            } label: {
+                                Label("Modifier", systemImage: "pencil")
+                            }
+                            .tint(Color(hex: Constants.Couleurs.accent))
                         }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {

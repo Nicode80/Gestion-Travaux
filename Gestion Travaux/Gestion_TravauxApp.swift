@@ -64,6 +64,7 @@ struct Gestion_TravauxApp: App {
         WindowGroup {
             ContentView()
                 .environment(modeChantier)
+                .preferredColorScheme(.light)
         }
         .modelContainer(sharedModelContainer)
     }

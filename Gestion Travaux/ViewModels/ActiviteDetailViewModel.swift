@@ -12,17 +12,33 @@ import SwiftData
 final class ActiviteDetailViewModel {
 
     let activite: ActiviteEntity
+    private let modelContext: ModelContext
 
     private(set) var astucesCritiques: [AstuceEntity] = []
     private(set) var astucesImportantes: [AstuceEntity] = []
     private(set) var astucesUtiles: [AstuceEntity] = []
+    var editError: String? = nil
 
     var totalCount: Int {
         astucesCritiques.count + astucesImportantes.count + astucesUtiles.count
     }
 
-    init(activite: ActiviteEntity) {
+    init(activite: ActiviteEntity, modelContext: ModelContext) {
         self.activite = activite
+        self.modelContext = modelContext
+    }
+
+    // MARK: - Edition (Story 7.2)
+
+    func modifierAstuce(_ astuce: AstuceEntity, nouveauxBlocks: [ContentBlock], niveau: AstuceLevel) {
+        astuce.blocksData = nouveauxBlocks.toData()
+        astuce.niveau = niveau
+        do {
+            try modelContext.save()
+            load()
+        } catch {
+            editError = "Impossible de modifier cette fiche. Réessayez."
+        }
     }
 
     func load() {

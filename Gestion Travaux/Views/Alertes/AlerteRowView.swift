@@ -10,8 +10,10 @@ import SwiftUI
 struct AlerteRowView: View {
 
     let alerte: AlerteEntity
+    var onModifier: (() -> Void)? = nil
 
     @State private var showDetail = false
+    @State private var pendingEdit = false
 
     var body: some View {
         Button {
@@ -53,7 +55,18 @@ struct AlerteRowView: View {
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showDetail) {
-            CaptureDetailView(blocksData: alerte.blocksData, titre: "Alerte")
+            CaptureDetailView(
+                blocksData: alerte.blocksData,
+                titre: "Alerte",
+                onModifier: onModifier == nil ? nil : {
+                    pendingEdit = true
+                }
+            )
+        }
+        .onChange(of: showDetail) { _, isShown in
+            guard !isShown && pendingEdit else { return }
+            pendingEdit = false
+            onModifier?()
         }
     }
 }

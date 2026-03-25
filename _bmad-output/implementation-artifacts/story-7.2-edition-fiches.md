@@ -197,3 +197,91 @@ func modifierTexte(_ alerte: AlerteEntity, nouveauTexte: String) { ... }
 - Story 6.1 (done) : `ToDoEntity` — disponible
 - Stories 3.2, 4.2, 4.3, 5.1 (done) : entités Alerte, Astuce, Achat et leurs vues — disponibles
 - Aucune migration SwiftData nécessaire (les propriétés à modifier existent déjà)
+
+---
+
+## Tasks / Subtasks
+
+- [x] Task 1 : Composants d'édition réutilisables
+  - [x] 1.1 Créer `Views/Components/EditTexteSheet.swift` — `@Binding var texte`, titre paramétrable, bouton Enregistrer désactivé si vide, callbacks `onValider` / `onAnnuler`
+  - [x] 1.2 Créer `Views/Components/EditRichContentSheet.swift` — remplace `EditAstuceSheet` (initialement prévu) ; affiche tous les blocs texte en `TextEditor` éditable + blocs photo en lecture seule + sélecteur `AstuceLevel` optionnel (non-nil uniquement pour les astuces). Décision prise en cours d'implémentation : les alertes et astuces contenant des photos nécessitent un éditeur riche, `EditTexteSheet` seul était insuffisant.
+  - ~~[x] `EditAstuceSheet.swift` créé~~ → **dead code supprimé** (remplacé par `EditRichContentSheet`)
+
+- [x] Task 2 : Édition des ToDo
+  - [x] 2.1 Ajouter `modifierTitre(_ todo:, nouveauTitre:)` dans `ToDoViewModel` (update + save + charger + erreur)
+  - [x] 2.2 Accès à l'édition via bouton ✏️ dans `ToDoDetailSheet` (sheet de détail) — pattern demandé par Nico, plus clair qu'une swipe action sur la liste
+  - [x] 2.3 Bouton ✏️ masqué quand `boutonVert == true`
+  - [x] 2.4 Ajouter `modifierTitreToDo()` dans `TacheDetailViewModel` + accès via ✏️ dans `TacheDetailView` et `PieceDetailView`
+
+- [x] Task 3 : Édition des Alertes
+  - [x] 3.1 Ajouter `modifierBlocks(_ alerte:, nouveauxBlocks:)` dans `AlerteListViewModel` (réencode blocksData + save + reload)
+  - [x] 3.2 Accès à l'édition via bouton ✏️ dans `CaptureDetailView` / `AlerteRowView` (sheet de détail) — même pattern que les astuces
+  - [x] 3.3 Bouton ✏️ masqué quand `boutonVert == true`
+  - [x] 3.4 Ajouter `modifierTexteAlerte()` dans `TacheDetailViewModel` + accès via ✏️ dans `TacheDetailView`
+
+- [x] Task 4 : Édition des Astuces
+  - [x] 4.1 Injecter `ModelContext` dans `ActiviteDetailViewModel` + ajouter `modifierAstuce(_ astuce:, nouveauxBlocks:, niveau:)`
+  - [x] 4.2 Accès à l'édition via bouton ✏️ dans `CaptureDetailView` appelé depuis `ActiviteDetailView` (pattern `pendingEditAstuce` + `onChange`)
+  - [x] 4.3 Brancher `EditRichContentSheet` dans `ActiviteDetailView` via `@State private var astuceAEditer`
+  - [x] 4.4 Bouton ✏️ masqué quand `boutonVert == true`
+
+- [x] Task 5 : Édition des Achats
+  - [x] 5.1 Ajouter `modifierAchat(_ achat:, nouveauTexte:)` dans `ShoppingListViewModel` (update + save + reload)
+  - [x] 5.2 Ajouter swipe action "Modifier" (leading) dans `ShoppingListView` → ouvre `EditTexteSheet`
+  - [x] 5.3 Désactiver swipe "Modifier" quand `boutonVert == true`
+
+- [x] Task 6 : Messages d'erreur
+  - [x] 6.1 Chaque vue modifiée affiche `.alert` sur erreur save
+
+---
+
+## Dev Agent Record
+
+### Implementation Plan
+
+- Composants `EditTexteSheet` et `EditRichContentSheet` : nouveaux fichiers dans `Views/Components/`
+- Pattern d'accès à l'édition : bouton ✏️ dans les sheets de détail (`CaptureDetailView`, `ToDoDetailSheet`) — demandé par Nico, plus lisible qu'une swipe action
+- `EditRichContentSheet` remplace `EditAstuceSheet` (initialement prévu) : nécessaire car les entités avec `ContentBlock` peuvent mélanger texte et photos ; `EditTexteSheet` seul était insuffisant pour ce cas
+- `boutonVert` lockdown : `@Environment(ModeChantierState.self)` ajouté dans chaque vue concernée
+- `ActiviteDetailViewModel` : ajout `modelContext` via init (règle architecturale)
+- Astuces : accès édition via ✏️ dans `CaptureDetailView` avec pattern `pendingEditAstuce` + `onChange(of: selectedAstuce)` pour chaîner les deux sheets sans conflit
+
+### Debug Log
+
+### Completion Notes
+
+Implémentation complète des AC. Composants créés : `EditTexteSheet` (texte simple — ToDo, Achat) et `EditRichContentSheet` (blocs mixtes texte/photo — Alertes, Astuces). `EditAstuceSheet` initialement prévu mais remplacé par `EditRichContentSheet` — **fichier supprimé (dead code)**. Pattern d'édition unifié via bouton ✏️ dans les sheets de détail. Vues supplémentaires impactées par rapport au plan initial : `TacheDetailView`, `TacheDetailViewModel`, `PieceDetailView`, `CaptureDetailView`, `AlerteRowView`, `ToDoDetailSheet`. `boutonVert` lockdown respecté. `ActiviteDetailViewModel` reçoit `ModelContext` via `init`. BUILD SUCCEEDED — zéro erreur de compilation.
+
+---
+
+## File List
+
+- `Gestion Travaux/Views/Components/EditTexteSheet.swift` (nouveau)
+- `Gestion Travaux/Views/Components/EditRichContentSheet.swift` (nouveau — remplace EditAstuceSheet)
+- `Gestion Travaux/ViewModels/ToDoViewModel.swift` (modifié)
+- `Gestion Travaux/ViewModels/TacheDetailViewModel.swift` (modifié)
+- `Gestion Travaux/ViewModels/AlerteListViewModel.swift` (modifié)
+- `Gestion Travaux/ViewModels/ActiviteDetailViewModel.swift` (modifié)
+- `Gestion Travaux/ViewModels/ShoppingListViewModel.swift` (modifié)
+- `Gestion Travaux/Views/ToDo/ToDoListView.swift` (modifié)
+- `Gestion Travaux/Views/ToDo/ToDoDetailSheet.swift` (modifié — bouton ✏️ ajouté)
+- `Gestion Travaux/Views/Alertes/AlerteListView.swift` (modifié)
+- `Gestion Travaux/Views/Alertes/AlerteRowView.swift` (modifié — callback onModifier ajouté)
+- `Gestion Travaux/Views/Activites/ActiviteDetailView.swift` (modifié)
+- `Gestion Travaux/Views/Taches/TacheDetailView.swift` (modifié)
+- `Gestion Travaux/Views/Pieces/PieceDetailView.swift` (modifié)
+- `Gestion Travaux/Views/Shared/CaptureDetailView.swift` (modifié — bouton ✏️ ajouté)
+- `Gestion Travaux/Views/Shopping/ShoppingListView.swift` (modifié)
+
+---
+
+## Change Log
+
+- 2026-03-25 : Implémentation story 7.2 — édition des fiches ToDo, Alerte, Astuce, Achat. Nouveaux composants `EditTexteSheet` (texte simple) et `EditRichContentSheet` (blocs mixtes texte/photo). `EditAstuceSheet` initialement prévu supprimé (dead code — remplacé par EditRichContentSheet). Accès édition via bouton ✏️ dans les sheets de détail (demande Nico). Lockdown `boutonVert`.
+- 2026-03-25 (code review) : Correction File List — 8 fichiers manquants ajoutés, `AstuceSection.swift` retiré (non modifié). Tasks 1.2, 2.2, 3.2, 4.2, 4.3 rectifiées pour refléter l'implémentation réelle.
+
+---
+
+## Status
+
+review

@@ -126,6 +126,26 @@ final class ToDoViewModel {
         }
     }
 
+    // MARK: - Edition (Story 7.2)
+
+    var editError: String? = nil
+
+    func dismissEditError() {
+        editError = nil
+    }
+
+    func modifierTitre(_ todo: ToDoEntity, nouveauTitre: String) {
+        let trimmed = nouveauTitre.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        todo.titre = trimmed
+        do {
+            try modelContext.save()
+            charger()
+        } catch {
+            editError = "Impossible de modifier cette fiche. Réessayez."
+        }
+    }
+
     // MARK: - Animated completion (iOS Reminders style)
 
     /// Marks the todo as done, keeps it visible for 2 seconds (strikethrough), then archives it.

@@ -12,6 +12,8 @@ struct AlerteListView: View {
 
     private let modelContext: ModelContext
     @State private var viewModel: AlerteListViewModel
+    @State private var alerteAEditer: AlerteEntity?
+    @Environment(ModeChantierState.self) private var chantier
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -47,7 +49,12 @@ struct AlerteListView: View {
                 ForEach(viewModel.alertesGroupedByTache, id: \.0?.persistentModelID) { (tache, alertes) in
                     Section(tache?.titre ?? "Sans tâche") {
                         ForEach(alertes) { alerte in
-                            AlerteRowView(alerte: alerte)
+                            AlerteRowView(
+                                alerte: alerte,
+                                onModifier: chantier.boutonVert ? nil : {
+                                    alerteAEditer = alerte
+                                }
+                            )
                         }
                     }
                 }
@@ -60,7 +67,7 @@ struct AlerteListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.load() }
         .onChange(of: viewModel.filtreTache) { viewModel.load() }
-        .alert("Erreur de chargement", isPresented: Binding(
+        .alert("Erreur", isPresented: Binding(
             get: { viewModel.loadError != nil },
             set: { if !$0 { viewModel.loadError = nil } }
         )) {
@@ -68,6 +75,21 @@ struct AlerteListView: View {
             Button("Annuler", role: .cancel) { viewModel.loadError = nil }
         } message: {
             Text(viewModel.loadError ?? "")
+        }
+        .sheet(item: $alerteAEditer) { alerte in
+            EditRichContentSheet(
+                blocksData: alerte.blocksData,
+                titre: "Modifier l'alerte",
+                onValider: { blocks, _ in viewModel.modifierBlocks(alerte, nouveauxBlocks: blocks) }
+            )
+        }
+        .alert("Erreur", isPresented: Binding(
+            get: { viewModel.editError != nil },
+            set: { if !$0 { viewModel.editError = nil } }
+        )) {
+            Button("OK", role: .cancel) { viewModel.editError = nil }
+        } message: {
+            Text(viewModel.editError ?? "")
         }
     }
 }
