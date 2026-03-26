@@ -554,7 +554,10 @@ final class ClassificationViewModel {
         Task.detached { [weak self] in
             do {
                 let session = AVAudioSession.sharedInstance()
-                try session.setCategory(.record, mode: .measurement, options: .duckOthers)
+                // No .duckOthers: iOS interrupts other audio (Spotify, Apple Music) when we activate,
+                // matching the AudioEngine behaviour (Story 7.3). stopVoiceInputForProchaineAction()
+                // already calls notifyOthersOnDeactivation so music resumes after dictation.
+                try session.setCategory(.record, mode: .measurement, options: [])
                 try session.setActive(true)
 
                 let inputNode = audioState.engine.inputNode

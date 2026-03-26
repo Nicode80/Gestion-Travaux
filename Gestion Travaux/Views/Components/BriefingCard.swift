@@ -5,8 +5,11 @@
 // QF2: shows up to 3 tappable active alerts for the hero task (prochaine action moved to hero).
 // Hidden entirely when no active alerts. Each alert opens CaptureDetailView as a sheet.
 // "Voir N de plus" opens a sheet listing all remaining alerts.
+// Story 7.2 follow-up: edit button (✏️) available whenever CaptureDetailView is opened,
+// matching AlerteListView and TacheDetailView behaviour.
 
 import SwiftUI
+import SwiftData
 
 struct BriefingCard: View {
 
@@ -14,6 +17,11 @@ struct BriefingCard: View {
 
     @State private var selectedAlerte: AlerteEntity?
     @State private var showAll = false
+    @State private var alerteAEditer: AlerteEntity?
+    @State private var editError: String?
+
+    @Environment(ModeChantierState.self) private var chantier
+    @Environment(\.modelContext) private var modelContext
 
     private var alertesActives: [AlerteEntity] {
         tache.alertes.filter { !$0.resolue }
@@ -69,7 +77,35 @@ struct BriefingCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear { showAll = false }
         .sheet(item: $selectedAlerte) { alerte in
-            CaptureDetailView(blocksData: alerte.blocksData, titre: "Alerte")
+            CaptureDetailView(
+                blocksData: alerte.blocksData,
+                titre: "Alerte",
+                onModifier: chantier.boutonVert ? nil : {
+                    alerteAEditer = alerte
+                }
+            )
+        }
+        .sheet(item: $alerteAEditer) { alerte in
+            EditRichContentSheet(
+                blocksData: alerte.blocksData,
+                titre: "Modifier l'alerte",
+                onValider: { blocks, _ in
+                    alerte.blocksData = blocks.toData()
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        editError = "Impossible de modifier cette alerte. Réessayez."
+                    }
+                }
+            )
+        }
+        .alert("Erreur", isPresented: Binding(
+            get: { editError != nil },
+            set: { if !$0 { editError = nil } }
+        )) {
+            Button("OK") { editError = nil }
+        } message: {
+            Text(editError ?? "")
         }
     }
 }

@@ -116,14 +116,16 @@ final class AudioEngine: AudioEngineProtocol {
                 }
                 do {
                     let session = AVAudioSession.sharedInstance()
-                    // .playAndRecord + .mixWithOthers allows camera to activate without
-                    // interrupting the audio tap (Story 2.3, NFR-P7: interruption < 200 ms).
+                    // .playAndRecord without .mixWithOthers: iOS interrupts other audio sessions
+                    // (Spotify, Apple Music, etc.) when we activate — pausing music during dictation
+                    // (Story 7.3). Camera from the same app shares this session, so .mixWithOthers
+                    // is not needed for in-app photo capture (Story 2.3, NFR-P7).
                     try session.setCategory(
                         .playAndRecord,
                         mode: .default,
-                        options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP]
+                        options: [.defaultToSpeaker, .allowBluetoothHFP]
                     )
-                    try session.setActive(true, options: .notifyOthersOnDeactivation)
+                    try session.setActive(true)
 
                     let inputNode = self.avEngine.inputNode
                     let recordingFormat = inputNode.outputFormat(forBus: 0)

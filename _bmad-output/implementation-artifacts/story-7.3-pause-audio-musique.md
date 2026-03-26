@@ -160,3 +160,54 @@ Le changement de session AVAudio se fait dans un `Task.detached` (pattern établ
 - Story 2.3 (done) : photos pendant la dictée — test de non-régression obligatoire
 - Story 2.4 (done) : gestion des interruptions iOS — le handler existant doit aussi envoyer `notifyOthersOnDeactivation`
 - Aucune migration SwiftData (pas de persistance)
+
+---
+
+## Tasks / Subtasks
+
+- [x] Task 1 : Modifier la configuration AVAudioSession dans `demarrer()`
+  - [x] 1.1 Retirer `.mixWithOthers` des options de `setCategory` dans `AudioEngine.demarrer()`
+  - [x] 1.2 Remplacer `setActive(true, options: .notifyOthersOnDeactivation)` par `setActive(true)` (option non pertinente à l'activation)
+  - [x] 1.3 Mettre à jour le commentaire associé pour refléter la nouvelle intention (pause musique tierce)
+  - [x] 1.4 Vérifier que `stopInterne()` appelle `setActive(false, options: .notifyOthersOnDeactivation)` (déjà en place — aucune modification)
+
+---
+
+## Dev Agent Record
+
+### Implementation Plan
+
+- Un seul fichier modifié : `Services/AudioEngine.swift`
+- Changement dans `demarrer()` (Task.detached hardware setup) : retrait `.mixWithOthers`, correction `setActive(true)`
+- `stopInterne()` déjà correct : `setActive(false, options: .notifyOthersOnDeactivation)` ligne 256 ✅
+- Pas de migration SwiftData, pas de nouveaux fichiers
+- Fallback `.duckOthers` documenté dans la story si régression story 2.3 détectée sur device réel
+
+### Debug Log
+
+### Completion Notes
+
+Changement minimal et ciblé dans `AudioEngine.demarrer()` (Task.detached hardware setup) :
+- `.mixWithOthers` retiré des options `setCategory` → iOS interrompt automatiquement Spotify/Apple Music/etc. au `setActive(true)`
+- `setActive(true, options: .notifyOthersOnDeactivation)` corrigé en `setActive(true)` (option aberrante à l'activation)
+- Commentaire mis à jour pour expliquer la décision story 7.3 et confirmer que la caméra intra-app ne nécessite pas `.mixWithOthers`
+- `stopInterne()` appelle déjà `setActive(false, options: .notifyOthersOnDeactivation)` ligne 256 — **aucune modification nécessaire** pour la reprise des apps tierces
+- **Test obligatoire sur device réel** : valider pause musique Apple Music/Spotify + non-régression photo. Si régression détectée, fallback `.duckOthers` documenté dans la story.
+
+---
+
+## File List
+
+- `Gestion Travaux/Services/AudioEngine.swift` (modifié)
+
+---
+
+## Change Log
+
+- 2026-03-25 : Implémentation story 7.3 — retrait `.mixWithOthers` de `AVAudioSession.setCategory` dans `AudioEngine.demarrer()`. Correction `setActive(true, options:)` → `setActive(true)`. Reprise des apps tierces déjà gérée par `stopInterne()` (`.notifyOthersOnDeactivation`).
+
+---
+
+## Status
+
+review
