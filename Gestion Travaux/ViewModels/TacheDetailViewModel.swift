@@ -7,11 +7,14 @@
 // RULE: all modelContext writes must call try modelContext.save() explicitly.
 
 import Foundation
+import OSLog
 import SwiftData
 
 @Observable
 @MainActor
 final class TacheDetailViewModel {
+
+    private static let logger = Logger(subsystem: "com.gestiontravaux", category: "TacheDetail")
 
     // MARK: - Outputs
 
@@ -65,9 +68,7 @@ final class TacheDetailViewModel {
         do {
             try modelContext.save()
         } catch {
-            #if DEBUG
-            print("[TacheDetailViewModel] toggleComplete() save failed: \(error)")
-            #endif
+            Self.logger.error("toggleComplete() save failed: \(error)")
             errorMessage = "Impossible d'enregistrer la complétion. Réessayer."
             return
         }
@@ -77,9 +78,7 @@ final class TacheDetailViewModel {
             do {
                 try modelContext.save()
             } catch {
-                #if DEBUG
-                print("[TacheDetailViewModel] toggleComplete() archive failed: \(error)")
-                #endif
+                Self.logger.error("toggleComplete() archive failed: \(error)")
                 errorMessage = "Impossible d'archiver le To Do. Réessayer."
             }
         }
@@ -91,9 +90,7 @@ final class TacheDetailViewModel {
         do {
             try modelContext.save()
         } catch {
-            #if DEBUG
-            print("[TacheDetailViewModel] changerPriorite() failed: \(error)")
-            #endif
+            Self.logger.error("changerPriorite() failed: \(error)")
             errorMessage = "Impossible de modifier la priorité. Réessayer."
         }
     }
@@ -108,9 +105,7 @@ final class TacheDetailViewModel {
         do {
             try modelContext.save()
         } catch {
-            #if DEBUG
-            print("[TacheDetailViewModel] ajouterToDo() failed: \(error)")
-            #endif
+            Self.logger.error("ajouterToDo() failed: \(error)")
             errorMessage = "Impossible de créer le To Do. Réessayer."
         }
     }
@@ -150,9 +145,7 @@ final class TacheDetailViewModel {
             try modelContext.save()
         } catch {
             tache.statut = ancienStatut
-            #if DEBUG
-            print("[TacheDetailViewModel] terminer() failed: \(error)")
-            #endif
+            Self.logger.error("terminer() failed: \(error)")
             errorMessage = "Impossible de terminer la tâche. Réessayer."
         }
     }
