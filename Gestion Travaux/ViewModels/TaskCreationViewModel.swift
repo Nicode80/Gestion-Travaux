@@ -10,6 +10,7 @@
 //       Audio state lives in AudioState (@unchecked Sendable) to cross actor boundaries safely.
 
 import Foundation
+import OSLog
 import SwiftData
 @preconcurrency import Speech
 @preconcurrency import AVFoundation
@@ -17,6 +18,8 @@ import SwiftData
 @Observable
 @MainActor
 final class TaskCreationViewModel {
+
+    private static let logger = Logger(subsystem: "com.gestiontravaux", category: "TaskCreation")
 
     // MARK: - Field enum
 
@@ -131,9 +134,7 @@ final class TaskCreationViewModel {
             try creer(pieces: pieces, activites: activites, nomPiece: nomPiece, nomActivite: nomActivite)
 
         } catch {
-            #if DEBUG
-            print("[TaskCreationViewModel] valider() failed: \(error)")
-            #endif
+            Self.logger.error("valider() failed: \(error)")
             errorMessage = "Impossible de créer la tâche. Réessayez."
         }
     }

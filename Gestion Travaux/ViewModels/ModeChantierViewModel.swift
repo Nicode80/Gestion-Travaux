@@ -340,6 +340,16 @@ final class ModeChantierViewModel {
         // Within-task hypothesis reset detection: on-device SFSpeechRecognizer may restart its
         // hypothesis after extended silence (e.g. during photo capture). A shorter incoming partial
         // signals a fresh start — commit the previous partial to texteCommis before appending.
+        //
+        // Root cause: this fix was introduced because speech before a photo was being lost —
+        // after tapping the photo button and speaking again, only the post-photo text was saved.
+        // The engine silently restarted from zero, discarding the pre-photo partial.
+        //
+        // Heuristic: "shorter incoming partial = reset". This is not guaranteed — the engine can
+        // also legitimately shorten a partial when correcting a word (e.g. "placard" → "placo").
+        // In practice, mid-word corrections are rare with clear speech, so false positives are
+        // acceptable. If a false positive occurs, the worst case is a duplicated word in the
+        // transcription.
         if !dernierePartielle.isEmpty && texte.count < dernierePartielle.count {
             texteCommis = texteCommis.isEmpty ? dernierePartielle : texteCommis + " " + dernierePartielle
         }
