@@ -109,7 +109,7 @@ struct ClassificationClassifyTests {
 
         let piece = PieceEntity(nom: "Salon")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Peinture Salon")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
         let capture = CaptureEntity()
@@ -122,7 +122,7 @@ struct ClassificationClassifyTests {
         let todos = try context.fetch(FetchDescriptor<ToDoEntity>())
         #expect(todos.count == 1)
         #expect(todos[0].priorite == .bientot)
-        #expect(todos[0].piece?.nom == "Salon")
+        #expect(todos[0].tache?.piece?.nom == "Salon")
         #expect(todos[0].source == .swipeGame)
     }
 
@@ -134,7 +134,7 @@ struct ClassificationClassifyTests {
 
         let piece = PieceEntity(nom: "Cuisine")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Tache cuisine")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
         let capture = CaptureEntity()
@@ -148,17 +148,14 @@ struct ClassificationClassifyTests {
         #expect(remaining.isEmpty)
     }
 
-    @Test("classify toDo without piece sets classificationError and preserves capture")
-    func classifyToDoWithoutPieceSetsError() throws {
+    @Test("classify toDo without tache sets classificationError and preserves capture")
+    func classifyToDoWithoutTacheSetsError() throws {
         let container = try makeContainer()
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
-        // Tache without piece
-        let tache = TacheEntity(titre: "Tache sans pièce")
-        context.insert(tache)
+        // Capture not linked to any tache
         let capture = CaptureEntity()
-        capture.tache = tache
         context.insert(capture)
         try context.save()
 

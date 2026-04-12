@@ -8,7 +8,14 @@ import SwiftData
 
 @Model
 final class TacheEntity {
-    var titre: String
+    // titre is derived dynamically from piece.nom and activite.nom.
+    // SwiftData ignores computed properties — no column is stored for this.
+    var titre: String {
+        let p = piece?.nom ?? "Sans pièce"
+        let a = activite?.nom ?? "Sans activité"
+        return "\(p) — \(a)"
+    }
+
     var statut: StatutTache = StatutTache.active
     var prochaineAction: String?
     var createdAt: Date = Date()
@@ -19,13 +26,14 @@ final class TacheEntity {
     var piece: PieceEntity?
     var activite: ActiviteEntity?
 
+    @Relationship(deleteRule: .cascade, inverse: \ToDoEntity.tache)
+    var todos: [ToDoEntity] = []
+
     @Relationship(deleteRule: .cascade, inverse: \AlerteEntity.tache)
     var alertes: [AlerteEntity] = []
 
     @Relationship(deleteRule: .cascade, inverse: \CaptureEntity.tache)
     var captures: [CaptureEntity] = []
 
-    init(titre: String) {
-        self.titre = titre
-    }
+    init() {}
 }

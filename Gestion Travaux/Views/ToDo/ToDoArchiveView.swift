@@ -16,7 +16,7 @@ struct ToDoArchiveView: View {
 
     var body: some View {
         let archives = viewModel.todosArchives.filter { todo in
-            filtrePiece == nil || todo.piece?.id == filtrePiece?.id
+            filtrePiece == nil || todo.tache?.piece?.id == filtrePiece?.id
         }
 
         List {
@@ -55,7 +55,7 @@ struct ToDoArchiveView: View {
                                     .foregroundStyle(.secondary)
                                     .strikethrough(true, color: .secondary)
                                 HStack {
-                                    if let nom = todo.piece?.nom {
+                                    if let nom = todo.tache?.titre {
                                         Text(nom)
                                             .font(.caption)
                                             .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))

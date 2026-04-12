@@ -245,9 +245,8 @@ final class TaskCreationViewModel {
             activite = newActivite
         }
 
-        // Create TacheEntity — title is auto-generated from piece + activite
-        let titre = "\(piece.nom) — \(activite.nom)"
-        let tache = TacheEntity(titre: titre)
+        // Create TacheEntity — titre is a computed property derived from piece.nom + activite.nom
+        let tache = TacheEntity()
         tache.piece = piece
         tache.activite = activite
         modelContext.insert(tache)

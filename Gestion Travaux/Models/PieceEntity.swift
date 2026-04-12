@@ -16,9 +16,6 @@ final class PieceEntity {
     @Relationship(deleteRule: .cascade, inverse: \TacheEntity.piece)
     var taches: [TacheEntity] = []
 
-    @Relationship(deleteRule: .cascade, inverse: \ToDoEntity.piece)
-    var todos: [ToDoEntity] = []
-
     init(nom: String) {
         self.nom = nom
     }

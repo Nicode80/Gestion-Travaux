@@ -46,7 +46,7 @@ struct ModeChantierViewModelEndSessionTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Cuisine")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -72,7 +72,7 @@ struct ModeChantierViewModelEndSessionTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Salle de bain")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -120,7 +120,7 @@ struct ModeChantierViewModelEndSessionTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Terrasse")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 

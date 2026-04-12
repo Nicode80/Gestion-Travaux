@@ -42,7 +42,7 @@ struct CheckoutViewModelTests {
     }
 
     private func makeTache(in context: ModelContext) -> TacheEntity {
-        let tache = TacheEntity(titre: "Salon — Peinture")
+        let tache = TacheEntity()
         context.insert(tache)
         return tache
     }
@@ -390,8 +390,8 @@ struct CheckoutViewModelTests {
         let context = container.mainContext
         let vm = ClassificationViewModel(modelContext: context)
 
-        let t1 = TacheEntity(titre: "Tache 1")
-        let t2 = TacheEntity(titre: "Tache 2")
+        let t1 = TacheEntity()
+        let t2 = TacheEntity()
         context.insert(t1)
         context.insert(t2)
         try context.save()
@@ -522,8 +522,8 @@ struct CheckoutViewModelTests {
         let vm = ClassificationViewModel(modelContext: context)
 
         // Simulate task switch: Tache A (older captures) → Tache B (most recent capture)
-        let tacheA = TacheEntity(titre: "Tâche A — ancienne")
-        let tacheB = TacheEntity(titre: "Tâche B — dernière active")
+        let tacheA = TacheEntity()
+        let tacheB = TacheEntity()
         context.insert(tacheA)
         context.insert(tacheB)
 
@@ -554,12 +554,12 @@ struct CheckoutViewModelTests {
 
         let piece = PieceEntity(nom: "Salon")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Salon — Peinture")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
 
         // Pre-existing urgent ToDo with the exact same title
-        let existing = ToDoEntity(titre: "Repeindre le plafond", priorite: .urgent, piece: piece)
+        let existing = ToDoEntity(titre: "Repeindre le plafond", priorite: .urgent, tache: tache)
         context.insert(existing)
         try context.save()
 
@@ -582,11 +582,11 @@ struct CheckoutViewModelTests {
 
         let piece = PieceEntity(nom: "Cuisine")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Cuisine — Carrelage")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
 
-        let existing = ToDoEntity(titre: "Poser le carrelage", priorite: .urgent, piece: piece)
+        let existing = ToDoEntity(titre: "Poser le carrelage", priorite: .urgent, tache: tache)
         context.insert(existing)
         try context.save()
 
@@ -607,11 +607,11 @@ struct CheckoutViewModelTests {
 
         let piece = PieceEntity(nom: "Couloir")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Couloir — Rail")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
 
-        let existing = ToDoEntity(titre: "Fixer les rails", priorite: .urgent, piece: piece)
+        let existing = ToDoEntity(titre: "Fixer les rails", priorite: .urgent, tache: tache)
         context.insert(existing)
         try context.save()
 
@@ -632,11 +632,11 @@ struct CheckoutViewModelTests {
 
         let piece = PieceEntity(nom: "Couloir")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Couloir — Rail")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
 
-        let existing = ToDoEntity(titre: "Poser les rails", priorite: .urgent, piece: piece)
+        let existing = ToDoEntity(titre: "Poser les rails", priorite: .urgent, tache: tache)
         context.insert(existing)
         try context.save()
 
@@ -657,11 +657,11 @@ struct CheckoutViewModelTests {
 
         let piece = PieceEntity(nom: "Buanderie")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Buanderie — Plomberie")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
 
-        let existing = ToDoEntity(titre: "Réparer la fuite", priorite: .bientot, piece: piece)
+        let existing = ToDoEntity(titre: "Réparer la fuite", priorite: .bientot, tache: tache)
         context.insert(existing)
         try context.save()
 
@@ -682,7 +682,7 @@ struct CheckoutViewModelTests {
 
         let piece = PieceEntity(nom: "Chambre")
         context.insert(piece)
-        let tache = TacheEntity(titre: "Chambre — Peinture")
+        let tache = TacheEntity()
         tache.piece = piece
         context.insert(tache)
         try context.save()

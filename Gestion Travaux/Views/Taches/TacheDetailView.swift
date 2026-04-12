@@ -19,6 +19,11 @@ struct TacheDetailView: View {
     @State private var alerteAEditer: AlerteEntity?
     @State private var texteEditionToDo = ""
     @State private var todoAEditer: ToDoEntity?
+    // Edition des noms (AC4)
+    @State private var nomPieceAEditer: String = ""
+    @State private var showEditNomPiece = false
+    @State private var nomActiviteAEditer: String = ""
+    @State private var showEditNomActivite = false
     @Environment(ModeChantierState.self) private var chantier
 
     init(tache: TacheEntity, modelContext: ModelContext) {
@@ -38,6 +43,9 @@ struct TacheDetailView: View {
                 // Pastille statut — centrée en haut du contenu
                 statutBadge
                     .frame(maxWidth: .infinity, alignment: .center)
+
+                // Section PIÈCE / ACTIVITÉ (AC4)
+                pieceActiviteSection
 
                 // Prochaine action
                 VStack(alignment: .leading, spacing: 0) {
@@ -84,10 +92,8 @@ struct TacheDetailView: View {
                         .padding(.top, 8)
                 }
 
-                // À FAIRE — uniquement si la tâche a une pièce
-                if tache.piece != nil {
-                    sectionToDo
-                }
+                // À FAIRE
+                sectionToDo
             }
             .padding(.horizontal, 16)
             .padding(.top, 4)
@@ -135,6 +141,24 @@ struct TacheDetailView: View {
                 onAnnuler: {}
             )
         }
+        .sheet(isPresented: $showEditNomPiece) {
+            EditTexteSheet(
+                titre: "Renommer la pièce",
+                texte: $nomPieceAEditer,
+                texteOriginal: tache.piece?.nom ?? "",
+                onValider: { vm.renommerPiece(nouveauNom: nomPieceAEditer) },
+                onAnnuler: {}
+            )
+        }
+        .sheet(isPresented: $showEditNomActivite) {
+            EditTexteSheet(
+                titre: "Renommer l'activité",
+                texte: $nomActiviteAEditer,
+                texteOriginal: tache.activite?.nom ?? "",
+                onValider: { vm.renommerActivite(nouveauNom: nomActiviteAEditer) },
+                onAnnuler: {}
+            )
+        }
         .alert(
             "Erreur",
             isPresented: Binding(
@@ -142,10 +166,67 @@ struct TacheDetailView: View {
                 set: { if !$0 { vm.clearError() } }
             )
         ) {
-            Button("OK") { vm.clearError() }
+            Button("Réessayer") { vm.clearError() }
+            Button("Annuler", role: .cancel) { vm.clearError() }
         } message: {
             Text(vm.errorMessage ?? "")
         }
+    }
+
+    // MARK: - Section PIÈCE / ACTIVITÉ (AC4)
+
+    private var pieceActiviteSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("TÂCHE")
+                .font(.caption.bold())
+                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .padding(.bottom, 8)
+
+            VStack(spacing: 0) {
+                ligneEditable(
+                    label: "PIÈCE",
+                    valeur: tache.piece?.nom ?? "Sans pièce"
+                ) {
+                    nomPieceAEditer = tache.piece?.nom ?? ""
+                    showEditNomPiece = true
+                }
+                Divider().padding(.leading, 14)
+                ligneEditable(
+                    label: "ACTIVITÉ",
+                    valeur: tache.activite?.nom ?? "Sans activité"
+                ) {
+                    nomActiviteAEditer = tache.activite?.nom ?? ""
+                    showEditNomActivite = true
+                }
+            }
+            .background(Color(hex: Constants.Couleurs.accent).opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private func ligneEditable(label: String, valeur: String, onTap: @escaping () -> Void) -> some View {
+        Button {
+            if !chantier.boutonVert { onTap() }
+        } label: {
+            HStack {
+                Text(label)
+                    .font(.caption.bold())
+                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .frame(width: 80, alignment: .leading)
+                Text(valeur)
+                    .font(.subheadline)
+                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "pencil")
+                    .font(.caption)
+                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire).opacity(chantier.boutonVert ? 0.3 : 0.7))
+            }
+            .frame(minHeight: 44)
+            .padding(.horizontal, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(chantier.boutonVert)
     }
 
     // MARK: - Section À FAIRE

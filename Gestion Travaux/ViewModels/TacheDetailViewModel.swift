@@ -29,8 +29,7 @@ final class TacheDetailViewModel {
     /// Todos with estFaite == true remain visible for the 2-second strikethrough animation
     /// until toggleComplete() sets isArchived = true and they drop from this list.
     var todosActifs: [ToDoEntity] {
-        guard let piece = tache.piece else { return [] }
-        return piece.todos
+        tache.todos
             .filter { !$0.isArchived }
             .sorted { a, b in
                 if a.priorite.ordre != b.priorite.ordre { return a.priorite.ordre < b.priorite.ordre }
@@ -95,18 +94,45 @@ final class TacheDetailViewModel {
         }
     }
 
-    /// Creates a new ToDoEntity linked to tache.piece and saves.
+    /// Creates a new ToDoEntity linked to tache and saves.
     func ajouterToDo(titre: String, priorite: PrioriteToDo) {
-        guard let piece = tache.piece else { return }
         let trimmed = titre.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        let todo = ToDoEntity(titre: trimmed, priorite: priorite, piece: piece, source: .manuel)
+        let todo = ToDoEntity(titre: trimmed, priorite: priorite, tache: tache, source: .manuel)
         modelContext.insert(todo)
         do {
             try modelContext.save()
         } catch {
             Self.logger.error("ajouterToDo() failed: \(error)")
             errorMessage = "Impossible de créer le To Do. Réessayer."
+        }
+    }
+
+    // MARK: - Edition des noms de pièce / activité (Story 7.4)
+
+    func renommerPiece(nouveauNom: String) {
+        guard let piece = tache.piece else { return }
+        let trimmed = nouveauNom.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        piece.nom = trimmed
+        do {
+            try modelContext.save()
+        } catch {
+            Self.logger.error("renommerPiece() failed: \(error)")
+            errorMessage = "Impossible de sauvegarder la modification. Réessayez."
+        }
+    }
+
+    func renommerActivite(nouveauNom: String) {
+        guard let activite = tache.activite else { return }
+        let trimmed = nouveauNom.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        activite.nom = trimmed
+        do {
+            try modelContext.save()
+        } catch {
+            Self.logger.error("renommerActivite() failed: \(error)")
+            errorMessage = "Impossible de sauvegarder la modification. Réessayez."
         }
     }
 

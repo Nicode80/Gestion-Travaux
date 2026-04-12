@@ -18,7 +18,10 @@ struct PieceDetailView: View {
     @State private var texteEditionToDo = ""
     @State private var todoAEditer: ToDoEntity?
     @State private var autresTodosExpanded = false
-    @State private var showAddTodo = false
+    // Edition du nom de pièce (AC2)
+    @State private var nomPieceAEditer: String = ""
+    @State private var showEditNomPiece = false
+    @State private var editNomPieceError: String? = nil
     @Environment(ModeChantierState.self) private var chantier
 
     init(piece: PieceEntity, modelContext: ModelContext) {
@@ -27,13 +30,23 @@ struct PieceDetailView: View {
         _viewModel = State(initialValue: ToDoViewModel(modelContext: modelContext))
     }
 
-    // Todos de cette pièce uniquement, non archivés, triés par priorité puis date
+    // Todos de toutes les tâches de cette pièce, non archivés, triés par priorité puis date
+    private var allTodosForPiece: [ToDoEntity] {
+        piece.taches
+            .flatMap { $0.todos }
+            .filter { !$0.isArchived }
+            .sorted { a, b in
+                if a.priorite.ordre != b.priorite.ordre { return a.priorite.ordre < b.priorite.ordre }
+                return a.dateCreation > b.dateCreation
+            }
+    }
+
     private var todosUrgents: [ToDoEntity] {
-        viewModel.todos.filter { $0.piece?.id == piece.id && $0.priorite == .urgent }
+        allTodosForPiece.filter { $0.priorite == .urgent }
     }
 
     private var todosAutres: [ToDoEntity] {
-        viewModel.todos.filter { $0.piece?.id == piece.id && $0.priorite != .urgent }
+        allTodosForPiece.filter { $0.priorite != .urgent }
     }
 
     private var tachesActives: [TacheEntity] {
@@ -86,16 +99,7 @@ struct PieceDetailView: View {
                     }
                 }
             } header: {
-                HStack {
-                    Text("To Do")
-                    Spacer()
-                    Button {
-                        showAddTodo = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.subheadline.bold())
-                    }
-                }
+                Text("To Do")
             }
 
             // MARK: — Tâches liées
@@ -128,7 +132,17 @@ struct PieceDetailView: View {
         .background(Color(hex: Constants.Couleurs.backgroundBureau))
         .navigationTitle(piece.nom)
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { viewModel.charger() }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    nomPieceAEditer = piece.nom
+                    showEditNomPiece = true
+                } label: {
+                    Image(systemName: "pencil")
+                }
+                .disabled(chantier.boutonVert)
+            }
+        }
         .sheet(item: $selectedTodo) { todo in
             ToDoDetailSheet(
                 todo: todo,
@@ -147,8 +161,23 @@ struct PieceDetailView: View {
                 onAnnuler: {}
             )
         }
-        .sheet(isPresented: $showAddTodo) {
-            AjouterToDoSheet(piece: piece, viewModel: viewModel)
+        .sheet(isPresented: $showEditNomPiece) {
+            EditTexteSheet(
+                titre: "Renommer la pièce",
+                texte: $nomPieceAEditer,
+                texteOriginal: piece.nom,
+                onValider: {
+                    let trimmed = nomPieceAEditer.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    piece.nom = trimmed
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        editNomPieceError = "Impossible de sauvegarder la modification. Réessayez."
+                    }
+                },
+                onAnnuler: {}
+            )
         }
         .alert("Erreur", isPresented: Binding(
             get: { viewModel.editError != nil },
@@ -158,65 +187,23 @@ struct PieceDetailView: View {
         } message: {
             Text(viewModel.editError ?? "")
         }
-    }
-}
-
-// MARK: - Sheet création To Do
-
-private struct AjouterToDoSheet: View {
-
-    let piece: PieceEntity
-    let viewModel: ToDoViewModel
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var titre = ""
-    @State private var priorite: PrioriteToDo = .urgent
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Ce qu'il reste à faire") {
-                    TextField("Décrire le to do…", text: $titre, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-
-                Section("Priorité") {
-                    ForEach(PrioriteToDo.allCases, id: \.self) { p in
-                        Button {
-                            priorite = p
-                        } label: {
-                            HStack {
-                                Circle()
-                                    .fill(p.couleur)
-                                    .frame(width: 10, height: 10)
-                                Text(p.libelle)
-                                    .foregroundStyle(Color.primary)
-                                Spacer()
-                                if priorite == p {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(p.couleur)
-                                }
-                            }
-                        }
-                    }
+        .alert("Impossible de sauvegarder la modification. Réessayez.", isPresented: Binding(
+            get: { editNomPieceError != nil },
+            set: { if !$0 { editNomPieceError = nil } }
+        )) {
+            Button("Réessayer") {
+                let trimmed = nomPieceAEditer.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return }
+                piece.nom = trimmed
+                do {
+                    try modelContext.save()
+                    editNomPieceError = nil
+                } catch {
+                    editNomPieceError = "Impossible de sauvegarder la modification. Réessayez."
                 }
             }
-            .navigationTitle("Nouveau To Do")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Annuler") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Ajouter") {
-                        viewModel.ajouterToDo(titre: titre, priorite: priorite, piece: piece)
-                        dismiss()
-                    }
-                    .disabled(titre.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-            }
+            Button("Annuler", role: .cancel) { editNomPieceError = nil }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
     }
 }
+

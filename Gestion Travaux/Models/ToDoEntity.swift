@@ -1,8 +1,10 @@
 // ToDoEntity.swift
 // Gestion Travaux
 //
-// Story 6.1: Replaces NoteEntity. A to-do item linked to a room (PieceEntity),
-// with a priority level and iOS Reminders-style animated completion.
+// Story 6.1: Replaces NoteEntity. A to-do item with a priority level and
+// iOS Reminders-style animated completion.
+// Story 7.4: Linked to TacheEntity (piece + activite) instead of PieceEntity directly,
+// so each task has its own independent todo list.
 
 import Foundation
 import SwiftData
@@ -22,12 +24,12 @@ final class ToDoEntity {
     var source: SourceToDo = SourceToDo.manuel
 
     @Relationship(deleteRule: .nullify)
-    var piece: PieceEntity?
+    var tache: TacheEntity?
 
-    init(titre: String, priorite: PrioriteToDo, piece: PieceEntity, source: SourceToDo = .manuel, blocksData: Data = Data()) {
+    init(titre: String, priorite: PrioriteToDo, tache: TacheEntity, source: SourceToDo = .manuel, blocksData: Data = Data()) {
         self.titre = titre
         self.priorite = priorite
-        self.piece = piece
+        self.tache = tache
         self.source = source
         self.blocksData = blocksData
     }

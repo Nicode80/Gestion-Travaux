@@ -49,7 +49,7 @@ struct AlerteListViewModelTests {
     func loadExcludesAlertesResolues() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        let tache = TacheEntity(titre: "Tâche A")
+        let tache = TacheEntity()
         context.insert(tache)
 
         let alerteActive = AlerteEntity()
@@ -76,8 +76,8 @@ struct AlerteListViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tacheA = TacheEntity(titre: "Tâche A")
-        let tacheB = TacheEntity(titre: "Tâche B")
+        let tacheA = TacheEntity()
+        let tacheB = TacheEntity()
         context.insert(tacheA)
         context.insert(tacheB)
 
@@ -90,8 +90,8 @@ struct AlerteListViewModelTests {
         vm.load()
 
         #expect(vm.alertesGroupedByTache.count == 2)
-        let groupA = vm.alertesGroupedByTache.first { $0.0?.titre == "Tâche A" }
-        let groupB = vm.alertesGroupedByTache.first { $0.0?.titre == "Tâche B" }
+        let groupA = vm.alertesGroupedByTache.first { $0.0?.id == tacheA.id }
+        let groupB = vm.alertesGroupedByTache.first { $0.0?.id == tacheB.id }
         #expect(groupA?.1.count == 2)
         #expect(groupB?.1.count == 1)
     }
@@ -101,8 +101,14 @@ struct AlerteListViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tacheZ = TacheEntity(titre: "Zoulou")
-        let tacheA = TacheEntity(titre: "Alpha")
+        let pieceZ = PieceEntity(nom: "Zoulou")
+        let pieceA = PieceEntity(nom: "Alpha")
+        let tacheZ = TacheEntity()
+        tacheZ.piece = pieceZ
+        let tacheA = TacheEntity()
+        tacheA.piece = pieceA
+        context.insert(pieceZ)
+        context.insert(pieceA)
         context.insert(tacheZ)
         context.insert(tacheA)
 
@@ -114,8 +120,8 @@ struct AlerteListViewModelTests {
         vm.load()
 
         #expect(vm.alertesGroupedByTache.count == 2)
-        #expect(vm.alertesGroupedByTache[0].0?.titre == "Alpha")
-        #expect(vm.alertesGroupedByTache[1].0?.titre == "Zoulou")
+        #expect(vm.alertesGroupedByTache[0].0?.titre == "Alpha — Sans activité")
+        #expect(vm.alertesGroupedByTache[1].0?.titre == "Zoulou — Sans activité")
     }
 
     @Test("load() includes alerts from terminated tasks when filter is .terminee")
@@ -123,7 +129,7 @@ struct AlerteListViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Tâche terminée")
+        let tache = TacheEntity()
         tache.statut = .terminee
         context.insert(tache)
 
@@ -145,9 +151,9 @@ struct AlerteListViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tacheActive = TacheEntity(titre: "Tâche active")
+        let tacheActive = TacheEntity()
         tacheActive.statut = .active
-        let tacheTerminee = TacheEntity(titre: "Tâche terminée")
+        let tacheTerminee = TacheEntity()
         tacheTerminee.statut = .terminee
         context.insert(tacheActive)
         context.insert(tacheTerminee)
@@ -196,7 +202,7 @@ struct AlerteListViewModelTests {
         let context = ModelContext(container)
 
         for i in 1...3 {
-            let tache = TacheEntity(titre: "Tâche \(i)")
+            let tache = TacheEntity()
             context.insert(tache)
             let alerte = AlerteEntity()
             alerte.tache = tache

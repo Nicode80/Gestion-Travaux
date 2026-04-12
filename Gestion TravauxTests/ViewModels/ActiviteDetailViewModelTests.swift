@@ -56,7 +56,7 @@ struct ActiviteDetailViewModelTests {
         context.insert(astuceUtile)
         try context.save()
 
-        let vm = ActiviteDetailViewModel(activite: activite)
+        let vm = ActiviteDetailViewModel(activite: activite, modelContext: context)
         vm.load()
 
         #expect(vm.astucesCritiques.count == 1)
@@ -76,7 +76,7 @@ struct ActiviteDetailViewModelTests {
         for _ in 0..<1 { let a = AstuceEntity(niveau: .utile); a.activite = activite; context.insert(a) }
         try context.save()
 
-        let vm = ActiviteDetailViewModel(activite: activite)
+        let vm = ActiviteDetailViewModel(activite: activite, modelContext: context)
         vm.load()
 
         #expect(vm.totalCount == 6)
@@ -91,7 +91,7 @@ struct ActiviteDetailViewModelTests {
         context.insert(activite)
         try context.save()
 
-        let vm = ActiviteDetailViewModel(activite: activite)
+        let vm = ActiviteDetailViewModel(activite: activite, modelContext: context)
         vm.load()
 
         #expect(vm.astucesCritiques.isEmpty)
@@ -119,7 +119,7 @@ struct ActiviteDetailViewModelTests {
         context.insert(astuce2)
         try context.save()
 
-        let vm = ActiviteDetailViewModel(activite: activite1)
+        let vm = ActiviteDetailViewModel(activite: activite1, modelContext: context)
         vm.load()
 
         #expect(vm.astucesCritiques.count == 1)
@@ -144,7 +144,7 @@ struct ActiviteDetailViewModelTests {
         context.insert(later)
         try context.save()
 
-        let vm = ActiviteDetailViewModel(activite: activite)
+        let vm = ActiviteDetailViewModel(activite: activite, modelContext: context)
         vm.load()
 
         #expect(vm.astucesUtiles.count == 2)
@@ -159,7 +159,7 @@ struct ActiviteDetailViewModelTests {
         context.insert(activite)
         try context.save()
 
-        let vm = ActiviteDetailViewModel(activite: activite)
+        let vm = ActiviteDetailViewModel(activite: activite, modelContext: context)
 
         #expect(vm.totalCount == 0)
     }
