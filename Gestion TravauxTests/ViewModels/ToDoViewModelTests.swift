@@ -2,6 +2,7 @@
 // Gestion TravauxTests
 //
 // Story 6.1: Tests for ToDoViewModel — charger, filtres, changerPriorite, toggleComplete.
+// Story 7.4: ToDos are linked to TacheEntity (not PieceEntity) — helpers updated.
 // Uses an in-memory ModelContainer.
 
 import Testing
@@ -31,13 +32,20 @@ struct ToDoViewModelTests {
         return piece
     }
 
+    private func makeTache(piece: PieceEntity, in context: ModelContext) -> TacheEntity {
+        let tache = TacheEntity()
+        tache.piece = piece
+        context.insert(tache)
+        return tache
+    }
+
     private func makeToDo(
         titre: String,
         priorite: PrioriteToDo,
-        piece: PieceEntity,
+        tache: TacheEntity,
         in context: ModelContext
     ) -> ToDoEntity {
-        let todo = ToDoEntity(titre: titre, priorite: priorite, piece: piece)
+        let todo = ToDoEntity(titre: titre, priorite: priorite, tache: tache)
         context.insert(todo)
         return todo
     }
@@ -51,9 +59,10 @@ struct ToDoViewModelTests {
         let vm = ToDoViewModel(modelContext: context)
 
         let piece = makePiece(nom: "Salon", in: context)
-        _ = makeToDo(titre: "Un jour", priorite: .unJour, piece: piece, in: context)
-        _ = makeToDo(titre: "Urgent", priorite: .urgent, piece: piece, in: context)
-        _ = makeToDo(titre: "Bientôt", priorite: .bientot, piece: piece, in: context)
+        let tache = makeTache(piece: piece, in: context)
+        _ = makeToDo(titre: "Un jour", priorite: .unJour, tache: tache, in: context)
+        _ = makeToDo(titre: "Urgent", priorite: .urgent, tache: tache, in: context)
+        _ = makeToDo(titre: "Bientôt", priorite: .bientot, tache: tache, in: context)
         try context.save()
 
         vm.charger()
@@ -71,8 +80,9 @@ struct ToDoViewModelTests {
         let vm = ToDoViewModel(modelContext: context)
 
         let piece = makePiece(nom: "Cuisine", in: context)
-        let active = makeToDo(titre: "Actif", priorite: .urgent, piece: piece, in: context)
-        let archived = makeToDo(titre: "Archivé", priorite: .urgent, piece: piece, in: context)
+        let tache = makeTache(piece: piece, in: context)
+        let active = makeToDo(titre: "Actif", priorite: .urgent, tache: tache, in: context)
+        let archived = makeToDo(titre: "Archivé", priorite: .urgent, tache: tache, in: context)
         archived.isArchived = true
         try context.save()
 
@@ -93,9 +103,10 @@ struct ToDoViewModelTests {
         let vm = ToDoViewModel(modelContext: context)
 
         let piece = makePiece(nom: "Buanderie", in: context)
-        _ = makeToDo(titre: "Urgent 1", priorite: .urgent, piece: piece, in: context)
-        _ = makeToDo(titre: "Urgent 2", priorite: .urgent, piece: piece, in: context)
-        _ = makeToDo(titre: "Bientôt", priorite: .bientot, piece: piece, in: context)
+        let tache = makeTache(piece: piece, in: context)
+        _ = makeToDo(titre: "Urgent 1", priorite: .urgent, tache: tache, in: context)
+        _ = makeToDo(titre: "Urgent 2", priorite: .urgent, tache: tache, in: context)
+        _ = makeToDo(titre: "Bientôt", priorite: .bientot, tache: tache, in: context)
         try context.save()
 
         vm.charger()
@@ -105,7 +116,7 @@ struct ToDoViewModelTests {
         #expect(vm.todosFiltres.allSatisfy { $0.priorite == .urgent })
     }
 
-    @Test("setFiltrePiece filters by piece")
+    @Test("setFiltrePiece filters by piece via tache.piece")
     func setFiltrePieceFilters() throws {
         let container = try makeContainer()
         let context = container.mainContext
@@ -113,15 +124,17 @@ struct ToDoViewModelTests {
 
         let salon = makePiece(nom: "Salon", in: context)
         let cuisine = makePiece(nom: "Cuisine", in: context)
-        _ = makeToDo(titre: "Salon Todo", priorite: .urgent, piece: salon, in: context)
-        _ = makeToDo(titre: "Cuisine Todo", priorite: .bientot, piece: cuisine, in: context)
+        let tacheSalon = makeTache(piece: salon, in: context)
+        let tacheCuisine = makeTache(piece: cuisine, in: context)
+        _ = makeToDo(titre: "Salon Todo", priorite: .urgent, tache: tacheSalon, in: context)
+        _ = makeToDo(titre: "Cuisine Todo", priorite: .bientot, tache: tacheCuisine, in: context)
         try context.save()
 
         vm.charger()
         vm.setFiltrePiece(salon)
 
         #expect(vm.todosFiltres.count == 1)
-        #expect(vm.todosFiltres[0].piece?.nom == "Salon")
+        #expect(vm.todosFiltres[0].tache?.piece?.nom == "Salon")
     }
 
     @Test("setFiltrePriorite nil shows all")
@@ -131,8 +144,9 @@ struct ToDoViewModelTests {
         let vm = ToDoViewModel(modelContext: context)
 
         let piece = makePiece(nom: "Salon", in: context)
-        _ = makeToDo(titre: "T1", priorite: .urgent, piece: piece, in: context)
-        _ = makeToDo(titre: "T2", priorite: .bientot, piece: piece, in: context)
+        let tache = makeTache(piece: piece, in: context)
+        _ = makeToDo(titre: "T1", priorite: .urgent, tache: tache, in: context)
+        _ = makeToDo(titre: "T2", priorite: .bientot, tache: tache, in: context)
         try context.save()
 
         vm.charger()
@@ -151,7 +165,8 @@ struct ToDoViewModelTests {
         let vm = ToDoViewModel(modelContext: context)
 
         let piece = makePiece(nom: "Salon", in: context)
-        let todo = makeToDo(titre: "A changer", priorite: .unJour, piece: piece, in: context)
+        let tache = makeTache(piece: piece, in: context)
+        let todo = makeToDo(titre: "A changer", priorite: .unJour, tache: tache, in: context)
         try context.save()
 
         vm.charger()
@@ -171,7 +186,8 @@ struct ToDoViewModelTests {
         let vm = ToDoViewModel(modelContext: context)
 
         let piece = makePiece(nom: "Salon", in: context)
-        let todo = makeToDo(titre: "A compléter", priorite: .urgent, piece: piece, in: context)
+        let tache = makeTache(piece: piece, in: context)
+        let todo = makeToDo(titre: "A compléter", priorite: .urgent, tache: tache, in: context)
         try context.save()
 
         vm.charger()
@@ -188,9 +204,9 @@ struct ToDoViewModelTests {
         let container = try makeContainer()
         let context = container.mainContext
 
-        let piece = PieceEntity(nom: "Test")
-        context.insert(piece)
-        let todo = ToDoEntity(titre: "Test", priorite: .urgent, piece: piece)
+        let tache = TacheEntity()
+        context.insert(tache)
+        let todo = ToDoEntity(titre: "Test", priorite: .urgent, tache: tache)
         context.insert(todo)
         try context.save()
 
@@ -201,19 +217,18 @@ struct ToDoViewModelTests {
         #expect(fetched[0].source == .manuel)
     }
 
-    @Test("PieceEntity cascade deletes its ToDos")
+    @Test("TacheEntity cascade deletes its ToDos")
     func cascadeDeleteToDo() throws {
         let container = try makeContainer()
         let context = container.mainContext
 
-        let piece = PieceEntity(nom: "Chambre")
-        context.insert(piece)
-        let todo = ToDoEntity(titre: "Test cascade", priorite: .urgent, piece: piece)
-        todo.piece = piece
+        let tache = TacheEntity()
+        context.insert(tache)
+        let todo = ToDoEntity(titre: "Test cascade", priorite: .urgent, tache: tache)
         context.insert(todo)
         try context.save()
 
-        context.delete(piece)
+        context.delete(tache)
         try context.save()
 
         let todos = try context.fetch(FetchDescriptor<ToDoEntity>())

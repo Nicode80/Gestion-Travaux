@@ -57,7 +57,7 @@ struct ModeChantierViewModelInterruptionTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Terrasse")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -87,7 +87,7 @@ struct ModeChantierViewModelInterruptionTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Salle de bain")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -131,7 +131,7 @@ struct ModeChantierViewModelInterruptionTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Cuisine")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -153,7 +153,7 @@ struct ModeChantierViewModelInterruptionTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Combles")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -182,7 +182,7 @@ struct ModeChantierViewModelInterruptionTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Couloir")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -219,7 +219,7 @@ struct ModeChantierViewModelInterruptionTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Garage")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -248,7 +248,7 @@ struct ModeChantierViewModelInterruptionTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Cave")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache

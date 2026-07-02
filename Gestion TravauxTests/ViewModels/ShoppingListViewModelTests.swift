@@ -256,7 +256,7 @@ struct ShoppingListViewModelTests {
         let context = try makeContextWithLDC()
         let ldc = try context.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first!
 
-        let tache = TacheEntity(titre: "Ravalement façade")
+        let tache = TacheEntity()
         context.insert(tache)
 
         let achat = AchatEntity(texte: "Enduit façade")
@@ -268,6 +268,6 @@ struct ShoppingListViewModelTests {
         let vm = ShoppingListViewModel(modelContext: context)
         vm.load()
 
-        #expect(vm.achats.first?.tacheOrigine?.titre == "Ravalement façade")
+        #expect(vm.achats.first?.tacheOrigine?.id == tache.id)
     }
 }

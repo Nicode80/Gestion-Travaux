@@ -34,7 +34,7 @@ struct ToDoRowView: View {
                         .strikethrough(todo.estFaite, color: .secondary)
                         .multilineTextAlignment(.leading)
 
-                    if let nom = todo.piece?.nom {
+                    if let nom = todo.tache?.titre {
                         Text(nom)
                             .font(.caption)
                             .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))

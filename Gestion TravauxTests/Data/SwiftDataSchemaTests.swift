@@ -71,7 +71,7 @@ struct SwiftDataSchemaTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Peindre le salon")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -100,7 +100,7 @@ struct SwiftDataSchemaTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Test cascade")
+        let tache = TacheEntity()
         context.insert(tache)
         let capture = CaptureEntity()
         capture.tache = tache
@@ -119,7 +119,7 @@ struct SwiftDataSchemaTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Test alerte cascade")
+        let tache = TacheEntity()
         context.insert(tache)
         let alerte = AlerteEntity()
         alerte.tache = tache

@@ -26,7 +26,7 @@ struct TacheDetailViewModelTests {
     func demanderTerminaisonSetsAlert() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
+        let tache = TacheEntity()
         ctx.insert(tache)
         try ctx.save()
 
@@ -42,7 +42,7 @@ struct TacheDetailViewModelTests {
     func terminerChangesStatut() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
+        let tache = TacheEntity()
         ctx.insert(tache)
         try ctx.save()
 
@@ -57,7 +57,7 @@ struct TacheDetailViewModelTests {
     func terminerDismissesAlert() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
+        let tache = TacheEntity()
         ctx.insert(tache)
         try ctx.save()
 
@@ -72,7 +72,7 @@ struct TacheDetailViewModelTests {
     func terminerClearsError() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
+        let tache = TacheEntity()
         ctx.insert(tache)
         try ctx.save()
 
@@ -86,7 +86,7 @@ struct TacheDetailViewModelTests {
     func terminerIdempotent() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Chambre 1 — Peinture")
+        let tache = TacheEntity()
         tache.statut = .terminee
         ctx.insert(tache)
         try ctx.save()
@@ -102,7 +102,7 @@ struct TacheDetailViewModelTests {
     func demanderTerminaisonIgnoreeSiTerminee() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Déjà terminée")
+        let tache = TacheEntity()
         tache.statut = .terminee
         ctx.insert(tache)
         try ctx.save()
@@ -121,13 +121,13 @@ struct TacheDetailViewModelTests {
         let container = try makeContainer()
         let ctx = container.mainContext
         let piece = PieceEntity(nom: "Cuisine")
-        let tache = TacheEntity(titre: "Peinture")
+        let tache = TacheEntity()
         tache.piece = piece
         ctx.insert(piece)
         ctx.insert(tache)
 
-        let todo1 = ToDoEntity(titre: "Actif", priorite: .bientot, piece: piece, source: .manuel)
-        let todo2 = ToDoEntity(titre: "Fait mais pas encore archivé", priorite: .urgent, piece: piece, source: .manuel)
+        let todo1 = ToDoEntity(titre: "Actif", priorite: .bientot, tache: tache, source: .manuel)
+        let todo2 = ToDoEntity(titre: "Fait mais pas encore archivé", priorite: .urgent, tache: tache, source: .manuel)
         todo2.estFaite = true
         todo2.dateFaite = Date()
         // isArchived reste false — fenêtre des 2 secondes
@@ -145,13 +145,13 @@ struct TacheDetailViewModelTests {
         let container = try makeContainer()
         let ctx = container.mainContext
         let piece = PieceEntity(nom: "Salon")
-        let tache = TacheEntity(titre: "Parquet")
+        let tache = TacheEntity()
         tache.piece = piece
         ctx.insert(piece)
         ctx.insert(tache)
 
-        let todo1 = ToDoEntity(titre: "Actif", priorite: .bientot, piece: piece, source: .manuel)
-        let todo2 = ToDoEntity(titre: "Archivé", priorite: .urgent, piece: piece, source: .manuel)
+        let todo1 = ToDoEntity(titre: "Actif", priorite: .bientot, tache: tache, source: .manuel)
+        let todo2 = ToDoEntity(titre: "Archivé", priorite: .urgent, tache: tache, source: .manuel)
         todo2.isArchived = true
         ctx.insert(todo1)
         ctx.insert(todo2)
@@ -167,14 +167,14 @@ struct TacheDetailViewModelTests {
         let container = try makeContainer()
         let ctx = container.mainContext
         let piece = PieceEntity(nom: "Bureau")
-        let tache = TacheEntity(titre: "Rangement")
+        let tache = TacheEntity()
         tache.piece = piece
         ctx.insert(piece)
         ctx.insert(tache)
 
-        let t1 = ToDoEntity(titre: "Un jour", priorite: .unJour, piece: piece, source: .manuel)
-        let t2 = ToDoEntity(titre: "Urgent", priorite: .urgent, piece: piece, source: .manuel)
-        let t3 = ToDoEntity(titre: "Bientôt", priorite: .bientot, piece: piece, source: .manuel)
+        let t1 = ToDoEntity(titre: "Un jour", priorite: .unJour, tache: tache, source: .manuel)
+        let t2 = ToDoEntity(titre: "Urgent", priorite: .urgent, tache: tache, source: .manuel)
+        let t3 = ToDoEntity(titre: "Bientôt", priorite: .bientot, tache: tache, source: .manuel)
         ctx.insert(t1)
         ctx.insert(t2)
         ctx.insert(t3)
@@ -185,11 +185,11 @@ struct TacheDetailViewModelTests {
         #expect(titres == ["Urgent", "Bientôt", "Un jour"])
     }
 
-    @Test("todosActifs retourne [] si tache.piece == nil")
-    func todosActifsVideSansPiece() throws {
+    @Test("todosActifs retourne [] si aucun todo lié à la tâche")
+    func todosActifsVideSansTodos() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Sans pièce")
+        let tache = TacheEntity()
         ctx.insert(tache)
         try ctx.save()
 
@@ -199,12 +199,12 @@ struct TacheDetailViewModelTests {
 
     // MARK: - ajouterToDo (Story 7.1)
 
-    @Test("ajouterToDo() crée un ToDoEntity lié à la pièce de la tâche")
+    @Test("ajouterToDo() crée un ToDoEntity lié à la tâche")
     func ajouterToDoCreeEntite() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
         let piece = PieceEntity(nom: "Cuisine")
-        let tache = TacheEntity(titre: "Peinture cuisine")
+        let tache = TacheEntity()
         tache.piece = piece
         ctx.insert(piece)
         ctx.insert(tache)
@@ -217,7 +217,7 @@ struct TacheDetailViewModelTests {
         #expect(todos.count == 1)
         #expect(todos.first?.titre == "Acheter rouleau")
         #expect(todos.first?.priorite == .urgent)
-        #expect(todos.first?.piece?.id == piece.id)
+        #expect(todos.first?.tache?.id == tache.id)
         #expect(vm.errorMessage == nil)
     }
 
@@ -226,7 +226,7 @@ struct TacheDetailViewModelTests {
         let container = try makeContainer()
         let ctx = container.mainContext
         let piece = PieceEntity(nom: "Salon")
-        let tache = TacheEntity(titre: "Parquet salon")
+        let tache = TacheEntity()
         tache.piece = piece
         ctx.insert(piece)
         ctx.insert(tache)
@@ -240,11 +240,11 @@ struct TacheDetailViewModelTests {
         #expect(todos.isEmpty)
     }
 
-    @Test("ajouterToDo() ne fait rien si tache.piece == nil")
-    func ajouterToDoSansPieceEstIgnore() throws {
+    @Test("ajouterToDo() fonctionne même si tache.piece == nil")
+    func ajouterToDoSansPieceFonctionne() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Sans pièce")
+        let tache = TacheEntity()
         ctx.insert(tache)
         try ctx.save()
 
@@ -252,7 +252,8 @@ struct TacheDetailViewModelTests {
         vm.ajouterToDo(titre: "Titre valide", priorite: .urgent)
 
         let todos = try ctx.fetch(FetchDescriptor<ToDoEntity>())
-        #expect(todos.isEmpty)
+        #expect(todos.count == 1)
+        #expect(todos.first?.tache?.id == tache.id)
     }
 
     @Test("ajouterToDo() trimme les espaces dans le titre")
@@ -260,7 +261,7 @@ struct TacheDetailViewModelTests {
         let container = try makeContainer()
         let ctx = container.mainContext
         let piece = PieceEntity(nom: "Bureau")
-        let tache = TacheEntity(titre: "Pose étagères")
+        let tache = TacheEntity()
         tache.piece = piece
         ctx.insert(piece)
         ctx.insert(tache)
@@ -277,7 +278,7 @@ struct TacheDetailViewModelTests {
     func showAjoutToDoDefaultFalse() throws {
         let container = try makeContainer()
         let ctx = container.mainContext
-        let tache = TacheEntity(titre: "Test")
+        let tache = TacheEntity()
         ctx.insert(tache)
         try ctx.save()
 
@@ -297,7 +298,7 @@ struct TacheDetailViewModelTests {
     func terminerRollbackSiSaveEchoue() throws {
         // Skeleton — décommenté quand ModelSaving protocol est introduit.
         // let stub = FailingSaveContext()
-        // let tache = TacheEntity(titre: "Test rollback")
+        // let tache = TacheEntity()
         // tache.statut = .active
         // let vm = TacheDetailViewModel(tache: tache, modelContext: stub)
         // vm.terminer()

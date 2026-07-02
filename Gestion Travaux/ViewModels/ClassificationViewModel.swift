@@ -201,20 +201,20 @@ final class ClassificationViewModel {
                 destination = "Activité : " + (activite?.nom ?? "Sans activité")
 
             case .toDo(let priorite):
-                guard let piece = tache?.piece else {
-                    classificationError = "Impossible de créer un To Do : pièce introuvable."
+                guard let tache else {
+                    classificationError = "Impossible de créer un To Do : tâche introuvable."
                     return
                 }
                 let todo = ToDoEntity(
                     titre: capture.transcription.isEmpty ? capturePreview : capture.transcription,
                     priorite: priorite,
-                    piece: piece,
+                    tache: tache,
                     source: .swipeGame,
                     blocksData: blocksData
                 )
                 modelContext.insert(todo)
                 summaryEntity = .toDo(todo)
-                destination = piece.nom
+                destination = tache.titre
 
             case .achat:
                 guard let ldc = try modelContext.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first else {
@@ -277,8 +277,8 @@ final class ClassificationViewModel {
                 newDestination = "Activité : " + (item.activite?.nom ?? "Sans activité")
 
             case .toDo(let priorite):
-                guard let piece = item.tache?.piece else {
-                    reclassifyError = "Impossible de créer un To Do : pièce introuvable."
+                guard let tache = item.tache else {
+                    reclassifyError = "Impossible de créer un To Do : tâche introuvable."
                     return
                 }
                 let todo = ToDoEntity(
@@ -287,13 +287,13 @@ final class ClassificationViewModel {
                         .compactMap { $0.text }
                         .joined(separator: " "),
                     priorite: priorite,
-                    piece: piece,
+                    tache: tache,
                     source: .swipeGame,
                     blocksData: item.blocksData
                 )
                 modelContext.insert(todo)
                 newEntity = .toDo(todo)
-                newDestination = piece.nom
+                newDestination = tache.titre
 
             case .achat:
                 guard let ldc = try modelContext.fetch(FetchDescriptor<ListeDeCoursesEntity>()).first else {
@@ -375,18 +375,17 @@ final class ClassificationViewModel {
             checkoutError = "Impossible d'enregistrer la prochaine action. Réessayez."
             return
         }
-        // Story 6.1: create or check existing ToDo for this piece
-        guard let piece = tache.piece else { return }
+        // Story 6.1: create or check existing ToDo for this task
         pendingToDoTitre = trimmed
         pendingToDoTache = tache
-        if let similar = findSimilarToDo(titre: trimmed, piece: piece) {
+        if let similar = findSimilarToDo(titre: trimmed, tache: tache) {
             if similar.priorite == .urgent {
                 pendingToDoDecision = .alreadyUrgent(todo: similar, titreSimilaire: similar.titre)
             } else {
                 pendingToDoDecision = .upgradeToUrgent(todo: similar, titreSimilaire: similar.titre)
             }
         } else {
-            let todo = ToDoEntity(titre: trimmed, priorite: .urgent, piece: piece, source: .checkout)
+            let todo = ToDoEntity(titre: trimmed, priorite: .urgent, tache: tache, source: .checkout)
             modelContext.insert(todo)
             do {
                 try modelContext.save()
@@ -410,11 +409,11 @@ final class ClassificationViewModel {
 
     /// Creates a new separate ToDo (user chose "Créer séparé" or "Non, créer séparé").
     func creerToDoSepare() {
-        guard let tache = pendingToDoTache, let piece = tache.piece else {
+        guard let tache = pendingToDoTache else {
             pendingToDoDecision = nil
             return
         }
-        let todo = ToDoEntity(titre: pendingToDoTitre, priorite: .urgent, piece: piece, source: .checkout)
+        let todo = ToDoEntity(titre: pendingToDoTitre, priorite: .urgent, tache: tache, source: .checkout)
         modelContext.insert(todo)
         do {
             try modelContext.save()
@@ -470,15 +469,15 @@ final class ClassificationViewModel {
         return BriefingEngine.jaroWinklerSimilarity(joinA, joinB) >= 0.88
     }
 
-    /// Finds a semantically similar non-archived ToDo in the same piece (Story 6.1).
-    private func findSimilarToDo(titre: String, piece: PieceEntity) -> ToDoEntity? {
+    /// Finds a semantically similar non-archived ToDo in the same task (Story 6.1).
+    private func findSimilarToDo(titre: String, tache: TacheEntity) -> ToDoEntity? {
         do {
             let allTodos = try modelContext.fetch(FetchDescriptor<ToDoEntity>(
                 predicate: #Predicate { !$0.isArchived }
             ))
-            let todosForPiece = allTodos.filter { $0.piece?.id == piece.id }
-            guard !todosForPiece.isEmpty else { return nil }
-            return todosForPiece.first { ClassificationViewModel.titresSimilaires(titre, $0.titre) }
+            let todosForTache = allTodos.filter { $0.tache?.id == tache.id }
+            guard !todosForTache.isEmpty else { return nil }
+            return todosForTache.first { ClassificationViewModel.titresSimilaires(titre, $0.titre) }
         } catch {
             classificationError = "Impossible de vérifier les ToDo existants. Réessayez."
             return nil

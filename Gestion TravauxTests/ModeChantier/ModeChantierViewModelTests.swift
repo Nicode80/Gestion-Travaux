@@ -70,8 +70,8 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let active = TacheEntity(titre: "Peindre le salon")
-        let terminee = TacheEntity(titre: "Poser le carrelage")
+        let active = TacheEntity()
+        let terminee = TacheEntity()
         terminee.statut = .terminee
 
         context.insert(active)
@@ -82,7 +82,7 @@ struct ModeChantierViewModelTests {
         vm.charger()
 
         #expect(vm.tachesActives.count == 1)
-        #expect(vm.tachesActives.first?.titre == "Peindre le salon")
+        #expect(vm.tachesActives.first?.id == active.id)
     }
 
     @Test("charger() sorts active tasks by createdAt descending")
@@ -90,9 +90,9 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let ancienne = TacheEntity(titre: "Tâche ancienne")
+        let ancienne = TacheEntity()
         ancienne.createdAt = Date().addingTimeInterval(-3600)
-        let recente = TacheEntity(titre: "Tâche récente")
+        let recente = TacheEntity()
         recente.createdAt = Date()
 
         context.insert(ancienne)
@@ -103,8 +103,8 @@ struct ModeChantierViewModelTests {
         vm.charger()
 
         #expect(vm.tachesActives.count == 2)
-        #expect(vm.tachesActives.first?.titre == "Tâche récente")
-        #expect(vm.tachesActives.last?.titre == "Tâche ancienne")
+        #expect(vm.tachesActives.first?.id == recente.id)
+        #expect(vm.tachesActives.last?.id == ancienne.id)
     }
 
     @Test("tacheProposee returns the most recently created active task")
@@ -112,9 +112,9 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let ancienne = TacheEntity(titre: "Tâche ancienne")
+        let ancienne = TacheEntity()
         ancienne.createdAt = Date().addingTimeInterval(-3600)
-        let recente = TacheEntity(titre: "Tâche récente")
+        let recente = TacheEntity()
         recente.createdAt = Date()
 
         context.insert(ancienne)
@@ -124,7 +124,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context)
         vm.charger()
 
-        #expect(vm.tacheProposee?.titre == "Tâche récente")
+        #expect(vm.tacheProposee?.id == recente.id)
     }
 
     @Test("tacheProposee is nil when no active tasks exist")
@@ -143,7 +143,7 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Rénover la salle de bain")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -155,7 +155,7 @@ struct ModeChantierViewModelTests {
         vm.demarrerSession(tache: tache, etat: etat)
 
         #expect(etat.sessionActive == true)
-        #expect(etat.tacheActive?.titre == "Rénover la salle de bain")
+        #expect(etat.tacheActive?.id == tache.id)
     }
 
     @Test("demarrerSession renews sessionId on ModeChantierState")
@@ -163,7 +163,7 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Peindre la chambre")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -221,7 +221,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Cuisine")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -244,7 +244,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Salon")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -288,7 +288,7 @@ struct ModeChantierViewModelTests {
         mockEngine.erreurAuDemarrage = AudioEngineErreur.reconnaissanceIndisponible
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
-        etat.tacheActive = TacheEntity(titre: "Test")
+        etat.tacheActive = TacheEntity()
 
         await vm.toggleEnregistrement(chantier: etat)
 
@@ -307,7 +307,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Salle de bain")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -317,7 +317,7 @@ struct ModeChantierViewModelTests {
         // A CaptureEntity should have been created
         let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
         #expect(captures.count == 1)
-        #expect(captures.first?.tache?.titre == "Salle de bain")
+        #expect(captures.first?.tache?.id == tache.id)
         // Verify transcription was persisted
         let blocks = captures.first?.blocksData.toContentBlocks() ?? []
         #expect(blocks.first?.text == "Premier résultat")
@@ -334,7 +334,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Garage")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -357,7 +357,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Entrée")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -381,7 +381,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Terrasse")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -404,7 +404,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Cuisine")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -428,7 +428,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Chambre")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -463,7 +463,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Cuisine")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -496,7 +496,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Salon")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -525,7 +525,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Terrasse")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -554,7 +554,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Garage")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -612,7 +612,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Chambre")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -636,7 +636,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Bureau")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -740,7 +740,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Couloir")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -788,7 +788,7 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine, photoService: mockPhoto)
         let etat = ModeChantierState()
 
-        let tache = TacheEntity(titre: "Couloir")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
         etat.tacheActive = tache
@@ -814,8 +814,8 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache1 = TacheEntity(titre: "Cuisine")
-        let tache2 = TacheEntity(titre: "Garage")
+        let tache1 = TacheEntity()
+        let tache2 = TacheEntity()
         context.insert(tache1)
         context.insert(tache2)
         try context.save()
@@ -826,7 +826,7 @@ struct ModeChantierViewModelTests {
 
         vm.changerDeTache(tache: tache2, chantier: etat)
 
-        #expect(etat.tacheActive?.titre == "Garage")
+        #expect(etat.tacheActive?.id == tache2.id)
     }
 
     @Test("changerDeTache() met à jour lastSessionDate pour le tri futur (NFR-P5)")
@@ -834,7 +834,7 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Salle de bain")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -862,8 +862,8 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tache1 = TacheEntity(titre: "Salon")
-        let tache2 = TacheEntity(titre: "Chambre")
+        let tache1 = TacheEntity()
+        let tache2 = TacheEntity()
         context.insert(tache1)
         context.insert(tache2)
         try context.save()
@@ -872,18 +872,18 @@ struct ModeChantierViewModelTests {
 
         // Switch task (no recording in progress)
         vm.changerDeTache(tache: tache2, chantier: etat)
-        #expect(etat.tacheActive?.titre == "Chambre")
+        #expect(etat.tacheActive?.id == tache2.id)
 
         // New recording uses the new tacheActive
         await vm.toggleEnregistrement(chantier: etat)
         await vm.toggleEnregistrement(chantier: etat)
 
         let capturesChambre = try context.fetch(FetchDescriptor<CaptureEntity>())
-            .filter { $0.tache?.titre == "Chambre" }
+            .filter { $0.tache?.id == tache2.id }
         #expect(capturesChambre.count == 1)
 
         let capturesSalon = try context.fetch(FetchDescriptor<CaptureEntity>())
-            .filter { $0.tache?.titre == "Salon" }
+            .filter { $0.tache?.id == tache1.id }
         #expect(capturesSalon.isEmpty)
     }
 
@@ -944,7 +944,7 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tache = TacheEntity(titre: "Peinture façade")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -980,7 +980,7 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tacheInitiale = TacheEntity(titre: "Cuisine")
+        let tacheInitiale = TacheEntity()
         context.insert(tacheInitiale)
         try context.save()
 
@@ -990,7 +990,7 @@ struct ModeChantierViewModelTests {
         etat.demarrerSession()
 
         // Simulate a newly created task (as produced by TaskCreationViewModel.createTask)
-        let nouvelleTache = TacheEntity(titre: "Nouvelle pièce")
+        let nouvelleTache = TacheEntity()
         // statut is .active by default — lastSessionDate is nil before changerDeTache
         context.insert(nouvelleTache)
         try context.save()
@@ -1003,7 +1003,7 @@ struct ModeChantierViewModelTests {
         let apres = Date()
 
         // tacheActive must switch to the new task
-        #expect(etat.tacheActive?.titre == "Nouvelle pièce")
+        #expect(etat.tacheActive?.id == nouvelleTache.id)
         // lastSessionDate must be set (used for sort order in future sessions)
         #expect(nouvelleTache.lastSessionDate != nil)
         #expect(nouvelleTache.lastSessionDate! >= avant)
@@ -1017,7 +1017,7 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tacheCourante = TacheEntity(titre: "Cuisine")
+        let tacheCourante = TacheEntity()
         context.insert(tacheCourante)
         try context.save()
 
@@ -1033,7 +1033,7 @@ struct ModeChantierViewModelTests {
         #expect(estMemeTache, "AC5 : la tâche doit être reconnue comme la tâche courante via persistentModelID")
 
         // Verify invariants: no changerDeTache call → tacheActive unchanged, lastSessionDate still nil
-        #expect(etat.tacheActive?.titre == "Cuisine")
+        #expect(etat.tacheActive?.id == tacheCourante.id)
         #expect(tacheCourante.lastSessionDate == nil, "changerDeTache ne doit pas être appelé en AC5 — lastSessionDate reste nil")
     }
 
@@ -1042,8 +1042,8 @@ struct ModeChantierViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
 
-        let tacheCourante = TacheEntity(titre: "Cuisine")
-        let tacheExistante = TacheEntity(titre: "Garage")
+        let tacheCourante = TacheEntity()
+        let tacheExistante = TacheEntity()
         context.insert(tacheCourante)
         context.insert(tacheExistante)
         try context.save()
@@ -1062,7 +1062,7 @@ struct ModeChantierViewModelTests {
         let apres = Date()
 
         // tacheActive must switch to the other existing task
-        #expect(etat.tacheActive?.titre == "Garage", "tacheActive doit basculer sur la tâche existante (AC6)")
+        #expect(etat.tacheActive?.id == tacheExistante.id, "tacheActive doit basculer sur la tâche existante (AC6)")
         // lastSessionDate must be set (changerDeTache was called)
         #expect(tacheExistante.lastSessionDate != nil, "lastSessionDate doit être défini après changerDeTache (AC6)")
         #expect(tacheExistante.lastSessionDate! >= avant)
@@ -1082,28 +1082,28 @@ struct ModeChantierViewModelTests {
         let vm = ModeChantierViewModel(modelContext: context, audioEngine: mockEngine)
         let etat = ModeChantierState()
 
-        let tacheInitiale = TacheEntity(titre: "Salle de bain")
+        let tacheInitiale = TacheEntity()
         context.insert(tacheInitiale)
         try context.save()
         etat.tacheActive = tacheInitiale
         etat.demarrerSession()
 
         // A new task freshly created during Mode Chantier
-        let nouvelleTache = TacheEntity(titre: "Couloir")
+        let nouvelleTache = TacheEntity()
         context.insert(nouvelleTache)
         try context.save()
 
         // Switch to the fresh task (AC3)
         vm.changerDeTache(tache: nouvelleTache, chantier: etat)
-        #expect(etat.tacheActive?.titre == "Couloir")
+        #expect(etat.tacheActive?.id == nouvelleTache.id)
 
         // Next capture must be attached to the new task (FR11)
         await vm.toggleEnregistrement(chantier: etat)
         await vm.toggleEnregistrement(chantier: etat)
 
         let captures = try context.fetch(FetchDescriptor<CaptureEntity>())
-        let capturesCouloir = captures.filter { $0.tache?.titre == "Couloir" }
-        let capturesSalleDeBain = captures.filter { $0.tache?.titre == "Salle de bain" }
+        let capturesCouloir = captures.filter { $0.tache?.id == nouvelleTache.id }
+        let capturesSalleDeBain = captures.filter { $0.tache?.id == tacheInitiale.id }
 
         #expect(capturesCouloir.count == 1)
         #expect(capturesSalleDeBain.isEmpty)

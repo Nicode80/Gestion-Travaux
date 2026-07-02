@@ -17,6 +17,9 @@ struct ActiviteDetailView: View {
     @State private var pendingEditAstuce: AstuceEntity?
     @State private var niveauEditionAstuce: AstuceLevel = .utile
     @State private var tachesExpanded = false
+    // Edition du nom d'activité (AC3)
+    @State private var nomActiviteAEditer: String = ""
+    @State private var showEditNomActivite = false
     @Environment(ModeChantierState.self) private var chantier
 
     private let modelContext: ModelContext
@@ -109,6 +112,15 @@ struct ActiviteDetailView: View {
                     Button("Fermer") { dismiss() }
                 }
             }
+            ToolbarItem(placement: showDismissButton ? .topBarLeading : .topBarTrailing) {
+                Button {
+                    nomActiviteAEditer = viewModel.activite.nom
+                    showEditNomActivite = true
+                } label: {
+                    Image(systemName: "pencil")
+                }
+                .disabled(chantier.boutonVert)
+            }
         }
         .task { viewModel.load() }
         // FR37, FR46 — note originale complète. Bouton ✏️ si pas en lockdown.
@@ -139,11 +151,23 @@ struct ActiviteDetailView: View {
                 }
             )
         }
+        .sheet(isPresented: $showEditNomActivite) {
+            EditTexteSheet(
+                titre: "Renommer l'activité",
+                texte: $nomActiviteAEditer,
+                texteOriginal: viewModel.activite.nom,
+                onValider: { viewModel.renommerActivite(nouveauNom: nomActiviteAEditer) },
+                onAnnuler: {}
+            )
+        }
         .alert("Erreur", isPresented: Binding(
             get: { viewModel.editError != nil },
             set: { if !$0 { viewModel.editError = nil } }
         )) {
-            Button("OK", role: .cancel) { viewModel.editError = nil }
+            Button("Réessayer") {
+                viewModel.renommerActivite(nouveauNom: nomActiviteAEditer)
+            }
+            Button("Annuler", role: .cancel) { viewModel.editError = nil }
         } message: {
             Text(viewModel.editError ?? "")
         }

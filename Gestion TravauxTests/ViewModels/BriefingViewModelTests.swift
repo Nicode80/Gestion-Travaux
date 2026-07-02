@@ -38,7 +38,7 @@ struct BriefingViewModelTests {
     func stateIdleBeforeLoad() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        let tache = TacheEntity(titre: "Tâche test")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -54,7 +54,7 @@ struct BriefingViewModelTests {
     func loadSetsSuccess() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        let tache = TacheEntity(titre: "Tâche test")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -71,7 +71,7 @@ struct BriefingViewModelTests {
     func loadFiltresAlertesResolues() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        let tache = TacheEntity(titre: "Tâche")
+        let tache = TacheEntity()
         context.insert(tache)
 
         let alerteActive = AlerteEntity()
@@ -97,7 +97,7 @@ struct BriefingViewModelTests {
     func loadEmptyAlertes() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        let tache = TacheEntity(titre: "Tâche sans alertes")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -112,7 +112,7 @@ struct BriefingViewModelTests {
         let container = try makeContainer()
         let context = ModelContext(container)
         let activite = ActiviteEntity(nom: "Peinture")
-        let tache = TacheEntity(titre: "Tâche")
+        let tache = TacheEntity()
         tache.activite = activite
 
         let astuceCritique = AstuceEntity(niveau: .critique)
@@ -140,7 +140,7 @@ struct BriefingViewModelTests {
     func loadEmptyAstucesWhenNoActivite() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        let tache = TacheEntity(titre: "Tâche sans activité")
+        let tache = TacheEntity()
         context.insert(tache)
         try context.save()
 
@@ -154,7 +154,7 @@ struct BriefingViewModelTests {
     func loadMultipleAlertesActives() throws {
         let container = try makeContainer()
         let context = ModelContext(container)
-        let tache = TacheEntity(titre: "Tâche multi-alertes")
+        let tache = TacheEntity()
         context.insert(tache)
 
         for _ in 0..<3 {

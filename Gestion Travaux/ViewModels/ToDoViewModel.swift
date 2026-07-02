@@ -84,7 +84,7 @@ final class ToDoViewModel {
     func appliquerFiltres() {
         todosFiltres = todos.filter { todo in
             let prioriteOK = filtrePriorite == nil || todo.priorite == filtrePriorite
-            let pieceOK = filtrePiece == nil || todo.piece?.id == filtrePiece?.id
+            let pieceOK = filtrePiece == nil || todo.tache?.piece?.id == filtrePiece?.id
             return prioriteOK && pieceOK
         }
     }
@@ -113,10 +113,10 @@ final class ToDoViewModel {
 
     // MARK: - Creation
 
-    func ajouterToDo(titre: String, priorite: PrioriteToDo, piece: PieceEntity) {
+    func ajouterToDo(titre: String, priorite: PrioriteToDo, tache: TacheEntity) {
         let trimmed = titre.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        let todo = ToDoEntity(titre: trimmed, priorite: priorite, piece: piece, source: .manuel)
+        let todo = ToDoEntity(titre: trimmed, priorite: priorite, tache: tache, source: .manuel)
         modelContext.insert(todo)
         do {
             try modelContext.save()

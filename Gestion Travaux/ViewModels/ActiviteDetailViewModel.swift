@@ -28,7 +28,18 @@ final class ActiviteDetailViewModel {
         self.modelContext = modelContext
     }
 
-    // MARK: - Edition (Story 7.2)
+    // MARK: - Edition (Story 7.2 / 7.4)
+
+    func renommerActivite(nouveauNom: String) {
+        let trimmed = nouveauNom.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        activite.nom = trimmed
+        do {
+            try modelContext.save()
+        } catch {
+            editError = "Impossible de sauvegarder la modification. Réessayez."
+        }
+    }
 
     func modifierAstuce(_ astuce: AstuceEntity, nouveauxBlocks: [ContentBlock], niveau: AstuceLevel) {
         astuce.blocksData = nouveauxBlocks.toData()
