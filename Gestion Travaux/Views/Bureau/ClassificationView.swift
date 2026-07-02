@@ -20,6 +20,8 @@ struct ClassificationView: View {
 
     @State private var viewModel: ClassificationViewModel
     @State private var showRecap = false
+    // Story 8.3: confirmation before deleting a junk capture (FR85).
+    @State private var showDeleteAlert = false
 
     init(modelContext: ModelContext, onComplete: @escaping () -> Void) {
         self.modelContext = modelContext
@@ -88,6 +90,28 @@ struct ClassificationView: View {
             if let capture = viewModel.captures.first {
                 SwipeClassifier(capture: capture) { type in
                     viewModel.classify(capture, as: type)
+                }
+
+                // Story 8.3 (FR85): discard a junk capture (dictation artefact)
+                // instead of being forced to classify it.
+                Button {
+                    showDeleteAlert = true
+                } label: {
+                    Label("Supprimer cette capture", systemImage: "trash")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                        .frame(minHeight: 60)
+                }
+                .accessibilityLabel("Supprimer cette capture")
+                .alert("Supprimer cette capture ?", isPresented: $showDeleteAlert) {
+                    Button("Supprimer", role: .destructive) {
+                        if let courante = viewModel.captures.first {
+                            viewModel.supprimerCapture(courante)
+                        }
+                    }
+                    Button("Annuler", role: .cancel) {}
+                } message: {
+                    Text("La capture (texte et photos) sera définitivement supprimée, sans être classée.")
                 }
             }
         }

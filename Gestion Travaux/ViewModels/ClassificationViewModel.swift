@@ -257,6 +257,47 @@ final class ClassificationViewModel {
         }
     }
 
+    // MARK: - Story 8.3: Suppression de capture (FR85)
+
+    /// Deletes a junk capture without classifying it (dictation artefacts observed
+    /// in real field data, e.g. conversation fragments picked up by the mic).
+    /// Photo files referenced by the capture become orphans and are removed by the
+    /// launch-time sweep (PhotoCleanupService) after its 24 h grace period.
+    func supprimerCapture(_ capture: CaptureEntity) {
+        modelContext.delete(capture)
+        do {
+            try modelContext.save()
+            // The deleted capture no longer counts in the progress bar total.
+            total = max(0, total - 1)
+            charger()
+        } catch {
+            Log.classification.error("supprimerCapture() save failed: \(error)")
+            classificationError = "Impossible de supprimer la capture. Réessayez."
+        }
+    }
+
+    // MARK: - Story 8.3: Nettoyage prochaine action (FR86)
+
+    /// Strips the dictated preamble "la prochaine action (c'est / qui est / est) (de)"
+    /// observed in real checkout data ("La prochaine action qui est percé les Ipe").
+    /// Returns the original text when nothing remains after the preamble, so a bare
+    /// "Prochaine action" entry is kept as-is rather than emptied.
+    static func nettoyerProchaineAction(_ texte: String) -> String {
+        let pattern = "(?i)^\\s*(la\\s+)?prochaine\\s+action\\s*(,?\\s*(c[’']?est|qui\\s+est|est))?\\s*(:\\s*)?(de\\s+|d[’'])?"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return texte }
+        let rangeComplet = NSRange(texte.startIndex..., in: texte)
+        guard
+            let match = regex.firstMatch(in: texte, range: rangeComplet),
+            match.range.length > 0,
+            let matchRange = Range(match.range, in: texte)
+        else { return texte }
+
+        let reste = String(texte[matchRange.upperBound...])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !reste.isEmpty else { return texte }
+        return reste.prefix(1).uppercased() + reste.dropFirst()
+    }
+
     // MARK: - Reclassification (Story 3.3 — FR18)
 
     /// Recreates the entity under a new type, then deletes the old one, then saves.
@@ -377,8 +418,10 @@ final class ClassificationViewModel {
     /// If no similar ToDo, creates one immediately with .urgent priority.
     /// CheckoutView should call onComplete() only when pendingToDoDecision == nil after this call.
     func saveProchaineAction(for tache: TacheEntity) {
-        let trimmed = prochaineActionInput.trimmingCharacters(in: .whitespaces)
+        var trimmed = prochaineActionInput.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
+        // FR86: strip the dictated "la prochaine action c'est…" preamble.
+        trimmed = Self.nettoyerProchaineAction(trimmed)
         tache.prochaineAction = trimmed
         do {
             try modelContext.save()
