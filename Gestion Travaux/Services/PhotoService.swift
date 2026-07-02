@@ -56,7 +56,8 @@ final class PhotoService: PhotoServiceProtocol {
         let fileURL = capturesURL.appendingPathComponent(filename)
         let relativePath = "\(Constants.Photos.repertoireCaptures)/\(filename)"
 
-        guard let jpegData = image.jpegData(compressionQuality: 0.85) else {
+        let reduite = Self.redimensionner(image, dimensionMax: Constants.Photos.dimensionMax)
+        guard let jpegData = reduite.jpegData(compressionQuality: 0.85) else {
             throw PhotoServiceErreur.compressionEchouee
         }
 
@@ -67,5 +68,26 @@ final class PhotoService: PhotoServiceProtocol {
         }
 
         return relativePath
+    }
+
+    /// Downscales so the longest side is at most `dimensionMax` points (aspect ratio preserved).
+    /// Native camera photos (~4000 px, 3-5 MB JPEG) shrink ~4× — chantier documentation
+    /// does not need more, and photo files are never purged while referenced.
+    /// Images already small enough are returned untouched.
+    static func redimensionner(_ image: UIImage, dimensionMax: CGFloat) -> UIImage {
+        let plusGrandCote = max(image.size.width, image.size.height)
+        guard plusGrandCote > dimensionMax, plusGrandCote > 0 else { return image }
+
+        let facteur = dimensionMax / plusGrandCote
+        let nouvelleTaille = CGSize(
+            width: (image.size.width * facteur).rounded(),
+            height: (image.size.height * facteur).rounded()
+        )
+        // scale = 1: sizes are in real pixels, not multiplied by the screen scale.
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: nouvelleTaille, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: nouvelleTaille))
+        }
     }
 }

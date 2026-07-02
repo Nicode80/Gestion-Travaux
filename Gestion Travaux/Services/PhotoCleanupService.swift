@@ -75,9 +75,9 @@ struct PhotoCleanupService {
                 Log.photos.error("Orphan sweep: failed to delete \(cheminRelatif, privacy: .public): \(error)")
             }
         }
-        if supprimees > 0 {
-            Log.photos.info("Orphan sweep: deleted \(supprimees) unreferenced photo file(s)")
-        }
+        // Always log the summary (even 0 deletions) — serves as launch-time proof
+        // that the sweep ran and the logging pipeline works.
+        Log.photos.info("Orphan sweep: \(fichiers.count) file(s) checked, \(supprimees) deleted")
         return supprimees
     }
 
