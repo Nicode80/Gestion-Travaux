@@ -6,14 +6,11 @@
 //
 // RULE: all modelContext writes must call try modelContext.save() explicitly.
 // RULE: never write to ModeChantierState properties directly.
-// NOTE: AVAudioEngine setup runs off the main thread (required on real device hardware).
-//       Audio state lives in AudioState (@unchecked Sendable) to cross actor boundaries safely.
+// Story 8.4: voice input delegated to the shared DicteeOneShot service.
 
 import Foundation
 import OSLog
 import SwiftData
-@preconcurrency import Speech
-@preconcurrency import AVFoundation
 
 @Observable
 @MainActor
@@ -69,16 +66,21 @@ final class TaskCreationViewModel {
     /// User explicitly declined an activité fuzzy suggestion — skip re-checking.
     private var activiteDeclinedFuzzy = false
 
-    /// Audio capture state isolated in a Sendable container so Task.detached can access
-    /// AVAudioEngine off the main thread without Swift 6 concurrency errors.
-    /// One active session at a time — guarded by stopVoiceInput() at the top of beginCapture.
-    private let audio = AudioState()
+    /// Story 8.4: shared one-shot dictation service (replaces the private AudioState copy).
+    private let dictee: DicteeOneShotProtocol
+    /// Field currently receiving dictated text — captured per session in startVoiceInput.
+    private var champActif: Field?
 
     // MARK: - Init
 
-    init(modelContext: ModelContext, briefingEngine: BriefingEngine = BriefingEngine()) {
+    init(
+        modelContext: ModelContext,
+        briefingEngine: BriefingEngine = BriefingEngine(),
+        dictee: DicteeOneShotProtocol? = nil
+    ) {
         self.modelContext = modelContext
         self.briefingEngine = briefingEngine
+        self.dictee = dictee ?? DicteeOneShot()
     }
 
     // MARK: - Main action
@@ -176,46 +178,36 @@ final class TaskCreationViewModel {
         step = .form
     }
 
-    // MARK: - Voice input
+    // MARK: - Voice input (Story 8.4: shared DicteeOneShot service)
 
     func startVoiceInput(for field: Field) {
-        // requestAuthorization via nonisolated helper — avoids main-thread queue assertions
-        // in iOS speech framework internals (asserts NOT on main queue on some iOS versions).
-        Task { [weak self] in
-            let status = await TaskCreationViewModel.requestSpeechAuthorization()
-            guard let self else { return }
-            guard status == .authorized else {
-                self.errorMessage = "Permission microphone requise pour la saisie vocale."
-                return
+        champActif = field
+        isRecordingPiece = field == .piece
+        isRecordingActivite = field == .activite
+        dictee.demarrer(
+            surTexte: { [weak self] texte in
+                // Route by the captured field value — immune to a session switch.
+                switch field {
+                case .piece:    self?.pieceName = texte
+                case .activite: self?.activiteName = texte
+                }
+            },
+            surFin: { [weak self] in
+                self?.isRecordingPiece = false
+                self?.isRecordingActivite = false
+                self?.champActif = nil
+            },
+            surErreur: { [weak self] message in
+                self?.isRecordingPiece = false
+                self?.isRecordingActivite = false
+                self?.champActif = nil
+                self?.errorMessage = message
             }
-            self.beginCapture(for: field)
-        }
-    }
-
-    /// Runs off the main actor so SFSpeechRecognizer.requestAuthorization is not on main thread.
-    private nonisolated static func requestSpeechAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
-        await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status)
-            }
-        }
+        )
     }
 
     func stopVoiceInput() {
-        audio.silenceTimer?.invalidate()
-        audio.silenceTimer = nil
-        if audio.engine.isRunning {
-            audio.engine.stop()
-            audio.engine.inputNode.removeTap(onBus: 0)
-        }
-        audio.request?.endAudio()
-        audio.recognitionTask?.cancel()
-        audio.request = nil
-        audio.recognitionTask = nil
-        isRecordingPiece = false
-        isRecordingActivite = false
-        audio.activeField = nil
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        dictee.arreter()
     }
 
     // MARK: - Private helpers
@@ -257,100 +249,4 @@ final class TaskCreationViewModel {
         step = .form
     }
 
-    private func beginCapture(for field: Field) {
-        stopVoiceInput()
-        // UI state on main actor — button turns red immediately
-        isRecordingPiece = field == .piece
-        isRecordingActivite = field == .activite
-        audio.activeField = field
-
-        let req = SFSpeechAudioBufferRecognitionRequest()
-        req.shouldReportPartialResults = true
-        req.requiresOnDeviceRecognition = true  // offline-first — never send audio to Apple servers (NFR-R3)
-        audio.request = req
-
-        // Capture audio container for the detached task (AudioState is @unchecked Sendable)
-        let audioState = audio
-
-        // Audio hardware setup runs off the main thread.
-        // AVAudioEngine.inputNode initialization and start() block on real device hardware
-        // and trigger the iOS watchdog timeout if called on the main thread.
-        Task.detached { [weak self] in
-            do {
-                let session = AVAudioSession.sharedInstance()
-                try session.setCategory(.record, mode: .measurement, options: .duckOthers)
-                try session.setActive(true)
-
-                let inputNode = audioState.engine.inputNode
-                let format = inputNode.outputFormat(forBus: 0)
-                guard format.channelCount > 0 else {
-                    await MainActor.run { [weak self] in
-                        self?.stopVoiceInput()
-                        self?.errorMessage = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."
-                    }
-                    return
-                }
-                // installTap fires on audio thread — capture req directly, never self
-                inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak req] buffer, _ in
-                    req?.append(buffer)
-                }
-                audioState.engine.prepare()
-                try audioState.engine.start()
-
-                // SFSpeechRecognizer is @MainActor — recognitionTask(with:) must be called from main actor.
-                // Extract Sendable values before crossing actor boundary (SFSpeechRecognitionResult is not Sendable).
-                await MainActor.run { [weak self] in
-                    guard let self else { return }
-                    audioState.recognitionTask = audioState.recognizer?.recognitionTask(with: req) { result, error in
-                        let text = result?.bestTranscription.formattedString
-                        let isFinal = result?.isFinal ?? false
-                        let hasError = error != nil
-                        Task { @MainActor [weak self] in
-                            guard let self else { return }
-                            if let text {
-                                switch audioState.activeField {
-                                case .piece:    self.pieceName = text
-                                case .activite: self.activiteName = text
-                                case nil:       break
-                                }
-                                self.resetSilenceTimer(audioState: audioState)
-                            }
-                            if isFinal || hasError { self.stopVoiceInput() }
-                        }
-                    }
-                    self.resetSilenceTimer(audioState: audioState)
-                }
-            } catch {
-                Self.logger.error("beginCapture() audio setup failed: \(error)")
-                await MainActor.run { [weak self] in
-                    self?.stopVoiceInput()
-                    self?.errorMessage = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."
-                }
-            }
-        }
-    }
-
-    private func resetSilenceTimer(audioState: AudioState) {
-        audioState.silenceTimer?.invalidate()
-        // Auto-stop after 3 seconds of silence (one-shot mode)
-        audioState.silenceTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.stopVoiceInput() }
-        }
-    }
-}
-
-// MARK: - AudioState
-
-/// Holds all AVAudioEngine / SFSpeechRecognizer state.
-/// @unchecked Sendable: allows capture in Task.detached without Swift 6 concurrency errors.
-/// Thread safety guarantee: only one audio setup task runs at a time (stopVoiceInput guard).
-/// nonisolated(unsafe): AVAudioEngine and SFSpeechRecognizer are @MainActor in Swift 6 SDK headers;
-/// we override that isolation here because audio hardware access must run off the main thread.
-private final class AudioState: @unchecked Sendable {
-    nonisolated(unsafe) let engine = AVAudioEngine()
-    nonisolated(unsafe) var recognizer: SFSpeechRecognizer? = SFSpeechRecognizer(locale: Locale(identifier: "fr-FR"))
-    var request: SFSpeechAudioBufferRecognitionRequest?
-    nonisolated(unsafe) var recognitionTask: SFSpeechRecognitionTask?
-    var silenceTimer: Timer?
-    var activeField: TaskCreationViewModel.Field?
 }

@@ -12,8 +12,6 @@
 
 import Foundation
 import SwiftData
-@preconcurrency import Speech
-@preconcurrency import AVFoundation
 import os
 
 // MARK: - Supporting types (Story 3.3 / 6.1)
@@ -134,15 +132,17 @@ final class ClassificationViewModel {
     private var pendingToDoTitre: String = ""
     private var pendingToDoTache: TacheEntity? = nil
 
-    @ObservationIgnored private let voiceAudio = CheckoutAudioState()
+    /// Story 8.4: shared one-shot dictation service (replaces CheckoutAudioState copy).
+    @ObservationIgnored private let dictee: DicteeOneShotProtocol
 
     // Tracks whether charger() has run at least once so total is set only on first load.
     @ObservationIgnored private var initialLoadDone = false
 
     // MARK: - Init
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, dictee: DicteeOneShotProtocol? = nil) {
         self.modelContext = modelContext
+        self.dictee = dictee ?? DicteeOneShot()
     }
 
     // MARK: - Data loading
@@ -562,111 +562,26 @@ final class ClassificationViewModel {
         }
     }
 
-    // MARK: - Voice input for prochaine action (Story 3.3 — same one-shot pattern as TaskCreationVM)
+    // MARK: - Voice input for prochaine action (Story 8.4: shared DicteeOneShot service)
 
     func startVoiceInputForProchaineAction() {
-        Task { [weak self] in
-            let status = await ClassificationViewModel.requestSpeechAuthorization()
-            guard let self else { return }
-            guard status == .authorized else {
-                self.checkoutError = "Permission microphone requise pour la saisie vocale."
-                return
+        isRecordingProchaineAction = true
+        dictee.demarrer(
+            surTexte: { [weak self] texte in
+                self?.prochaineActionInput = texte
+            },
+            surFin: { [weak self] in
+                self?.isRecordingProchaineAction = false
+            },
+            surErreur: { [weak self] message in
+                self?.isRecordingProchaineAction = false
+                self?.checkoutError = message
             }
-            self.beginVoiceCapture()
-        }
-    }
-
-    /// Runs off the main actor so SFSpeechRecognizer.requestAuthorization is not on main thread.
-    private nonisolated static func requestSpeechAuthorization() async -> SFSpeechRecognizerAuthorizationStatus {
-        await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status)
-            }
-        }
+        )
     }
 
     func stopVoiceInputForProchaineAction() {
-        voiceAudio.silenceTimer?.invalidate()
-        voiceAudio.silenceTimer = nil
-        if voiceAudio.engine.isRunning {
-            voiceAudio.engine.stop()
-            voiceAudio.engine.inputNode.removeTap(onBus: 0)
-        }
-        voiceAudio.request?.endAudio()
-        voiceAudio.recognitionTask?.cancel()
-        voiceAudio.request = nil
-        voiceAudio.recognitionTask = nil
-        isRecordingProchaineAction = false
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    }
-
-    private func beginVoiceCapture() {
-        stopVoiceInputForProchaineAction()
-        isRecordingProchaineAction = true
-
-        let req = SFSpeechAudioBufferRecognitionRequest()
-        req.shouldReportPartialResults = true
-        req.requiresOnDeviceRecognition = true  // offline-first — never send audio to Apple servers (NFR-R3)
-        voiceAudio.request = req
-
-        let audioState = voiceAudio
-
-        Task.detached { [weak self] in
-            do {
-                let session = AVAudioSession.sharedInstance()
-                // No .duckOthers: iOS interrupts other audio (Spotify, Apple Music) when we activate,
-                // matching the AudioEngine behaviour (Story 7.3). stopVoiceInputForProchaineAction()
-                // already calls notifyOthersOnDeactivation so music resumes after dictation.
-                try session.setCategory(.record, mode: .measurement, options: [])
-                try session.setActive(true)
-
-                let inputNode = audioState.engine.inputNode
-                let format = inputNode.outputFormat(forBus: 0)
-                guard format.channelCount > 0 else {
-                    await MainActor.run { [weak self] in
-                        self?.stopVoiceInputForProchaineAction()
-                        self?.checkoutError = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."
-                    }
-                    return
-                }
-                inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak req] buffer, _ in
-                    req?.append(buffer)
-                }
-                audioState.engine.prepare()
-                try audioState.engine.start()
-
-                await MainActor.run { [weak self] in
-                    guard let self else { return }
-                    audioState.recognitionTask = audioState.recognizer?.recognitionTask(with: req) { result, error in
-                        let text = result?.bestTranscription.formattedString
-                        let isFinal = result?.isFinal ?? false
-                        let hasError = error != nil
-                        Task { @MainActor [weak self] in
-                            guard let self else { return }
-                            if let text {
-                                self.prochaineActionInput = text
-                                self.resetSilenceTimer(audioState: audioState)
-                            }
-                            if isFinal || hasError { self.stopVoiceInputForProchaineAction() }
-                        }
-                    }
-                    self.resetSilenceTimer(audioState: audioState)
-                }
-            } catch {
-                Log.audio.error("beginVoiceCapture() audio setup failed: \(error)")
-                await MainActor.run { [weak self] in
-                    self?.stopVoiceInputForProchaineAction()
-                    self?.checkoutError = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."
-                }
-            }
-        }
-    }
-
-    private func resetSilenceTimer(audioState: CheckoutAudioState) {
-        audioState.silenceTimer?.invalidate()
-        audioState.silenceTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            Task { @MainActor [weak self] in self?.stopVoiceInputForProchaineAction() }
-        }
+        dictee.arreter()
     }
 
     // MARK: - Private helpers
@@ -699,15 +614,3 @@ final class ClassificationViewModel {
     }
 }
 
-// MARK: - CheckoutAudioState
-
-/// Holds AVAudioEngine / SFSpeechRecognizer state for one-shot voice capture in CheckoutView.
-/// @unchecked Sendable: allows capture in Task.detached without Swift 6 concurrency errors.
-/// nonisolated(unsafe): audio hardware access must run off the main thread.
-private final class CheckoutAudioState: @unchecked Sendable {
-    nonisolated(unsafe) let engine = AVAudioEngine()
-    nonisolated(unsafe) var recognizer: SFSpeechRecognizer? = SFSpeechRecognizer(locale: Locale(identifier: "fr-FR"))
-    var request: SFSpeechAudioBufferRecognitionRequest?
-    nonisolated(unsafe) var recognitionTask: SFSpeechRecognitionTask?
-    var silenceTimer: Timer?
-}
