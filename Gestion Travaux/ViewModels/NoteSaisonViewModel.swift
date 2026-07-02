@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 @preconcurrency import Speech
 @preconcurrency import AVFoundation
+import os
 
 @Observable
 @MainActor
@@ -73,6 +74,7 @@ final class NoteSaisonViewModel {
             noteActive = note
             saved = true
         } catch {
+            Log.persistence.error("NoteSaison createNote() save failed: \(error)")
             errorMessage = "Impossible d'enregistrer la note. Réessayez."
         }
     }
@@ -88,6 +90,7 @@ final class NoteSaisonViewModel {
             try modelContext.save()
             saved = true
         } catch {
+            Log.persistence.error("NoteSaison modifierNote() save failed: \(error)")
             note.texte = texte // rollback
             errorMessage = "Impossible d'enregistrer les modifications. Réessayez."
         }
@@ -103,6 +106,7 @@ final class NoteSaisonViewModel {
         do {
             try modelContext.save()
         } catch {
+            Log.persistence.error("NoteSaison archiverEtCreerNouvelle() save failed: \(error)")
             errorMessage = "Impossible d'archiver la note. Réessayez."
         }
     }
@@ -203,6 +207,7 @@ final class NoteSaisonViewModel {
                     self.resetSilenceTimer(audioState: audioState)
                 }
             } catch {
+                Log.audio.error("NoteSaison beginCapture() audio setup failed: \(error)")
                 await MainActor.run { [weak self] in
                     self?.stopVoiceInput()
                     self?.errorMessage = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."

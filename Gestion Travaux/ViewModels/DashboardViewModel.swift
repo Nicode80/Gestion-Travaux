@@ -9,6 +9,7 @@
 
 import Foundation
 import SwiftData
+import os
 
 @Observable
 @MainActor
@@ -97,6 +98,7 @@ final class DashboardViewModel {
 
             viewState = .success(())
         } catch {
+            Log.persistence.error("Dashboard charger() fetch failed: \(error)")
             viewState = .failure("Impossible de charger les données.")
         }
     }
@@ -109,6 +111,7 @@ final class DashboardViewModel {
             try modelContext.save()
         } catch {
             // lastSessionDate non persisté — session lancée quand même, ordre Hero approximatif
+            Log.persistence.error("Dashboard lancerChantier() lastSessionDate save failed: \(error)")
         }
         chantier.tacheActive = tache
         chantier.demarrerSession()
@@ -132,6 +135,7 @@ final class DashboardViewModel {
             UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.seasonNoteTriggered)
         } catch {
             // Archive failed silently — note remains visible until next successful save.
+            Log.persistence.error("Dashboard archiveNote() save failed: \(error)")
         }
         charger()
     }
@@ -144,6 +148,7 @@ final class DashboardViewModel {
             try modelContext.save()
         } catch {
             // lastSessionDate non persisté — Hero order approximatif
+            Log.persistence.error("Dashboard mettreAJourHero() save failed: \(error)")
         }
         charger()
     }

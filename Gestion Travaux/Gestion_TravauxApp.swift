@@ -58,6 +58,14 @@ struct Gestion_TravauxApp: App {
         } catch {
             fatalError("Impossible de créer le ModelContainer : \(error)")
         }
+
+        // Sweep orphaned photo files off the main thread — photos whose referencing
+        // entity is gone would otherwise stay in Documents/captures/ forever.
+        // The 24 h grace period inside the sweep protects freshly written files.
+        let container = self.sharedModelContainer
+        Task.detached(priority: .utility) {
+            _ = PhotoCleanupService.nettoyerPhotosOrphelines(container: container)
+        }
     }
 
     var body: some Scene {

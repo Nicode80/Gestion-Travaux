@@ -19,7 +19,8 @@ import SwiftData
 @MainActor
 final class TaskCreationViewModel {
 
-    private static let logger = Logger(subsystem: "com.gestiontravaux", category: "TaskCreation")
+    // nonisolated: also called from the Task.detached audio-setup catch block.
+    private nonisolated static let logger = Logger(subsystem: "com.gestiontravaux", category: "TaskCreation")
 
     // MARK: - Field enum
 
@@ -320,6 +321,7 @@ final class TaskCreationViewModel {
                     self.resetSilenceTimer(audioState: audioState)
                 }
             } catch {
+                Self.logger.error("beginCapture() audio setup failed: \(error)")
                 await MainActor.run { [weak self] in
                     self?.stopVoiceInput()
                     self?.errorMessage = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."

@@ -19,6 +19,7 @@
 import Foundation
 @preconcurrency import AVFoundation
 @preconcurrency import Speech
+import os
 
 @MainActor
 final class AudioEngine: AudioEngineProtocol {
@@ -258,6 +259,7 @@ final class AudioEngine: AudioEngineProtocol {
             try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         } catch {
             // Audio session deactivation failed — other apps will eventually be notified
+            Log.audio.error("stopInterne() session deactivation failed: \(error)")
         }
     }
 }

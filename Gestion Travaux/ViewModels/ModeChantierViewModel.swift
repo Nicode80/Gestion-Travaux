@@ -37,6 +37,7 @@ import AVFoundation
 import Foundation
 import SwiftUI
 import SwiftData
+import os
 
 @Observable
 @MainActor
@@ -152,6 +153,7 @@ final class ModeChantierViewModel {
                 .trieeParSession()
             viewState = .success(())
         } catch {
+            Log.persistence.error("ModeChantier charger() fetch failed: \(error)")
             viewState = .failure("Impossible de charger les tâches.")
         }
     }
@@ -165,6 +167,7 @@ final class ModeChantierViewModel {
             try modelContext.save()
         } catch {
             // lastSessionDate persistence failed — non-critical, session continues
+            Log.persistence.error("demarrerSession() lastSessionDate save failed: \(error)")
         }
         etat.tacheActive = tache
         etat.demarrerSession()
@@ -261,6 +264,7 @@ final class ModeChantierViewModel {
             // Haptic léger (activation)
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         } catch {
+            Log.audio.error("startEnregistrement() engine start failed: \(error)")
             // Rollback optimistic UI update
             chantier.boutonVert = false
             arreterPulseTimer()
@@ -390,6 +394,7 @@ final class ModeChantierViewModel {
         do {
             try modelContext.save()
         } catch {
+            Log.persistence.error("mettreAJourCaptureEnCours() save failed: \(error)")
             erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
         }
     }
@@ -423,6 +428,7 @@ final class ModeChantierViewModel {
                 try modelContext.save()
                 afficherToastCapture()
             } catch {
+                Log.persistence.error("finaliserCapture() text save failed: \(error)")
                 erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
             }
         } else if hasPhotos {
@@ -431,6 +437,7 @@ final class ModeChantierViewModel {
                 try modelContext.save()
                 afficherToastCapture()
             } catch {
+                Log.persistence.error("finaliserCapture() photo-only save failed: \(error)")
                 erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
             }
         } else {
@@ -439,7 +446,8 @@ final class ModeChantierViewModel {
             do {
                 try modelContext.save()
             } catch {
-                // Orphaned empty capture acceptable — will be cleaned up on next session
+                // Orphaned empty capture acceptable — will surface in next classification
+                Log.persistence.error("finaliserCapture() empty-capture delete failed: \(error)")
             }
         }
         texteCommis = ""
@@ -466,6 +474,7 @@ final class ModeChantierViewModel {
             saisieManuelle = ""
             afficherToastCapture()
         } catch {
+            Log.persistence.error("sauvegarderSaisieManuelle() save failed: \(error)")
             erreurEnregistrement = "Échec de la sauvegarde : \(error.localizedDescription)"
         }
     }
@@ -543,6 +552,7 @@ final class ModeChantierViewModel {
             // Haptic feedback — medium (NFR-U4); uses stored generator (prepare() called in prendrePhoto).
             haptiquePhoto.impactOccurred()
         } catch {
+            Log.photos.error("sauvegarderPhoto() failed: \(error)")
             erreurEnregistrement = "Échec de la sauvegarde de la photo."
         }
     }
@@ -559,6 +569,7 @@ final class ModeChantierViewModel {
             try modelContext.save()
         } catch {
             // Non-critical: tacheActive is updated; lastSessionDate persistence failure is acceptable
+            Log.persistence.error("changerDeTache() lastSessionDate save failed: \(error)")
         }
     }
 

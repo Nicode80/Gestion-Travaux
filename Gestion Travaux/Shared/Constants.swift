@@ -23,7 +23,8 @@ enum Constants {
 
     enum Photos {
         /// Subdirectory inside Documents/ where captured photos are stored.
-        static let repertoireCaptures = "captures"
+        /// nonisolated: read from the background orphan sweep (PhotoCleanupService).
+        nonisolated static let repertoireCaptures = "captures"
     }
 
     enum SeasonNote {

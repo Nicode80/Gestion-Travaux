@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 struct ShoppingListView: View {
 
@@ -84,6 +85,7 @@ struct ShoppingListView: View {
                 do {
                     try viewModel.deleteCheckedItems()
                 } catch {
+                    Log.persistence.error("ShoppingList deleteCheckedItems failed: \(error)")
                     errorMessage = error.localizedDescription
                 }
             }
@@ -100,6 +102,7 @@ struct ShoppingListView: View {
                     do {
                         try viewModel.deleteItem(item)
                     } catch {
+                        Log.persistence.error("ShoppingList deleteItem failed: \(error)")
                         errorMessage = error.localizedDescription
                     }
                 }
@@ -128,6 +131,7 @@ struct ShoppingListView: View {
                     do {
                         try viewModel.modifierAchat(achat, nouveauTexte: texteEdition)
                     } catch {
+                        Log.persistence.error("ShoppingList modifierAchat failed: \(error)")
                         achatEditError = "Impossible de modifier cette fiche. Réessayez."
                     }
                 },
@@ -176,6 +180,7 @@ struct ShoppingListView: View {
                         do {
                             try viewModel.toggleItem(achat)
                         } catch {
+                            Log.persistence.error("ShoppingList toggleItem failed: \(error)")
                             errorMessage = error.localizedDescription
                         }
                     }
@@ -235,6 +240,7 @@ struct ShoppingListView: View {
             newItemText = ""
             showAddField = false
         } catch {
+            Log.persistence.error("ShoppingList addItem failed: \(error)")
             errorMessage = error.localizedDescription
         }
     }
