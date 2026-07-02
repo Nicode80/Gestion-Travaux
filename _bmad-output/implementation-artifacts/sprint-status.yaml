@@ -106,7 +106,8 @@ development_status:
   7-3-pause-musique-pendant-la-dictee: review
   # 7.4 mergée sur master via PR #26 (2026-07-02), validée sur device
   7-4-correction-des-noms-titre-dynamique-piece-activite: done
-  7-5-reordonnancement-manuel-todos: review
+  # 7.5 mergée sur master (2026-07-03)
+  7-5-reordonnancement-manuel-todos: done
 
   # ─────────────────────────────────────────────────────
   # Epic 8 : Consolidation & Robustesse (revue de code 2026-07-01)
