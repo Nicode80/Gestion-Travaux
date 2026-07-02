@@ -72,9 +72,9 @@ enum PrioriteToDo: String, Codable, CaseIterable {
 
     var couleur: Color {
         switch self {
-        case .urgent:  return Color(hex: "#FF3B30")
-        case .bientot: return Color(hex: "#FF9500")
-        case .unJour:  return Color(hex: "#6C6C70")
+        case .urgent:  return .alerte
+        case .bientot: return .astuce
+        case .unJour:  return .texteSecondaire
         }
     }
 

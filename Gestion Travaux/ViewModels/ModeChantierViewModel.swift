@@ -596,10 +596,7 @@ final class ModeChantierViewModel {
     /// Ends the session: resets all state and triggers ClassificationView navigation if captures exist.
     func endSession(chantier: ModeChantierState) {
         let hasCaptures = sessionCaptureCount(for: chantier) > 0
-        chantier.boutonVert = false
-        chantier.isBrowsing = false
-        chantier.tacheActive = nil
-        chantier.sessionActive = false          // dismisses the fullScreenCover
+        chantier.reinitialiser()                // dismisses the fullScreenCover (sessionActive = false)
         if hasCaptures {
             chantier.pendingClassification = true
         }

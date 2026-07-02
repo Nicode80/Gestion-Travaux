@@ -38,7 +38,7 @@ struct CaptureDetailView: View {
                                 case .text:
                                     Text(block.text ?? "")
                                         .font(.body)
-                                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                        .foregroundStyle(Color.textePrimaire)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 case .photo:
                                     if let path = block.photoLocalPath {
@@ -53,7 +53,7 @@ struct CaptureDetailView: View {
                     }
                 }
             }
-            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .background(Color.backgroundBureau)
             .navigationTitle(titre)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

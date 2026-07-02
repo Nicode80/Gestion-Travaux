@@ -32,7 +32,7 @@ struct NoteSaisonCreationView: View {
                 if let error = viewModel.errorMessage {
                     Section {
                         Text(error)
-                            .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                            .foregroundStyle(Color.alerte)
                             .font(.subheadline)
                     }
                 }
@@ -54,7 +54,7 @@ struct NoteSaisonCreationView: View {
                 archivesSection
             }
             .scrollContentBackground(.hidden)
-            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .background(Color.backgroundBureau)
             .navigationTitle("Note de Saison")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -140,7 +140,7 @@ struct NoteSaisonCreationView: View {
                 NoteSaisonArchivesView(modelContext: modelContext)
             } label: {
                 Label("Consulter les notes archivées", systemImage: "archivebox")
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
             }
             .frame(minHeight: 44) // NFR-U1
         }
@@ -159,8 +159,8 @@ struct NoteSaisonCreationView: View {
             Image(systemName: viewModel.isRecording ? "mic.fill" : "mic")
                 .foregroundStyle(
                     viewModel.isRecording
-                        ? Color(hex: Constants.Couleurs.alerte)
-                        : Color(hex: Constants.Couleurs.accent)
+                        ? Color.alerte
+                        : Color.accentPrincipal
                 )
                 .symbolEffect(.pulse, isActive: viewModel.isRecording)
         }

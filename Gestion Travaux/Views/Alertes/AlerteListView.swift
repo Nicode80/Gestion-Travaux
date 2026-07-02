@@ -62,7 +62,7 @@ struct AlerteListView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle("Alertes")
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.load() }

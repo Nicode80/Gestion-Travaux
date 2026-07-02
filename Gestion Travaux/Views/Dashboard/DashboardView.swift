@@ -53,7 +53,7 @@ struct DashboardView: View {
                 content
                     .navigationTitle("Gestion Travaux")
                     .navigationBarTitleDisplayMode(.large)
-                    .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                    .background(Color.backgroundBureau)
                     // "Changer de tâche" → TacheListView en mode sélection (actives uniquement)
                     .navigationDestination(isPresented: $showChangerTache) {
                         TacheListView(
@@ -102,7 +102,7 @@ struct DashboardView: View {
             // pendingClassification is true from endSession() until onDismiss clears it.
             .overlay {
                 if chantier.pendingClassification {
-                    Color(hex: Constants.Couleurs.backgroundBureau)
+                    Color.backgroundBureau
                         .ignoresSafeArea()
                 }
             }
@@ -181,13 +181,13 @@ struct DashboardView: View {
             VStack(spacing: 16) {
                 Image(systemName: "exclamationmark.triangle")
                     .font(.largeTitle)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                    .foregroundStyle(Color.alerte)
                 Text(message)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    .foregroundStyle(Color.textePrimaire)
                     .multilineTextAlignment(.center)
                 Button("Réessayer") { viewModel.charger() }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color(hex: Constants.Couleurs.accent))
+                    .tint(Color.accentPrincipal)
             }
             .padding(24)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -253,21 +253,21 @@ struct DashboardView: View {
                     TacheListView(modelContext: modelContext)
                 } label: {
                     Label("Tâches", systemImage: "checkmark.circle")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                        .foregroundStyle(Color.textePrimaire)
                 }
 
                 NavigationLink {
                     ActiviteListView(activites: viewModel.activites, modelContext: modelContext)
                 } label: {
                     Label("Activités", systemImage: "wrench.and.screwdriver")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                        .foregroundStyle(Color.textePrimaire)
                 }
 
                 NavigationLink {
                     PieceListView(pieces: viewModel.pieces, modelContext: modelContext)
                 } label: {
                     Label("Pièces", systemImage: "door.left.hand.open")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                        .foregroundStyle(Color.textePrimaire)
                 }
             }
 
@@ -278,7 +278,7 @@ struct DashboardView: View {
                 } label: {
                     HStack {
                         Label("To Do", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                         Spacer()
                         if viewModel.totalToDosActifs > 0 {
                             HStack(spacing: 4) {
@@ -289,12 +289,12 @@ struct DashboardView: View {
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 8)
                                         .padding(.vertical, 3)
-                                        .background(Color(hex: Constants.Couleurs.alerte))
+                                        .background(Color.alerte)
                                         .clipShape(Capsule())
                                 }
                                 Text("\(viewModel.totalToDosActifs)")
                                     .font(.caption)
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                    .foregroundStyle(Color.texteSecondaire)
                             }
                         }
                     }
@@ -306,7 +306,7 @@ struct DashboardView: View {
                 } label: {
                     HStack {
                         Label("Liste de courses", systemImage: "cart.fill")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                            .foregroundStyle(Color.accentPrincipal)
                         Spacer()
                         let nonAchetes = viewModel.nombreAchatsEnAttente
                         if nonAchetes > 0 {
@@ -316,7 +316,7 @@ struct DashboardView: View {
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
-                                .background(Color(hex: Constants.Couleurs.accent))
+                                .background(Color.accentPrincipal)
                                 .clipShape(Capsule())
                         }
                     }
@@ -327,7 +327,7 @@ struct DashboardView: View {
                     AlerteListView(modelContext: modelContext)
                 } label: {
                     Label("Alertes", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                        .foregroundStyle(Color.alerte)
                 }
 
                 // Story 4.4: Note de Saison creation (FR41).
@@ -344,7 +344,7 @@ struct DashboardView: View {
                 } label: {
                     HStack {
                         Label("Exporter mes données", systemImage: "square.and.arrow.up")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                         Spacer()
                         if exportEnCours {
                             ProgressView()
@@ -356,7 +356,7 @@ struct DashboardView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .listSectionSpacing(.compact)
         // Hide nav bar at root — Hero is the first thing visible.
         // navigationTitle("Gestion Travaux") is still set on the NavigationStack content

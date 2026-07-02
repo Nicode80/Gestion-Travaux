@@ -38,13 +38,13 @@ struct ShoppingListView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "cart.badge.questionmark")
                         .font(.largeTitle)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                        .foregroundStyle(Color.alerte)
                     Text(message)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                        .foregroundStyle(Color.textePrimaire)
                         .multilineTextAlignment(.center)
                     Button("Réessayer") { viewModel.load() }
                         .buttonStyle(.borderedProminent)
-                        .tint(Color(hex: Constants.Couleurs.accent))
+                        .tint(Color.accentPrincipal)
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -59,7 +59,7 @@ struct ShoppingListView: View {
         }
         .navigationTitle("Liste de courses")
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack {
@@ -160,7 +160,7 @@ struct ShoppingListView: View {
                 showAddField = true
             }
             .buttonStyle(.borderedProminent)
-            .tint(Color(hex: Constants.Couleurs.accent))
+            .tint(Color.accentPrincipal)
         }
     }
 
@@ -192,7 +192,7 @@ struct ShoppingListView: View {
                             } label: {
                                 Label("Modifier", systemImage: "pencil")
                             }
-                            .tint(Color(hex: Constants.Couleurs.accent))
+                            .tint(Color.accentPrincipal)
                         }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -206,7 +206,7 @@ struct ShoppingListView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
     }
 
     // MARK: - Add item row

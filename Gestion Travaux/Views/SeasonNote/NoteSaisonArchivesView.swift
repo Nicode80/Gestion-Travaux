@@ -32,7 +32,7 @@ struct NoteSaisonArchivesView: View {
                 .scrollContentBackground(.hidden)
             }
         }
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle("Notes archivées")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { charger() }
@@ -44,10 +44,10 @@ struct NoteSaisonArchivesView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(note.createdAt.formatted(.dateTime.day().month(.wide).year()))
                 .font(.caption)
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
             Text(note.texte)
                 .font(.body)
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(Color.textePrimaire)
         }
         .padding(.vertical, 4)
     }

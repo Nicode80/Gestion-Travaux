@@ -43,7 +43,7 @@ struct PauseBannerView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Color(hex: Constants.Couleurs.accent))
+        .background(Color.accentPrincipal)
         .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Session en pause : \(chantier.tacheActive?.titre ?? "Tâche"). Appuyez sur Reprendre pour continuer.")

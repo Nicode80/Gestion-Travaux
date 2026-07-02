@@ -15,7 +15,7 @@ struct TaskRowView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text(tache.titre)
                     .font(.headline)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    .foregroundStyle(Color.textePrimaire)
                 Spacer()
                 StatutBadge(statut: tache.statut)
             }
@@ -23,7 +23,7 @@ struct TaskRowView: View {
             if let action = tache.prochaineAction, !action.isEmpty {
                 Text(action)
                     .font(.subheadline)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
                     .lineLimit(2)
             }
         }
@@ -53,15 +53,15 @@ private struct StatutBadge: View {
 private extension StatutTache {
     var couleurTexte: Color {
         switch self {
-        case .active:   Color(hex: Constants.Couleurs.accent)
-        case .terminee: Color(hex: Constants.Couleurs.texteSecondaire)
+        case .active:   Color.accentPrincipal
+        case .terminee: Color.texteSecondaire
         }
     }
 
     var couleurFond: Color {
         switch self {
-        case .active:   Color(hex: Constants.Couleurs.accent).opacity(0.12)
-        case .terminee: Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.12)
+        case .active:   Color.accentPrincipal.opacity(0.12)
+        case .terminee: Color.texteSecondaire.opacity(0.12)
         }
     }
 }

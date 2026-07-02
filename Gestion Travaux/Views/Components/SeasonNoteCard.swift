@@ -24,13 +24,13 @@ struct SeasonNoteCard: View {
                 Spacer()
                 Text(note.createdAt.formatted(.dateTime.month(.wide).year()))
                     .font(.caption)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
             }
 
             // Note text — truncated to 6 lines on dashboard
             Text(note.texte)
                 .font(.body)
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(Color.textePrimaire)
                 .lineLimit(6)
 
             // Archive button (FR43)

@@ -40,13 +40,13 @@ struct ClassificationView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                        .foregroundStyle(Color.alerte)
                     Text(message)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                        .foregroundStyle(Color.textePrimaire)
                         .multilineTextAlignment(.center)
                     Button("Réessayer") { viewModel.charger() }
                         .buttonStyle(.borderedProminent)
-                        .tint(Color(hex: Constants.Couleurs.accent))
+                        .tint(Color.accentPrincipal)
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -63,7 +63,7 @@ struct ClassificationView: View {
         .navigationTitle("Débrief")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .onAppear { viewModel.charger() }
         .navigationDestination(isPresented: $showRecap) {
             RecapitulatifView(viewModel: viewModel, onComplete: onComplete)
@@ -99,7 +99,7 @@ struct ClassificationView: View {
                 } label: {
                     Label("Supprimer cette capture", systemImage: "trash")
                         .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                        .foregroundStyle(Color.alerte)
                         .frame(minHeight: 60)
                 }
                 .accessibilityLabel("Supprimer cette capture")
@@ -125,15 +125,15 @@ struct ClassificationView: View {
                 value: Double(viewModel.classified),
                 total: Double(max(1, viewModel.total))
             )
-            .tint(Color(hex: Constants.Couleurs.accent))
+            .tint(Color.accentPrincipal)
             .padding(.horizontal, 16)
 
             Text("\(viewModel.remaining) \(viewModel.remaining == 1 ? "capture restante" : "captures restantes")")
                 .font(.caption)
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
         }
         .padding(.vertical, 12)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
     }
 
 }

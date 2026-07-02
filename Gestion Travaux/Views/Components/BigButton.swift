@@ -32,9 +32,9 @@ struct BigButton: View {
 
     private var backgroundColor: Color {
         switch state {
-        case .inactive: return Color(hex: Constants.Couleurs.alerte)
+        case .inactive: return Color.alerte
         case .active:   return Color.green
-        case .disabled: return Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.4)
+        case .disabled: return Color.texteSecondaire.opacity(0.4)
         }
     }
 

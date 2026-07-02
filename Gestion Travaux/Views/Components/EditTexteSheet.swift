@@ -27,7 +27,7 @@ struct EditTexteSheet: View {
                 TextField("", text: $texte, axis: .vertical)
                     .lineLimit(3...8)
                     .padding(12)
-                    .background(Color(hex: Constants.Couleurs.backgroundCard))
+                    .background(Color.backgroundCard)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .autocorrectionDisabled(false)
                     .padding(.horizontal)
@@ -35,7 +35,7 @@ struct EditTexteSheet: View {
                 Spacer()
             }
             .padding(.top, 12)
-            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .background(Color.backgroundBureau)
             .navigationTitle(titre)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

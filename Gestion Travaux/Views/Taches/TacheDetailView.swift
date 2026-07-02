@@ -51,24 +51,24 @@ struct TacheDetailView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("PROCHAINE ACTION")
                         .font(.caption.bold())
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                         .padding(.bottom, 8)
 
                     Group {
                         if let action = tache.prochaineAction, !action.isEmpty {
                             Text(action)
                                 .font(.subheadline)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                .foregroundStyle(Color.textePrimaire)
                         } else {
                             Text("Aucune prochaine action")
                                 .font(.subheadline)
                                 .italic()
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.5))
+                                .foregroundStyle(Color.texteSecondaire.opacity(0.5))
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(14)
-                    .background(Color(hex: Constants.Couleurs.accent).opacity(0.08))
+                    .background(Color.accentPrincipal.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
@@ -77,8 +77,8 @@ struct TacheDetailView: View {
                     contenuSection(
                         titre: "ALERTES",
                         icone: "exclamationmark.triangle.fill",
-                        couleurIcone: Color(hex: Constants.Couleurs.alerte),
-                        fondColor: Color(hex: Constants.Couleurs.alerte).opacity(0.05),
+                        couleurIcone: Color.alerte,
+                        fondColor: Color.alerte.opacity(0.05),
                         items: alertesActives.map { ($0.preview.isEmpty ? "Alerte" : $0.preview, $0.blocksData) },
                         onTap: { index in selectedAlerte = alertesActives[index] }
                     )
@@ -87,7 +87,7 @@ struct TacheDetailView: View {
                 if alertesActives.isEmpty {
                     Text("Aucune alerte pour cette tâche.")
                         .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 8)
                 }
@@ -99,7 +99,7 @@ struct TacheDetailView: View {
             .padding(.top, 4)
             .padding(.bottom, 16)
         }
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle(tache.titre)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedAlerte) { alerte in
@@ -179,7 +179,7 @@ struct TacheDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("TÂCHE")
                 .font(.caption.bold())
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
                 .padding(.bottom, 8)
 
             VStack(spacing: 0) {
@@ -199,7 +199,7 @@ struct TacheDetailView: View {
                     showEditNomActivite = true
                 }
             }
-            .background(Color(hex: Constants.Couleurs.accent).opacity(0.08))
+            .background(Color.accentPrincipal.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
@@ -211,15 +211,15 @@ struct TacheDetailView: View {
             HStack {
                 Text(label)
                     .font(.caption.bold())
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
                     .frame(width: 80, alignment: .leading)
                 Text(valeur)
                     .font(.subheadline)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    .foregroundStyle(Color.textePrimaire)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "pencil")
                     .font(.caption)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire).opacity(chantier.boutonVert ? 0.3 : 0.7))
+                    .foregroundStyle(Color.texteSecondaire.opacity(chantier.boutonVert ? 0.3 : 0.7))
             }
             .frame(minHeight: 44)
             .padding(.horizontal, 14)
@@ -236,14 +236,14 @@ struct TacheDetailView: View {
             HStack {
                 Text("À FAIRE")
                     .font(.caption.bold())
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
                 Spacer()
                 Button {
                     vm.showAjoutToDo = true
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                        .foregroundStyle(Color.accentPrincipal)
                 }
                 .disabled(chantier.boutonVert)
                 .frame(minWidth: 44, minHeight: 44)
@@ -254,10 +254,10 @@ struct TacheDetailView: View {
                 Text("Aucun ToDo pour cette pièce.")
                     .font(.subheadline)
                     .italic()
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.6))
+                    .foregroundStyle(Color.texteSecondaire.opacity(0.6))
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 12)
-                    .background(Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.06))
+                    .background(Color.texteSecondaire.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 VStack(alignment: .leading, spacing: 0) {
@@ -275,7 +275,7 @@ struct TacheDetailView: View {
                         }
                     }
                 }
-                .background(Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.06))
+                .background(Color.texteSecondaire.opacity(0.06))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
@@ -290,11 +290,11 @@ struct TacheDetailView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
             .background(isActive
-                ? Color(hex: Constants.Couleurs.accent).opacity(0.12)
-                : Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.12))
+                ? Color.accentPrincipal.opacity(0.12)
+                : Color.texteSecondaire.opacity(0.12))
             .foregroundStyle(isActive
-                ? Color(hex: Constants.Couleurs.accent)
-                : Color(hex: Constants.Couleurs.texteSecondaire))
+                ? Color.accentPrincipal
+                : Color.texteSecondaire)
             .clipShape(Capsule())
     }
 
@@ -311,7 +311,7 @@ struct TacheDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(titre)
                 .font(.caption.bold())
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
                 .padding(.bottom, 8)
 
             VStack(alignment: .leading, spacing: 0) {
@@ -325,7 +325,7 @@ struct TacheDetailView: View {
                                 .font(.subheadline)
                             Text(item.0)
                                 .font(.subheadline)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                .foregroundStyle(Color.textePrimaire)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.leading)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -380,7 +380,7 @@ private struct AjoutToDoSheet: View {
                             }
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(prioriteSelectionnee == priorite ? priorite.couleur : Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.3))
+                        .tint(prioriteSelectionnee == priorite ? priorite.couleur : Color.texteSecondaire.opacity(0.3))
                         .frame(minHeight: 60)
                         .padding(.horizontal)
                     }

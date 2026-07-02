@@ -32,7 +32,7 @@ struct RecapitulatifView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle("Récapitulatif")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -102,7 +102,7 @@ struct RecapitulatifView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(item.capturePreview.isEmpty ? "(sans texte)" : item.capturePreview)
                 .font(.subheadline)
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(Color.textePrimaire)
                 .lineLimit(2)
 
             HStack(spacing: 6) {
@@ -112,7 +112,7 @@ struct RecapitulatifView: View {
 
                 Text("→ \(item.destination)")
                     .font(.caption)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
             }
         }
         .padding(.vertical, 4)
@@ -122,7 +122,7 @@ struct RecapitulatifView: View {
     private var emptySection: some View {
         Section {
             Text("Aucune capture classifiée.")
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
                 .font(.subheadline)
         }
     }
@@ -141,7 +141,7 @@ struct RecapitulatifView: View {
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color(hex: Constants.Couleurs.accent))
+                .background(Color.accentPrincipal)
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .padding(.horizontal, 16)
@@ -214,10 +214,10 @@ struct RecapitulatifView: View {
 
     private func typeColor(for item: ClassificationSummaryItem) -> Color {
         switch item.entity {
-        case .alerte:         return Color(hex: Constants.Couleurs.alerte)
-        case .astuce:         return Color(hex: Constants.Couleurs.astuce)
+        case .alerte:         return Color.alerte
+        case .astuce:         return Color.astuce
         case .toDo(let todo): return todo.priorite.couleur
-        case .achat:          return Color(hex: Constants.Couleurs.achat)
+        case .achat:          return Color.achat
         }
     }
 }

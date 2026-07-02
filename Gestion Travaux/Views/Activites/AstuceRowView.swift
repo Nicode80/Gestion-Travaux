@@ -22,20 +22,20 @@ struct AstuceRowView: View {
                 Text("(sans texte)")
                     .font(.body)
                     .italic()
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
             } else {
                 Text(previewText)
                     .font(.body)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    .foregroundStyle(Color.textePrimaire)
                     .lineLimit(3)
             }
             Text(astuce.createdAt.relativeFrench)
                 .font(.caption2)
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
         }
         .padding()
         .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
-        .background(Color(hex: Constants.Couleurs.backgroundCard), in: RoundedRectangle(cornerRadius: 10))
+        .background(Color.backgroundCard, in: RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal)
     }
 }

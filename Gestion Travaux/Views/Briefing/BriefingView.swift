@@ -53,10 +53,10 @@ struct BriefingView: View {
                         } label: {
                             Label("Voir toutes les astuces", systemImage: "list.bullet.rectangle")
                                 .font(.subheadline.bold())
-                                .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                                .foregroundStyle(Color.accentPrincipal)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(hex: Constants.Couleurs.accent).opacity(0.08))
+                                .background(Color.accentPrincipal.opacity(0.08))
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                         .buttonStyle(.plain)
@@ -75,11 +75,11 @@ struct BriefingView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .tint(Color(hex: Constants.Couleurs.accent))
+            .tint(Color.accentPrincipal)
             .padding()
             .background(.ultraThinMaterial)
         }
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle(viewModel.tache.titre)
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.load() }
@@ -103,17 +103,17 @@ struct BriefingView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("PROCHAINE ACTION", systemImage: "play.fill")
                 .font(.caption.bold())
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
                 .textCase(.uppercase)
 
             if let action = viewModel.tache.prochaineAction, !action.isEmpty {
                 Text(action)
                     .font(.body.bold())
-                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    .foregroundStyle(Color.textePrimaire)
             } else {
                 Text("Aucune prochaine action définie")
                     .font(.body)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
                     .italic()
             }
 
@@ -125,12 +125,12 @@ struct BriefingView: View {
                     Text("Dernière session \(lastSession.relativeFrench)")
                         .font(.caption)
                 }
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: Constants.Couleurs.backgroundCard))
+        .background(Color.backgroundCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -147,11 +147,11 @@ struct BriefingView: View {
                     } label: {
                         HStack(alignment: .top, spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                                .foregroundStyle(Color.alerte)
                                 .frame(width: 20)
                             Text(alerte.preview.isEmpty ? "Alerte (sans texte)" : alerte.preview)
                                 .font(.subheadline)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                .foregroundStyle(Color.textePrimaire)
                                 .lineLimit(2)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -167,10 +167,10 @@ struct BriefingView: View {
                 systemImage: "exclamationmark.triangle.fill"
             )
             .font(.subheadline.bold())
-            .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+            .foregroundStyle(Color.alerte)
         }
         .padding()
-        .background(Color(hex: Constants.Couleurs.alerte).opacity(0.08))
+        .background(Color.alerte.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -187,11 +187,11 @@ struct BriefingView: View {
                     } label: {
                         HStack(alignment: .top, spacing: 8) {
                             Image(systemName: "lightbulb.fill")
-                                .foregroundStyle(Color(hex: Constants.Couleurs.astuce))
+                                .foregroundStyle(Color.astuce)
                                 .frame(width: 20)
                             Text(astuce.preview.isEmpty ? "Astuce (sans texte)" : astuce.preview)
                                 .font(.subheadline)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                .foregroundStyle(Color.textePrimaire)
                                 .lineLimit(2)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -207,10 +207,10 @@ struct BriefingView: View {
                 systemImage: "lightbulb.fill"
             )
             .font(.subheadline.bold())
-            .foregroundStyle(Color(hex: Constants.Couleurs.astuce))
+            .foregroundStyle(Color.astuce)
         }
         .padding()
-        .background(Color(hex: Constants.Couleurs.astuce).opacity(0.08))
+        .background(Color.astuce.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

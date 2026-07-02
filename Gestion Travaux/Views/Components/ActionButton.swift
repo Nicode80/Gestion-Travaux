@@ -43,13 +43,13 @@ struct ActionButton: View {
                 label.frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(Color(hex: Constants.Couleurs.accent))
+            .tint(Color.accentPrincipal)
             .frame(minHeight: 60) // NFR-U1
         case .secondary:
             Button(action: action) {
                 label
                     .font(.subheadline)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
             }
             .buttonStyle(.plain)
             .frame(minHeight: 60) // NFR-U1

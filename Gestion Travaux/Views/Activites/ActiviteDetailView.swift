@@ -52,7 +52,7 @@ struct ActiviteDetailView: View {
                 // QF9: title is already in .inline navigationTitle — only show astuce count.
                 Text(subtitleText)
                     .font(.subheadline)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
                     .padding(.horizontal)
 
                 // Sections astuces — masquées si vides (FR35)
@@ -60,7 +60,7 @@ struct ActiviteDetailView: View {
                     AstuceSection(
                         title: "CRITIQUES",
                         subtitle: "À lire avant chaque session",
-                        color: Color(hex: Constants.Couleurs.astuce),
+                        color: Color.astuce,
                         icon: "exclamationmark.triangle.fill",
                         astuces: viewModel.astucesCritiques,
                         onTap: { astuce in selectedAstuce = astuce }
@@ -71,7 +71,7 @@ struct ActiviteDetailView: View {
                     AstuceSection(
                         title: "IMPORTANTES",
                         subtitle: "Bonnes pratiques",
-                        color: Color(hex: Constants.Couleurs.astuceImportante),
+                        color: Color.astuceImportante,
                         icon: "lightbulb.fill",
                         astuces: viewModel.astucesImportantes,
                         onTap: { astuce in selectedAstuce = astuce }
@@ -82,7 +82,7 @@ struct ActiviteDetailView: View {
                     AstuceSection(
                         title: "UTILES",
                         subtitle: "Infos pratiques complémentaires",
-                        color: Color(hex: Constants.Couleurs.astuceUtile),
+                        color: Color.astuceUtile,
                         icon: "info.circle.fill",
                         astuces: viewModel.astucesUtiles,
                         onTap: { astuce in selectedAstuce = astuce }
@@ -103,7 +103,7 @@ struct ActiviteDetailView: View {
             }
             .padding(.vertical)
         }
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle(viewModel.activite.nom)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -216,7 +216,7 @@ struct ActiviteDetailView: View {
                 } label: {
                     Text(label.uppercased())
                         .font(.caption.bold())
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                 }
             }
             .padding(.horizontal)

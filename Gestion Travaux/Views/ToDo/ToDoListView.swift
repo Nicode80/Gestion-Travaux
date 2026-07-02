@@ -74,12 +74,12 @@ struct ToDoListView: View {
                 } label: {
                     HStack {
                         Label("Voir les ToDo complétés", systemImage: "archivebox")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                         Spacer()
                         if !viewModel.todosArchives.isEmpty {
                             Text("\(viewModel.todosArchives.count)")
                                 .font(.caption)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .foregroundStyle(Color.texteSecondaire)
                         }
                     }
                 }
@@ -87,7 +87,7 @@ struct ToDoListView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle("To Do")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showArchive) {
@@ -164,15 +164,15 @@ struct ToDoListView: View {
 
     private func prioriteFilterButton(_ priorite: PrioriteToDo?, label: String) -> some View {
         let isSelected = viewModel.filtrePriorite == priorite
-        let color: Color = priorite?.couleur ?? Color(hex: Constants.Couleurs.accent)
+        let color: Color = priorite?.couleur ?? Color.accentPrincipal
         return Button(label) {
             viewModel.setFiltrePriorite(priorite)
         }
         .font(.caption.weight(isSelected ? .bold : .regular))
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(isSelected ? color : Color(hex: Constants.Couleurs.backgroundCard))
-        .foregroundStyle(isSelected ? .white : Color(hex: Constants.Couleurs.textePrimaire))
+        .background(isSelected ? color : Color.backgroundCard)
+        .foregroundStyle(isSelected ? .white : Color.textePrimaire)
         .clipShape(Capsule())
     }
 
@@ -184,8 +184,8 @@ struct ToDoListView: View {
         .font(.caption.weight(isSelected ? .bold : .regular))
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(isSelected ? Color(hex: Constants.Couleurs.accent) : Color(hex: Constants.Couleurs.backgroundCard))
-        .foregroundStyle(isSelected ? .white : Color(hex: Constants.Couleurs.textePrimaire))
+        .background(isSelected ? Color.accentPrincipal : Color.backgroundCard)
+        .foregroundStyle(isSelected ? .white : Color.textePrimaire)
         .clipShape(Capsule())
     }
 }

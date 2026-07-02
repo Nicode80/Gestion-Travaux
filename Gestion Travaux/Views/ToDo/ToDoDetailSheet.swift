@@ -36,7 +36,7 @@ struct ToDoDetailSheet: View {
                     if contentBlocks.isEmpty {
                         Text(todo.titre)
                             .font(.title3)
-                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            .foregroundStyle(Color.textePrimaire)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
                         LazyVStack(alignment: .leading, spacing: 12) {
@@ -45,7 +45,7 @@ struct ToDoDetailSheet: View {
                                 case .text:
                                     Text(block.text ?? "")
                                         .font(.body)
-                                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                        .foregroundStyle(Color.textePrimaire)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 case .photo:
                                     if let path = block.photoLocalPath {
@@ -62,15 +62,15 @@ struct ToDoDetailSheet: View {
 
                     HStack(spacing: 6) {
                         Image(systemName: "calendar")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                         Text(todo.dateCreation.formatted(date: .long, time: .omitted))
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                     }
                     .font(.subheadline)
                 }
                 .padding()
             }
-            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .background(Color.backgroundBureau)
             .navigationTitle("To Do")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

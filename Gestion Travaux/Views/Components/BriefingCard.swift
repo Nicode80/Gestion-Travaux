@@ -39,11 +39,11 @@ struct BriefingCard: View {
                 } label: {
                     HStack(spacing: 10) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                            .foregroundStyle(Color.alerte)
                             .font(.subheadline)
                         Text(alerte.preview.isEmpty ? "Alerte" : alerte.preview)
                             .font(.subheadline)
-                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            .foregroundStyle(Color.textePrimaire)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -64,7 +64,7 @@ struct BriefingCard: View {
                          ? "Voir moins"
                          : "Voir \(restantes) alerte\(restantes > 1 ? "s" : "") de plus")
                         .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                        .foregroundStyle(Color.accentPrincipal)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(minHeight: 44) // NFR-U1
                         .padding(.horizontal, 14)
@@ -74,7 +74,7 @@ struct BriefingCard: View {
             }
         }
         .padding(.vertical, 4)
-        .background(Color(hex: Constants.Couleurs.alerte).opacity(0.05))
+        .background(Color.alerte.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .onAppear { showAll = false }
         .sheet(item: $selectedAlerte) { alerte in

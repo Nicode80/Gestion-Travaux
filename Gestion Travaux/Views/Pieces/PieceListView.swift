@@ -27,16 +27,16 @@ struct PieceListView: View {
                     } label: {
                         HStack {
                             Image(systemName: "door.left.hand.open")
-                                .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                                .foregroundStyle(Color.accentPrincipal)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(piece.nom)
                                     .font(.headline)
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                    .foregroundStyle(Color.textePrimaire)
                                 let nbActives = piece.taches.filter { $0.statut == .active }.count
                                 if nbActives > 0 {
                                     Text("\(nbActives) tâche\(nbActives > 1 ? "s" : "") active\(nbActives > 1 ? "s" : "")")
                                         .font(.caption)
-                                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                        .foregroundStyle(Color.texteSecondaire)
                                 }
                             }
                         }
@@ -45,11 +45,11 @@ struct PieceListView: View {
                 }
                 .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)
-                .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                .background(Color.backgroundBureau)
             }
         }
         .navigationTitle("Pièces")
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
     }
 }

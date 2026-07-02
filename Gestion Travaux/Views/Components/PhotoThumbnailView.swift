@@ -22,7 +22,7 @@ struct PhotoThumbnailView: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Color(hex: Constants.Couleurs.backgroundCard)
+                Color.backgroundCard
                     .overlay {
                         Image(systemName: "photo")
                             .foregroundStyle(.secondary)

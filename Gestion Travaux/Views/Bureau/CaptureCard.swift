@@ -17,13 +17,13 @@ struct CaptureCard: View {
             // Task label — uppercase, secondary color
             Text(capture.tache?.titre.uppercased() ?? "SANS TÂCHE")
                 .font(.caption)
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
 
             // Transcription preview — capped at 200 characters
             if !capture.transcription.isEmpty {
                 Text(String(capture.transcription.prefix(200)))
                     .font(.body)
-                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                    .foregroundStyle(Color.textePrimaire)
                     .lineLimit(4)
             }
 
@@ -46,6 +46,6 @@ struct CaptureCard: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(hex: Constants.Couleurs.backgroundCard), in: RoundedRectangle(cornerRadius: 12))
+        .background(Color.backgroundCard, in: RoundedRectangle(cornerRadius: 12))
     }
 }

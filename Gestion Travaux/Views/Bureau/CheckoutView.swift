@@ -33,7 +33,7 @@ struct CheckoutView: View {
         .navigationTitle("Check-out")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         // Confirmation alert before marking terminee (FR21)
         .alert("Marquer comme terminée ?", isPresented: $showTerminaisonAlert) {
             Button("Terminer", role: .destructive) {
@@ -121,11 +121,11 @@ struct CheckoutView: View {
         VStack(spacing: 4) {
             Text("Pour la tâche :")
                 .font(.subheadline)
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
 
             Text(viewModel.tacheCourante?.titre ?? "—")
                 .font(.title3.bold())
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(Color.textePrimaire)
                 .multilineTextAlignment(.center)
         }
     }
@@ -136,7 +136,7 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("▶️ Prochaine action")
                 .font(.headline)
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(Color.textePrimaire)
 
             HStack {
                 TextField("Décris la prochaine action…", text: $viewModel.prochaineActionInput, axis: .vertical)
@@ -159,7 +159,7 @@ struct CheckoutView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color(hex: Constants.Couleurs.accent))
+                    .background(Color.accentPrincipal)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
@@ -181,8 +181,8 @@ struct CheckoutView: View {
             Image(systemName: viewModel.isRecordingProchaineAction ? "mic.fill" : "mic")
                 .foregroundStyle(
                     viewModel.isRecordingProchaineAction
-                        ? Color(hex: Constants.Couleurs.alerte)
-                        : Color(hex: Constants.Couleurs.accent)
+                        ? Color.alerte
+                        : Color.accentPrincipal
                 )
                 .symbolEffect(.pulse, isActive: viewModel.isRecordingProchaineAction)
         }
@@ -197,7 +197,7 @@ struct CheckoutView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("✅ Terminer la tâche")
                 .font(.headline)
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(Color.textePrimaire)
 
             Button {
                 showTerminaisonAlert = true
@@ -206,12 +206,12 @@ struct CheckoutView: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color(hex: Constants.Couleurs.alerte).opacity(0.1))
-                    .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                    .background(Color.alerte.opacity(0.1))
+                    .foregroundStyle(Color.alerte)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: Constants.Couleurs.alerte), lineWidth: 1)
+                            .stroke(Color.alerte, lineWidth: 1)
                     )
             }
             .accessibilityLabel("Marquer la tâche comme terminée")

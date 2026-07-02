@@ -27,11 +27,11 @@ struct ActiviteListView: View {
                     } label: {
                         HStack {
                             Image(systemName: "wrench.and.screwdriver")
-                                .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                                .foregroundStyle(Color.accentPrincipal)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(activite.nom)
                                     .font(.headline)
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                    .foregroundStyle(Color.textePrimaire)
                                 let nbTaches = activite.taches.filter { $0.statut == .active }.count
                                 let nbAstuces = activite.astuces.count
                                 if nbTaches > 0 || nbAstuces > 0 {
@@ -40,7 +40,7 @@ struct ActiviteListView: View {
                                         nbAstuces > 0 ? "\(nbAstuces) astuce\(nbAstuces > 1 ? "s" : "")" : nil
                                     ].compactMap { $0 }.joined(separator: " · "))
                                     .font(.caption)
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                    .foregroundStyle(Color.texteSecondaire)
                                 }
                             }
                         }
@@ -49,11 +49,11 @@ struct ActiviteListView: View {
                 }
                 .listStyle(.insetGrouped)
                 .scrollContentBackground(.hidden)
-                .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                .background(Color.backgroundBureau)
             }
         }
         .navigationTitle("Activités")
         .navigationBarTitleDisplayMode(.inline)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
     }
 }
