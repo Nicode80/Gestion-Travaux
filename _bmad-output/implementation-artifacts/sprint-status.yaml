@@ -113,7 +113,7 @@ development_status:
   epic-8: in-progress
   # 8.1 réalisée hors process (revue de code), rétro-documentée — PR #27
   8-1-consolidation-logging-photos-titres-resize: done
-  8-2-export-donnees-et-plan-migration-schema: backlog
+  8-2-export-donnees-et-plan-migration-schema: review
   8-3-polish-dictee-terrain: backlog
   8-4-service-dictee-one-shot-partage: backlog
   8-5-points-mineurs-revue: backlog

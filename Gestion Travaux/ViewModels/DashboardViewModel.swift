@@ -140,6 +140,26 @@ final class DashboardViewModel {
         charger()
     }
 
+    // MARK: - Story 8.2: Export (FR83)
+
+    /// Non-nil when the last export failed — shown as an alert in DashboardView.
+    var exportError: String? = nil
+
+    /// Builds the export archive off the main thread and returns its URL for the
+    /// share sheet, or nil on failure (exportError is set).
+    func exporterDonnees() async -> URL? {
+        let container = modelContext.container
+        do {
+            return try await Task.detached(priority: .userInitiated) {
+                try ExportService.exporter(container: container)
+            }.value
+        } catch {
+            Log.persistence.error("exporterDonnees() failed: \(error)")
+            exportError = "Impossible de créer l'export. Réessayez."
+            return nil
+        }
+    }
+
     /// Updates lastSessionDate so the given task becomes the Hero on next charger() call.
     /// Used by the "Changer de tâche" flow in DashboardView.
     func mettreAJourHero(tache: TacheEntity) {

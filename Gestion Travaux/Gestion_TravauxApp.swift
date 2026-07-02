@@ -35,7 +35,13 @@ struct Gestion_TravauxApp: App {
         )
 
         do {
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            // Story 8.2: migration plan so future schema versions migrate the store
+            // instead of requiring a reinstall (data loss).
+            let container = try ModelContainer(
+                for: schema,
+                migrationPlan: GestionTravauxMigrationPlan.self,
+                configurations: [modelConfiguration]
+            )
             self.sharedModelContainer = container
 
             // Create singletons on first launch
