@@ -110,7 +110,7 @@ development_status:
   # ─────────────────────────────────────────────────────
   # Epic 8 : Consolidation & Robustesse (revue de code 2026-07-01)
   # ─────────────────────────────────────────────────────
-  epic-8: in-progress
+  epic-8: done
   # 8.1 réalisée hors process (revue de code), rétro-documentée — PR #27
   8-1-consolidation-logging-photos-titres-resize: done
   # 8.2 mergée sur master via PR #29 (2026-07-03)
@@ -119,4 +119,5 @@ development_status:
   8-3-polish-dictee-terrain: done
   # 8.4 mergée sur master via PR #31 (2026-07-03) — validation device dictée à faire
   8-4-service-dictee-one-shot-partage: done
-  8-5-points-mineurs-revue: review
+  # 8.5 mergée sur master via PR #32 (2026-07-03)
+  8-5-points-mineurs-revue: done

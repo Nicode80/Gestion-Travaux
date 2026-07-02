@@ -2,7 +2,7 @@
 story: "8.4"
 epic: 8
 title: "Service de dictée one-shot partagé — dé-duplication audio"
-status: review
+status: done
 frs: []
 nfrs: [NFR-R3]
 ---

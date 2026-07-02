@@ -2,7 +2,7 @@
 story: "8.2"
 epic: 8
 title: "Export des données et plan de migration SwiftData"
-status: review
+status: done
 frs: [FR83, FR84]
 nfrs: [NFR-R7]
 ---

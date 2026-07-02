@@ -2,7 +2,7 @@
 story: "8.3"
 epic: 8
 title: "Polish dictée terrain — suppression de captures et nettoyage prochaine action"
-status: review
+status: done
 frs: [FR85, FR86]
 nfrs: [NFR-U6]
 ---
