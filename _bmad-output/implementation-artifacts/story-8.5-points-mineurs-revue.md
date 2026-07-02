@@ -2,7 +2,7 @@
 story: "8.5"
 epic: 8
 title: "Points mineurs de la revue — couleurs, cleanup"
-status: review
+status: done
 frs: []
 nfrs: [NFR-P10]
 ---
