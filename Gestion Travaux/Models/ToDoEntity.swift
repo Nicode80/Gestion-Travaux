@@ -17,6 +17,10 @@ final class ToDoEntity {
     /// Empty for checkout-created todos (text only).
     var blocksData: Data = Data()
     var priorite: PrioriteToDo
+    /// Story 7.5: manual position within the priority group (drag to reorder).
+    /// Lower = higher in the list. All legacy rows share 0 — ties fall back to
+    /// dateCreation desc, so a new todo (0) surfaces at the top of its group.
+    var ordreManuel: Int = 0
     var estFaite: Bool = false
     var dateFaite: Date?
     var isArchived: Bool = false

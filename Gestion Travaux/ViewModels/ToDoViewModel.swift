@@ -63,6 +63,12 @@ final class ToDoViewModel {
                     if a.priorite.ordre != b.priorite.ordre {
                         return a.priorite.ordre < b.priorite.ordre
                     }
+                    // Story 7.5: manual order within the group; legacy rows all share 0,
+                    // so the dateCreation tiebreak preserves the historical order and
+                    // surfaces new todos (0) at the top of a normalized group.
+                    if a.ordreManuel != b.ordreManuel {
+                        return a.ordreManuel < b.ordreManuel
+                    }
                     return a.dateCreation > b.dateCreation
                 }
             todosArchives = tousLesTodos
@@ -105,12 +111,40 @@ final class ToDoViewModel {
 
     func changerPriorite(_ todo: ToDoEntity, priorite: PrioriteToDo) {
         todo.priorite = priorite
+        // Story 7.5: a repriorized todo lands at the TOP of its new group.
+        let minOrdre = todos
+            .filter { $0.priorite == priorite && $0 !== todo }
+            .map(\.ordreManuel)
+            .min() ?? 0
+        todo.ordreManuel = minOrdre - 1
         do {
             try modelContext.save()
             charger()
         } catch {
             Log.persistence.error("ToDo changerPriorite() save failed: \(error)")
             viewState = .failure("Impossible de modifier la priorité. Réessayez.")
+        }
+    }
+
+    // MARK: - Story 7.5: Manual reorder (FR87)
+
+    /// Applies a drag-reorder within a priority group and persists the new order.
+    /// Renumbers the whole group 0…n — legacy rows (all 0) get normalized on the
+    /// first drag, following their currently displayed order.
+    /// Only callable with no piece filter (enforced by moveDisabled in the view):
+    /// reordering a filtered subset would scramble the hidden rows' positions.
+    func deplacerToDo(priorite: PrioriteToDo, de source: IndexSet, vers destination: Int) {
+        var groupe = todosFiltres.filter { $0.priorite == priorite }
+        groupe.move(fromOffsets: source, toOffset: destination)
+        for (index, todo) in groupe.enumerated() {
+            todo.ordreManuel = index
+        }
+        do {
+            try modelContext.save()
+            charger()
+        } catch {
+            Log.persistence.error("ToDo deplacerToDo() save failed: \(error)")
+            viewState = .failure("Impossible d'enregistrer le nouvel ordre. Réessayez.")
         }
     }
 

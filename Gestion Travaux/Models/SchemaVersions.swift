@@ -1,15 +1,19 @@
 // SchemaVersions.swift
 // Gestion Travaux
 //
-// Story 8.2: Versioned SwiftData schema + migration plan.
+// Story 8.2 (révisé 7.5): Versioned SwiftData schema — DOCUMENTATION for now.
 //
-// WHY: the ModelContainer used to be created without a migration plan — any
-// incompatible schema change meant fatalError at launch and reinstall (data
-// loss). Story 7.4 already required a reinstall for this exact reason.
+// ⚠️ The migration plan is NOT passed to the ModelContainer (see Gestion_TravauxApp).
+// Rationale: this V1 references the LIVE model classes, so its version hash moves
+// with the code. With the plan active, an old on-device store would match no schema
+// after any in-place model change and the container would throw at launch.
 //
-// V1 describes the CURRENT models (post story 7.4: computed titre, ToDo→Tache).
-// Future schema changes must add a V2 VersionedSchema + a MigrationStage here
-// instead of changing the @Model classes in place.
+// Migration policy:
+// - ADDITIVE change (new property with a default, e.g. ToDoEntity.ordreManuel in
+//   story 7.5): no plan needed — SwiftData lightweight migration is automatic.
+// - BREAKING change (rename/retype/delete): snapshot the old models into a
+//   `GestionTravauxSchemaV1` enum namespace (duplicated classes), make V2 the live
+//   models, add a MigrationStage, and pass the plan to the ModelContainer.
 
 import Foundation
 import SwiftData

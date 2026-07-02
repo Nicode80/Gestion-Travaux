@@ -35,11 +35,15 @@ struct Gestion_TravauxApp: App {
         )
 
         do {
-            // Story 8.2: migration plan so future schema versions migrate the store
-            // instead of requiring a reinstall (data loss).
+            // Story 7.5 (correctif 8.2): NO migrationPlan here. The 8.2 plan declared
+            // the LIVE model classes as V1 — after any in-place model change, an old
+            // store matches no schema in the plan and the container throws
+            // ("unknown model version"). Additive changes with defaults (like
+            // ToDoEntity.ordreManuel) migrate automatically via SwiftData lightweight
+            // migration. Reintroduce a plan (with V1/V2 model snapshots in separate
+            // namespaces) only for a breaking change — see SchemaVersions.swift.
             let container = try ModelContainer(
                 for: schema,
-                migrationPlan: GestionTravauxMigrationPlan.self,
                 configurations: [modelConfiguration]
             )
             self.sharedModelContainer = container
