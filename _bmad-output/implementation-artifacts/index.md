@@ -1,6 +1,6 @@
 # Gestion Travaux — Index des Stories
 
-27 stories · 8 epics · 86 FRs couverts
+28 stories · 8 epics · 87 FRs couverts
 
 ---
 
@@ -90,6 +90,7 @@ Améliorations issues de la première utilisation intensive : ToDos accessibles 
 | [7.2](story-7.2-edition-fiches.md) | Édition des fiches — ToDo, Alerte, Astuce, Achat | FR72, FR73, FR74, FR75 | NFR-R5, NFR-U9 |
 | [7.3](story-7.3-pause-audio-musique.md) | Pause musique pendant la dictée — interruption AVAudioSession | FR76, FR77 | NFR-R3, NFR-P2 |
 | [7.4](story-7.4-correction-noms-titre-dynamique.md) | Correction des noms — titre dynamique de tâche et édition Pièce/Activité | FR78 | NFR-R5, NFR-U9 |
+| [7.5](story-7.5-reordonnancement-todos.md) | Réordonnancement manuel des ToDos par glisser-déposer | FR87 | NFR-U1, NFR-U6 |
 
 ---
 

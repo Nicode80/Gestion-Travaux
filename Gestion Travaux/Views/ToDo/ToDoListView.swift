@@ -61,6 +61,13 @@ struct ToDoListView: View {
                                     },
                                     onTap: { selectedToDo = todo }
                                 )
+                                // Story 7.5: reordering a piece-filtered subset would
+                                // scramble the hidden rows — drag disabled while filtered.
+                                .moveDisabled(viewModel.filtrePiece != nil)
+                            }
+                            // Story 7.5 (FR87): long-press drag to reorder within the group.
+                            .onMove { source, destination in
+                                viewModel.deplacerToDo(priorite: priorite, de: source, vers: destination)
                             }
                         }
                     }
