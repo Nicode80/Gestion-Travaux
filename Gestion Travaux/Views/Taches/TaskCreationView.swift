@@ -45,7 +45,7 @@ struct TaskCreationView: View {
                 submitSection
             }
             .scrollContentBackground(.hidden)
-            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .background(Color.backgroundBureau)
             .navigationTitle("Nouvelle tâche")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -125,7 +125,7 @@ struct TaskCreationView: View {
     private func errorSection(message: String) -> some View {
         Section {
             Text(message)
-                .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                .foregroundStyle(Color.alerte)
                 .font(.subheadline)
         }
     }
@@ -158,8 +158,8 @@ struct TaskCreationView: View {
             Image(systemName: isRecording ? "mic.fill" : "mic")
                 .foregroundStyle(
                     isRecording
-                        ? Color(hex: Constants.Couleurs.alerte)
-                        : Color(hex: Constants.Couleurs.accent)
+                        ? Color.alerte
+                        : Color.accentPrincipal
                 )
                 .symbolEffect(.pulse, isActive: isRecording)
         }

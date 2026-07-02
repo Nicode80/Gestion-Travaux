@@ -30,14 +30,14 @@ struct ToDoRowView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(todo.titre)
                         .font(.body)
-                        .foregroundStyle(todo.estFaite ? Color.secondary : Color(hex: Constants.Couleurs.textePrimaire))
+                        .foregroundStyle(todo.estFaite ? Color.secondary : Color.textePrimaire)
                         .strikethrough(todo.estFaite, color: .secondary)
                         .multilineTextAlignment(.leading)
 
                     if let nom = todo.tache?.titre {
                         Text(nom)
                             .font(.caption)
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

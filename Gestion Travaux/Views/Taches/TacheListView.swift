@@ -51,7 +51,7 @@ struct TacheListView: View {
                         ? "Aucune tâche active disponible."
                         : (filtreStatut == .active ? "Aucune tâche active." : "Aucune tâche terminée.")
                     Text(message)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                         .font(.subheadline)
                 } else {
                     ForEach(tachesFiltrees) { tache in
@@ -62,7 +62,7 @@ struct TacheListView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle("Tâches")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

@@ -68,7 +68,7 @@ struct ModeChantierView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: Constants.Couleurs.backgroundChantier)
+            Color.backgroundChantier
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -210,7 +210,7 @@ struct ModeChantierView: View {
                 if let erreur = viewModel.erreurEnregistrement {
                     Text(erreur)
                         .font(.footnote)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                        .foregroundStyle(Color.alerte)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 24)
                 }
@@ -243,7 +243,7 @@ struct ModeChantierView: View {
             // Error message
             HStack(spacing: 8) {
                 Image(systemName: "mic.slash.fill")
-                    .foregroundStyle(Color(hex: Constants.Couleurs.alerte))
+                    .foregroundStyle(Color.alerte)
                 Text("Accès au microphone refusé. Vérifie les réglages de l'app.")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.8))
@@ -275,8 +275,8 @@ struct ModeChantierView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(viewModel.saisieManuelle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.4)
-                                : Color(hex: Constants.Couleurs.accent))
+                                ? Color.texteSecondaire.opacity(0.4)
+                                : Color.accentPrincipal)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .frame(minHeight: 60)
@@ -299,7 +299,7 @@ struct ModeChantierView: View {
                     .foregroundStyle(chantier.boutonVert ? .white : .white.opacity(0.4))
                     .frame(maxWidth: .infinity, minHeight: 60)
                     .background(chantier.boutonVert
-                                ? Color(hex: Constants.Couleurs.accent).opacity(0.35)
+                                ? Color.accentPrincipal.opacity(0.35)
                                 : .white.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
             }
@@ -336,7 +336,7 @@ struct ModeChantierView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .background(Color(hex: Constants.Couleurs.accent).opacity(0.9))
+                .background(Color.accentPrincipal.opacity(0.9))
                 .clipShape(Capsule())
                 .padding(.bottom, 100)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -355,7 +355,7 @@ struct ModeChantierView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .background(Color(hex: Constants.Couleurs.alerte).opacity(0.9))
+                .background(Color.alerte.opacity(0.9))
                 .clipShape(Capsule())
                 .padding(.bottom, 100)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -382,13 +382,13 @@ struct ModeChantierView: View {
                     VStack(spacing: 20) {
                         Image(systemName: "tray")
                             .font(.system(size: 48))
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                         Text("Aucune autre tâche active")
                             .font(.headline)
-                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            .foregroundStyle(Color.textePrimaire)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                    .background(Color.backgroundBureau)
                 } else {
                     List(autresTachesActives, id: \.persistentModelID) { tache in
                         Button {
@@ -399,11 +399,11 @@ struct ModeChantierView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(tache.titre)
                                         .font(.body)
-                                        .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                                        .foregroundStyle(Color.textePrimaire)
                                     if let action = tache.prochaineAction, !action.isEmpty {
                                         Text(action)
                                             .font(.caption)
-                                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                            .foregroundStyle(Color.texteSecondaire)
                                     }
                                 }
                                 Spacer()
@@ -413,12 +413,12 @@ struct ModeChantierView: View {
                     }
                     .listStyle(.insetGrouped)
                     .scrollContentBackground(.hidden)
-                    .background(Color(hex: Constants.Couleurs.backgroundBureau))
+                    .background(Color.backgroundBureau)
                 }
             }
             .navigationTitle("Changer de tâche")
             .navigationBarTitleDisplayMode(.inline)
-            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .background(Color.backgroundBureau)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annuler") { showTaskSwitch = false }
@@ -471,7 +471,7 @@ struct ModeChantierView: View {
                     viewModel.toggleEnregistrementAction(chantier: chantier)
                 }
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color(hex: Constants.Couleurs.accent))
+                .foregroundStyle(Color.accentPrincipal)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)

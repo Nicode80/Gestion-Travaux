@@ -21,21 +21,21 @@ struct CriticitéSheet: View {
             niveauButton(
                 title: "Critique",
                 icon: "exclamationmark.triangle.fill",
-                couleur: Color(hex: Constants.Couleurs.alerte),
+                couleur: Color.alerte,
                 niveau: .critique
             )
 
             niveauButton(
                 title: "Importante",
                 icon: "lightbulb.fill",
-                couleur: Color(hex: Constants.Couleurs.astuce),
+                couleur: Color.astuce,
                 niveau: .importante
             )
 
             niveauButton(
                 title: "Utile",
                 icon: "checkmark.circle.fill",
-                couleur: Color(hex: Constants.Couleurs.texteSecondaire),
+                couleur: Color.texteSecondaire,
                 niveau: .utile
             )
 

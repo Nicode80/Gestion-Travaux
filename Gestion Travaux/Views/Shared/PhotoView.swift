@@ -20,7 +20,7 @@ struct PhotoView: View {
                     .resizable()
                     .scaledToFit()
             } else {
-                Color(hex: Constants.Couleurs.backgroundCard)
+                Color.backgroundCard
                     .overlay {
                         Image(systemName: "photo")
                             .foregroundStyle(.secondary)

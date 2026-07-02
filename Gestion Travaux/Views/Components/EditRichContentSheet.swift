@@ -71,7 +71,7 @@ struct EditRichContentSheet: View {
                         TextEditor(text: $texteNouveauBloc)
                             .frame(minHeight: 80)
                             .padding(8)
-                            .background(Color(hex: Constants.Couleurs.backgroundCard))
+                            .background(Color.backgroundCard)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
 
@@ -88,7 +88,7 @@ struct EditRichContentSheet: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(Color(hex: Constants.Couleurs.backgroundBureau))
+            .background(Color.backgroundBureau)
             .navigationTitle(titre)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -123,7 +123,7 @@ struct EditRichContentSheet: View {
             if textBlocks.count > 1 {
                 Text("Texte")
                     .font(.caption.bold())
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
             }
             TextEditor(text: Binding(
                 get: { texteParBloc[block.id] ?? "" },
@@ -131,7 +131,7 @@ struct EditRichContentSheet: View {
             ))
             .frame(minHeight: 80)
             .padding(8)
-            .background(Color(hex: Constants.Couleurs.backgroundCard))
+            .background(Color.backgroundCard)
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
@@ -142,7 +142,7 @@ struct EditRichContentSheet: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Photo")
                     .font(.caption.bold())
-                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                    .foregroundStyle(Color.texteSecondaire)
                 PhotoView(path: path)
                     .frame(maxWidth: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -156,7 +156,7 @@ struct EditRichContentSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Niveau")
                 .font(.caption.bold())
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
 
             HStack(spacing: 8) {
                 ForEach(AstuceLevel.allCases, id: \.self) { lvl in
@@ -170,9 +170,9 @@ struct EditRichContentSheet: View {
         let isSelected = niveau == lvl
         let color: Color = {
             switch lvl {
-            case .critique:   return Color(hex: Constants.Couleurs.astuce)
-            case .importante: return Color(hex: Constants.Couleurs.astuceImportante)
-            case .utile:      return Color(hex: Constants.Couleurs.astuceUtile)
+            case .critique:   return Color.astuce
+            case .importante: return Color.astuceImportante
+            case .utile:      return Color.astuceUtile
             }
         }()
         let emoji: String = {
@@ -188,8 +188,8 @@ struct EditRichContentSheet: View {
         .font(.caption.weight(isSelected ? .bold : .regular))
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(isSelected ? color.opacity(0.2) : Color(hex: Constants.Couleurs.backgroundCard))
-        .foregroundStyle(isSelected ? color : Color(hex: Constants.Couleurs.textePrimaire))
+        .background(isSelected ? color.opacity(0.2) : Color.backgroundCard)
+        .foregroundStyle(isSelected ? color : Color.textePrimaire)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(isSelected ? color : Color.clear, lineWidth: 1.5)

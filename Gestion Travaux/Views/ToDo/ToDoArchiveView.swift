@@ -40,7 +40,7 @@ struct ToDoArchiveView: View {
             if archives.isEmpty {
                 Section {
                     Text("Aucun ToDo complété pour l'instant.")
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                         .font(.subheadline)
                 }
             } else {
@@ -58,13 +58,13 @@ struct ToDoArchiveView: View {
                                     if let nom = todo.tache?.titre {
                                         Text(nom)
                                             .font(.caption)
-                                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                            .foregroundStyle(Color.texteSecondaire)
                                     }
                                     Spacer()
                                     if let date = todo.dateFaite {
                                         Text(date.formatted(.relative(presentation: .named)))
                                             .font(.caption)
-                                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                            .foregroundStyle(Color.texteSecondaire)
                                     }
                                 }
                             }
@@ -79,7 +79,7 @@ struct ToDoArchiveView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle("Archive ToDo")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { viewModel.charger() }
@@ -96,8 +96,8 @@ struct ToDoArchiveView: View {
         .font(.caption.weight(isSelected ? .bold : .regular))
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(isSelected ? Color(hex: Constants.Couleurs.accent) : Color(hex: Constants.Couleurs.backgroundCard))
-        .foregroundStyle(isSelected ? .white : Color(hex: Constants.Couleurs.textePrimaire))
+        .background(isSelected ? Color.accentPrincipal : Color.backgroundCard)
+        .foregroundStyle(isSelected ? .white : Color.textePrimaire)
         .clipShape(Capsule())
     }
 }

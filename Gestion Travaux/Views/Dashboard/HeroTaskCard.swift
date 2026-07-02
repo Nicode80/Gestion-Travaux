@@ -31,25 +31,25 @@ struct HeroTaskCard: View {
                     VStack(alignment: .center, spacing: 6) {
                         Text(tache.titre)
                             .font(.title3.bold())
-                            .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                            .foregroundStyle(Color.textePrimaire)
                             .multilineTextAlignment(.center)
 
                         HStack(alignment: .top, spacing: 6) {
                             Image(systemName: "arrow.right")
                                 .font(.caption)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .foregroundStyle(Color.texteSecondaire)
                                 .padding(.top, 2)
                             if let action = tache.prochaineAction, !action.isEmpty {
                                 Text(action)
                                     .font(.subheadline)
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                    .foregroundStyle(Color.texteSecondaire)
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(2)
                             } else {
                                 Text("Aucune prochaine action")
                                     .font(.subheadline)
                                     .italic()
-                                    .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.5))
+                                    .foregroundStyle(Color.texteSecondaire.opacity(0.5))
                             }
                         }
                     }
@@ -58,7 +58,7 @@ struct HeroTaskCard: View {
                     if onVoirDetail != nil {
                         Image(systemName: "chevron.right")
                             .font(.subheadline)
-                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                            .foregroundStyle(Color.texteSecondaire)
                             .padding(.top, 4)
                     }
                 }
@@ -72,10 +72,10 @@ struct HeroTaskCard: View {
                         .font(.headline.bold())
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
-                        .background(Color(hex: Constants.Couleurs.accent))
+                        .background(Color.accentPrincipal)
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .shadow(color: Color(hex: Constants.Couleurs.accent).opacity(0.4), radius: 6, x: 0, y: 3)
+                        .shadow(color: Color.accentPrincipal.opacity(0.4), radius: 6, x: 0, y: 3)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Lancer le mode chantier")
@@ -83,7 +83,7 @@ struct HeroTaskCard: View {
                 Button(action: onChanger) {
                     Label("Changer de tâche", systemImage: "rectangle.2.swap")
                         .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                 }
                 .buttonStyle(.plain)
                 .frame(minHeight: 44)
@@ -92,7 +92,7 @@ struct HeroTaskCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(16)
-        .background(Color(hex: Constants.Couleurs.backgroundCard))
+        .background(Color.backgroundCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -102,24 +102,24 @@ struct HeroTaskCard: View {
         VStack(spacing: 16) {
             Image(systemName: "house")
                 .font(.system(size: 48))
-                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                .foregroundStyle(Color.texteSecondaire)
 
             Text("Aucune tâche active")
                 .font(.title3.bold())
-                .foregroundStyle(Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(Color.textePrimaire)
 
             Button(action: onCreer) {
                 Label("Créer une tâche", systemImage: "plus")
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(Color(hex: Constants.Couleurs.accent))
+            .tint(Color.accentPrincipal)
             .frame(minHeight: 60)
             .accessibilityLabel("Créer une tâche")
         }
         .frame(maxWidth: .infinity)
         .padding(20)
-        .background(Color(hex: Constants.Couleurs.backgroundCard))
+        .background(Color.backgroundCard)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

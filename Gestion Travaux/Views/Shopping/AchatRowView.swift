@@ -13,12 +13,12 @@ struct AchatRowView: View {
             // Checkbox
             Image(systemName: achat.achete ? "checkmark.circle.fill" : "circle")
                 .font(.title3)
-                .foregroundStyle(achat.achete ? Color(hex: Constants.Couleurs.accent) : Color.secondary)
+                .foregroundStyle(achat.achete ? Color.accentPrincipal : Color.secondary)
 
             Text(achat.texte)
                 .font(.body)
                 .strikethrough(achat.achete, color: .secondary)
-                .foregroundStyle(achat.achete ? Color.secondary : Color(hex: Constants.Couleurs.textePrimaire))
+                .foregroundStyle(achat.achete ? Color.secondary : Color.textePrimaire)
         }
         .opacity(achat.achete ? 0.6 : 1.0)
         .frame(minHeight: 44) // NFR-U1

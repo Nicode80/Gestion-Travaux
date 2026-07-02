@@ -71,7 +71,7 @@ struct PieceDetailView: View {
                 if todosVides {
                     Text("Pas encore de To Do pour cette pièce.")
                         .font(.subheadline)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                 } else {
                     ForEach(todosUrgents) { todo in
                         ToDoRowView(
@@ -95,7 +95,7 @@ struct PieceDetailView: View {
                         } label: {
                             Text("\(todosAutres.count) autre\(todosAutres.count > 1 ? "s" : "")")
                                 .font(.subheadline)
-                                .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                                .foregroundStyle(Color.texteSecondaire)
                         }
                     }
                 }
@@ -130,7 +130,7 @@ struct PieceDetailView: View {
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color(hex: Constants.Couleurs.backgroundBureau))
+        .background(Color.backgroundBureau)
         .navigationTitle(piece.nom)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

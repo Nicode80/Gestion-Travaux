@@ -69,25 +69,25 @@ struct SwipeClassifier: View {
                 ArcCrescentView(
                     direction: .left,
                     label: "ALERTE",
-                    color: Color(hex: Constants.Couleurs.alerte),
+                    color: Color.alerte,
                     isActive: activeDirection == .left
                 )
                 ArcCrescentView(
                     direction: .right,
                     label: "ASTUCE",
-                    color: Color(hex: Constants.Couleurs.astuce),
+                    color: Color.astuce,
                     isActive: activeDirection == .right
                 )
                 ArcCrescentView(
                     direction: .up,
                     label: "TO DO",
-                    color: Color(hex: Constants.Couleurs.texteSecondaire),
+                    color: Color.texteSecondaire,
                     isActive: activeDirection == .up
                 )
                 ArcCrescentView(
                     direction: .down,
                     label: "ACHAT",
-                    color: Color(hex: Constants.Couleurs.achat),
+                    color: Color.achat,
                     isActive: activeDirection == .down
                 )
 
@@ -131,10 +131,10 @@ struct SwipeClassifier: View {
 
     private var cardShadow: Color {
         switch activeDirection {
-        case .left:  Color(hex: Constants.Couleurs.alerte).opacity(0.45)
-        case .right: Color(hex: Constants.Couleurs.astuce).opacity(0.45)
-        case .up:    Color(hex: Constants.Couleurs.texteSecondaire).opacity(0.45)
-        case .down:  Color(hex: Constants.Couleurs.achat).opacity(0.45)
+        case .left:  Color.alerte.opacity(0.45)
+        case .right: Color.astuce.opacity(0.45)
+        case .up:    Color.texteSecondaire.opacity(0.45)
+        case .down:  Color.achat.opacity(0.45)
         case nil:    Color.black.opacity(0.12)
         }
     }

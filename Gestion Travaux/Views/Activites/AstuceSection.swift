@@ -26,7 +26,7 @@ struct AstuceSection: View {
                         .foregroundStyle(color)
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        .foregroundStyle(Color.texteSecondaire)
                 }
             }
             .padding(.horizontal)
