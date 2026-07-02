@@ -6,6 +6,7 @@
 
 import Foundation
 import SwiftData
+import os
 
 @Observable
 @MainActor
@@ -37,6 +38,7 @@ final class ActiviteDetailViewModel {
         do {
             try modelContext.save()
         } catch {
+            Log.persistence.error("ActiviteDetail renommerActivite() save failed: \(error)")
             editError = "Impossible de sauvegarder la modification. Réessayez."
         }
     }
@@ -48,6 +50,7 @@ final class ActiviteDetailViewModel {
             try modelContext.save()
             load()
         } catch {
+            Log.persistence.error("ActiviteDetail modifierAstuce() save failed: \(error)")
             editError = "Impossible de modifier cette fiche. Réessayez."
         }
     }

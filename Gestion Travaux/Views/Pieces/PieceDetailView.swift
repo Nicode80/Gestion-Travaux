@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 struct PieceDetailView: View {
 
@@ -173,6 +174,7 @@ struct PieceDetailView: View {
                     do {
                         try modelContext.save()
                     } catch {
+                        Log.persistence.error("PieceDetail rename save failed: \(error)")
                         editNomPieceError = "Impossible de sauvegarder la modification. Réessayez."
                     }
                 },
@@ -199,6 +201,7 @@ struct PieceDetailView: View {
                     try modelContext.save()
                     editNomPieceError = nil
                 } catch {
+                    Log.persistence.error("PieceDetail rename retry save failed: \(error)")
                     editNomPieceError = "Impossible de sauvegarder la modification. Réessayez."
                 }
             }

@@ -770,9 +770,12 @@ struct ModeChantierViewModelTests {
         let allOrders = blocks.map(\.order)
         #expect(Set(allOrders).count == allOrders.count, "Tous les blocs doivent avoir un order distinct")
 
-        // Recording starts before any photo, so text must logically precede the photo
+        // INV1 semantics: the photo was taken BEFORE any speech was transcribed, so the
+        // speech arriving after it belongs to the segment AFTER the photo. Chronological
+        // order photo → texte must be preserved in the block orders.
+        // (Assertion was inverted pre-INV1 and left stale — fixed 2026-07-03.)
         guard let textOrder = textBlocks.first?.order, let photoOrder = photoBlocks.first?.order else { return }
-        #expect(textOrder < photoOrder, "Le bloc texte (enregistrement) doit précéder le bloc photo")
+        #expect(photoOrder < textOrder, "Le bloc photo (pris avant la parole) doit précéder le bloc texte")
     }
 
     @Test("finaliserCapture keeps photo-only capture (no transcription text)")

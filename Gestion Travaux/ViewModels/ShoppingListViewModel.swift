@@ -6,6 +6,7 @@
 
 import Foundation
 import SwiftData
+import os
 
 @Observable
 @MainActor
@@ -31,6 +32,7 @@ final class ShoppingListViewModel {
             achats = try modelContext.fetch(descriptor)
             viewState = .success(())
         } catch {
+            Log.persistence.error("ShoppingList load() fetch failed: \(error)")
             viewState = .failure("Impossible de charger la liste de courses. Réessayez.")
         }
     }

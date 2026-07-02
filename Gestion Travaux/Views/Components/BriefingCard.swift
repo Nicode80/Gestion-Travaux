@@ -10,6 +10,7 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 struct BriefingCard: View {
 
@@ -94,6 +95,7 @@ struct BriefingCard: View {
                     do {
                         try modelContext.save()
                     } catch {
+                        Log.persistence.error("BriefingCard alerte edit save failed: \(error)")
                         editError = "Impossible de modifier cette alerte. Réessayez."
                     }
                 }

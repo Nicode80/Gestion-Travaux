@@ -145,6 +145,7 @@ final class TacheDetailViewModel {
         do {
             try modelContext.save()
         } catch {
+            Self.logger.error("modifierTitreToDo() save failed: \(error)")
             errorMessage = "Impossible de modifier cette fiche. Réessayez."
         }
     }
@@ -154,6 +155,7 @@ final class TacheDetailViewModel {
         do {
             try modelContext.save()
         } catch {
+            Self.logger.error("modifierTexteAlerte() save failed: \(error)")
             errorMessage = "Impossible de modifier cette fiche. Réessayez."
         }
     }

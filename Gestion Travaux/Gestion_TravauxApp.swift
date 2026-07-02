@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 @main
 struct Gestion_TravauxApp: App {
@@ -57,6 +58,18 @@ struct Gestion_TravauxApp: App {
 
         } catch {
             fatalError("Impossible de créer le ModelContainer : \(error)")
+        }
+
+        // Heartbeat log: guarantees at least one line per launch in Console.app,
+        // so an empty com.gestiontravaux stream means "logging broken", never "all good".
+        Log.app.info("App launched — ModelContainer ready")
+
+        // Sweep orphaned photo files off the main thread — photos whose referencing
+        // entity is gone would otherwise stay in Documents/captures/ forever.
+        // The 24 h grace period inside the sweep protects freshly written files.
+        let container = self.sharedModelContainer
+        Task.detached(priority: .utility) {
+            _ = PhotoCleanupService.nettoyerPhotosOrphelines(container: container)
         }
     }
 

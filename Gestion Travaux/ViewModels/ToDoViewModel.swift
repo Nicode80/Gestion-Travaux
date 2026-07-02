@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import SwiftUI
+import os
 
 @Observable
 @MainActor
@@ -75,6 +76,7 @@ final class ToDoViewModel {
             appliquerFiltres()
             viewState = .success(())
         } catch {
+            Log.persistence.error("ToDo charger() fetch failed: \(error)")
             viewState = .failure("Impossible de charger les ToDo. Réessayez.")
         }
     }
@@ -107,6 +109,7 @@ final class ToDoViewModel {
             try modelContext.save()
             charger()
         } catch {
+            Log.persistence.error("ToDo changerPriorite() save failed: \(error)")
             viewState = .failure("Impossible de modifier la priorité. Réessayez.")
         }
     }
@@ -122,6 +125,7 @@ final class ToDoViewModel {
             try modelContext.save()
             charger()
         } catch {
+            Log.persistence.error("ToDo ajouterToDo() save failed: \(error)")
             viewState = .failure("Impossible de créer le To Do. Réessayez.")
         }
     }
@@ -142,6 +146,7 @@ final class ToDoViewModel {
             try modelContext.save()
             charger()
         } catch {
+            Log.persistence.error("ToDo modifierTitre() save failed: \(error)")
             editError = "Impossible de modifier cette fiche. Réessayez."
         }
     }
@@ -155,6 +160,7 @@ final class ToDoViewModel {
         do {
             try modelContext.save()
         } catch {
+            Log.persistence.error("ToDo toggleComplete() save failed: \(error)")
             viewState = .failure("Impossible d'enregistrer la complétion. Réessayez.")
             return
         }
@@ -164,6 +170,7 @@ final class ToDoViewModel {
             do {
                 try modelContext.save()
             } catch {
+                Log.persistence.error("ToDo toggleComplete() archive save failed: \(error)")
                 viewState = .failure("Impossible d'archiver la tâche. Réessayez.")
             }
             withAnimation(.easeOut(duration: 0.3)) {

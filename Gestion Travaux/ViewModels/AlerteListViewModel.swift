@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import os
 
 @Observable
 @MainActor
@@ -38,6 +39,7 @@ final class AlerteListViewModel {
             try modelContext.save()
             load()
         } catch {
+            Log.persistence.error("AlerteList modifierBlocks() save failed: \(error)")
             editError = "Impossible de modifier cette fiche. Réessayez."
         }
     }
@@ -52,6 +54,7 @@ final class AlerteListViewModel {
         do {
             all = try modelContext.fetch(descriptor)
         } catch {
+            Log.persistence.error("AlerteList load() fetch failed: \(error)")
             loadError = "Impossible de charger les alertes."
             alertesGroupedByTache = []
             return

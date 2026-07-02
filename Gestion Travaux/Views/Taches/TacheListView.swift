@@ -10,6 +10,7 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 struct TacheListView: View {
 
@@ -131,6 +132,7 @@ struct TacheListView: View {
             let toutes = try modelContext.fetch(FetchDescriptor<TacheEntity>())
             taches = toutes.trieeParSession()
         } catch {
+            Log.persistence.error("TacheList charger() fetch failed: \(error)")
             showLoadError = true
         }
     }

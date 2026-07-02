@@ -110,4 +110,49 @@ struct PhotoServiceTests {
         #expect(fileURL.path.hasPrefix(tempDir.path))
         #expect(!fileURL.path.contains("Pictures"))
     }
+
+    // MARK: Downscaling
+
+    @Test("redimensionner() shrinks a large image to dimensionMax preserving aspect ratio")
+    func redimensionneGrandeImage() {
+        let grande = UIGraphicsImageRenderer(size: CGSize(width: 4000, height: 3000))
+            .image { ctx in
+                UIColor.blue.setFill()
+                ctx.fill(CGRect(x: 0, y: 0, width: 4000, height: 3000))
+            }
+
+        let reduite = PhotoService.redimensionner(grande, dimensionMax: 2048)
+
+        let cote = max(reduite.size.width * reduite.scale, reduite.size.height * reduite.scale)
+        #expect(cote <= 2048)
+        // Aspect ratio 4:3 preserved (±1 px rounding)
+        let ratio = (reduite.size.width * reduite.scale) / (reduite.size.height * reduite.scale)
+        #expect(abs(ratio - 4.0 / 3.0) < 0.01)
+    }
+
+    @Test("redimensionner() returns small images untouched")
+    func petiteImageIntacte() {
+        let petite = makeTestImage()
+        let resultat = PhotoService.redimensionner(petite, dimensionMax: 2048)
+        #expect(resultat === petite)
+    }
+
+    @Test("sauvegarder() writes a downscaled JPEG for oversized images")
+    func sauvegardeReduitLesGrandesPhotos() throws {
+        let tempDir = try makeTempDir()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let grande = UIGraphicsImageRenderer(size: CGSize(width: 3000, height: 3000))
+            .image { ctx in
+                UIColor.red.setFill()
+                ctx.fill(CGRect(x: 0, y: 0, width: 3000, height: 3000))
+            }
+
+        let service = PhotoService(baseURL: tempDir)
+        let chemin = try service.sauvegarder(grande)
+
+        let data = try Data(contentsOf: tempDir.appendingPathComponent(chemin))
+        let relue = try #require(UIImage(data: data))
+        #expect(max(relue.size.width, relue.size.height) <= Constants.Photos.dimensionMax)
+    }
 }

@@ -14,6 +14,7 @@ import Foundation
 import SwiftData
 @preconcurrency import Speech
 @preconcurrency import AVFoundation
+import os
 
 // MARK: - Supporting types (Story 3.3 / 6.1)
 
@@ -164,6 +165,7 @@ final class ClassificationViewModel {
             captures = loaded
             viewState = .success(())
         } catch {
+            Log.classification.error("charger() fetch failed: \(error)")
             viewState = .failure("Impossible de charger les captures. Réessayez.")
         }
     }
@@ -175,7 +177,11 @@ final class ClassificationViewModel {
     /// NFR-R5: SwiftData synchronous save targets ≤ 100ms.
     func classify(_ capture: CaptureEntity, as type: ClassificationType) {
         let blocksData = capture.blocksData
-        let capturePreview = String(capture.transcription.prefix(80))
+        // Photo-only captures have an empty transcription — fall back to a dated
+        // label so previews, ToDo titles and Achat texts are never blank.
+        let capturePreview = String(
+            Self.titreOuFallback(capture.transcription, date: capture.createdAt).prefix(80)
+        )
         let tache = capture.tache
         let activite = capture.tache?.activite
 
@@ -206,7 +212,7 @@ final class ClassificationViewModel {
                     return
                 }
                 let todo = ToDoEntity(
-                    titre: capture.transcription.isEmpty ? capturePreview : capture.transcription,
+                    titre: Self.titreOuFallback(capture.transcription, date: capture.createdAt),
                     priorite: priorite,
                     tache: tache,
                     source: .swipeGame,
@@ -221,7 +227,9 @@ final class ClassificationViewModel {
                     classificationError = "Liste de courses introuvable. Réessayez."
                     return
                 }
-                let achat = AchatEntity(texte: capture.transcription)
+                let achat = AchatEntity(
+                    texte: Self.titreOuFallback(capture.transcription, date: capture.createdAt)
+                )
                 achat.tacheOrigine = tache
                 achat.listeDeCourses = ldc
                 modelContext.insert(achat)
@@ -244,6 +252,7 @@ final class ClassificationViewModel {
 
             charger()
         } catch {
+            Log.classification.error("classify() save failed: \(error)")
             classificationError = "Impossible de classifier. Réessayez."
         }
     }
@@ -282,10 +291,10 @@ final class ClassificationViewModel {
                     return
                 }
                 let todo = ToDoEntity(
-                    titre: item.blocksData.toContentBlocks()
-                        .filter { $0.type == .text }
-                        .compactMap { $0.text }
-                        .joined(separator: " "),
+                    titre: Self.titreOuFallback(
+                        Self.transcriptionDepuisBlocks(item.blocksData),
+                        date: Self.dateDepuisBlocks(item.blocksData)
+                    ),
                     priorite: priorite,
                     tache: tache,
                     source: .swipeGame,
@@ -300,11 +309,12 @@ final class ClassificationViewModel {
                     reclassifyError = "Liste de courses introuvable. Réessayez."
                     return  // Safe: old entity untouched
                 }
-                let transcription = item.blocksData.toContentBlocks()
-                    .filter { $0.type == .text }
-                    .compactMap { $0.text }
-                    .joined(separator: " ")
-                let achat = AchatEntity(texte: transcription)
+                let achat = AchatEntity(
+                    texte: Self.titreOuFallback(
+                        Self.transcriptionDepuisBlocks(item.blocksData),
+                        date: Self.dateDepuisBlocks(item.blocksData)
+                    )
+                )
                 achat.tacheOrigine = item.tache
                 achat.listeDeCourses = ldc
                 modelContext.insert(achat)
@@ -333,6 +343,7 @@ final class ClassificationViewModel {
                 activite: item.activite
             )
         } catch {
+            Log.classification.error("reclassify() save failed: \(error)")
             reclassifyError = "Impossible de reclassifier. Réessayez."
         }
     }
@@ -353,6 +364,7 @@ final class ClassificationViewModel {
                 return false
             }
         } catch {
+            Log.classification.error("validateClassifications() fetch failed: \(error)")
             validationError = "Erreur technique lors de la validation. Réessayez."
             return false
         }
@@ -372,6 +384,7 @@ final class ClassificationViewModel {
             try modelContext.save()
             checkoutError = nil
         } catch {
+            Log.classification.error("saveProchaineAction() save failed: \(error)")
             checkoutError = "Impossible d'enregistrer la prochaine action. Réessayez."
             return
         }
@@ -390,6 +403,7 @@ final class ClassificationViewModel {
             do {
                 try modelContext.save()
             } catch {
+                Log.classification.error("saveProchaineAction() ToDo save failed: \(error)")
                 classificationError = "Impossible d'enregistrer le To Do. Réessayez."
             }
         }
@@ -402,6 +416,7 @@ final class ClassificationViewModel {
         do {
             try modelContext.save()
         } catch {
+            Log.classification.error("upgradeToDoToUrgent() save failed: \(error)")
             classificationError = "Impossible de mettre à jour la priorité. Réessayez."
         }
         pendingToDoDecision = nil
@@ -418,6 +433,7 @@ final class ClassificationViewModel {
         do {
             try modelContext.save()
         } catch {
+            Log.classification.error("creerToDoSepare() save failed: \(error)")
             classificationError = "Impossible de créer le To Do. Réessayez."
         }
         pendingToDoDecision = nil
@@ -479,6 +495,7 @@ final class ClassificationViewModel {
             guard !todosForTache.isEmpty else { return nil }
             return todosForTache.first { ClassificationViewModel.titresSimilaires(titre, $0.titre) }
         } catch {
+            Log.classification.error("findSimilarToDo() fetch failed: \(error)")
             classificationError = "Impossible de vérifier les ToDo existants. Réessayez."
             return nil
         }
@@ -495,6 +512,7 @@ final class ClassificationViewModel {
             try modelContext.save()
             checkoutError = nil
         } catch {
+            Log.classification.error("markTaskAsTerminee() save failed: \(error)")
             tache.statut = ancienStatut
             tache.prochaineAction = ancienneProchaineAction
             checkoutError = "Impossible de terminer la tâche. Réessayez."
@@ -592,6 +610,7 @@ final class ClassificationViewModel {
                     self.resetSilenceTimer(audioState: audioState)
                 }
             } catch {
+                Log.audio.error("beginVoiceCapture() audio setup failed: \(error)")
                 await MainActor.run { [weak self] in
                     self?.stopVoiceInputForProchaineAction()
                     self?.checkoutError = "Impossible de démarrer l'écoute. Vérifiez les permissions microphone."
@@ -612,6 +631,28 @@ final class ClassificationViewModel {
     /// Removes the CaptureEntity from SwiftData.
     private func deleteCapture(_ capture: CaptureEntity) {
         modelContext.delete(capture)
+    }
+
+    /// Returns the trimmed transcription, or a dated photo label when it is empty.
+    /// Photo-only captures are valid (finaliserCapture keeps them) but classifying
+    /// them as ToDo/Achat used to produce entities with a blank titre/texte.
+    private static func titreOuFallback(_ transcription: String, date: Date) -> String {
+        let trimmed = transcription.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "📷 Photo du \(date.shortFrench)" : trimmed
+    }
+
+    /// Aggregated text of all text blocks (same rule as CaptureEntity.transcription).
+    private static func transcriptionDepuisBlocks(_ blocksData: Data) -> String {
+        blocksData.toContentBlocks()
+            .filter { $0.type == .text }
+            .compactMap { $0.text }
+            .joined(separator: " ")
+    }
+
+    /// Earliest block timestamp — stands in for the capture date during reclassify,
+    /// where the original CaptureEntity no longer exists.
+    private static func dateDepuisBlocks(_ blocksData: Data) -> Date {
+        blocksData.toContentBlocks().map(\.timestamp).min() ?? Date()
     }
 }
 

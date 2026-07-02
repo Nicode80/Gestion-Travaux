@@ -23,7 +23,11 @@ enum Constants {
 
     enum Photos {
         /// Subdirectory inside Documents/ where captured photos are stored.
-        static let repertoireCaptures = "captures"
+        /// nonisolated: read from the background orphan sweep (PhotoCleanupService).
+        nonisolated static let repertoireCaptures = "captures"
+        /// Longest side after downscaling at save time. 2048 px is plenty for
+        /// chantier documentation and divides file size by ~4 vs native camera.
+        static let dimensionMax: CGFloat = 2048
     }
 
     enum SeasonNote {
