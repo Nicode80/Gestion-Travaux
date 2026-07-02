@@ -2,7 +2,7 @@
 story: "7.5"
 epic: 7
 title: "Réordonnancement manuel des ToDos par glisser-déposer"
-status: review
+status: done
 frs: [FR87]
 nfrs: [NFR-U1, NFR-U6]
 ---
