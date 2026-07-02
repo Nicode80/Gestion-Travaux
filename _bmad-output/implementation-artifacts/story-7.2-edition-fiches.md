@@ -2,7 +2,7 @@
 story: "7.2"
 epic: 7
 title: "Édition des fiches — ToDo, Alerte, Astuce, Achat"
-status: ready
+status: done
 frs: [FR72, FR73, FR74, FR75]
 nfrs: [NFR-R5, NFR-U9]
 ---

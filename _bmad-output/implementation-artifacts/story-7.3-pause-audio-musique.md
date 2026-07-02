@@ -2,7 +2,7 @@
 story: "7.3"
 epic: 7
 title: "Pause musique pendant la dictée — interruption audio AVAudioSession"
-status: ready
+status: done
 frs: [FR76, FR77]
 nfrs: [NFR-R3, NFR-P2]
 ---
