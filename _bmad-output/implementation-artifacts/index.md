@@ -1,6 +1,6 @@
 # Gestion Travaux — Index des Stories
 
-22 stories · 7 epics · 78 FRs couverts
+27 stories · 8 epics · 86 FRs couverts
 
 ---
 
@@ -90,6 +90,20 @@ Améliorations issues de la première utilisation intensive : ToDos accessibles 
 | [7.2](story-7.2-edition-fiches.md) | Édition des fiches — ToDo, Alerte, Astuce, Achat | FR72, FR73, FR74, FR75 | NFR-R5, NFR-U9 |
 | [7.3](story-7.3-pause-audio-musique.md) | Pause musique pendant la dictée — interruption AVAudioSession | FR76, FR77 | NFR-R3, NFR-P2 |
 | [7.4](story-7.4-correction-noms-titre-dynamique.md) | Correction des noms — titre dynamique de tâche et édition Pièce/Activité | FR78 | NFR-R5, NFR-U9 |
+
+---
+
+## Epic 8 — Consolidation & Robustesse *(ajouté 2026-07-03)*
+
+Issu d'une revue de code globale du MVP (2026-07-01) pendant la phase de test terrain, plus les enseignements de l'extraction de la base de données réelle du device : observabilité, sécurité des données, corrections UX terrain et dette technique audio.
+
+| Story | Titre | FRs | NFRs |
+|-------|-------|-----|------|
+| [8.1](story-8.1-consolidation-logging-photos-titres.md) | Consolidation — logging centralisé, nettoyage photos, titres fallback, resize *(rétro-documentée, hors process)* | FR79–82 | NFR-R3, NFR-P10 |
+| [8.2](story-8.2-export-donnees-migration-schema.md) | Export des données et plan de migration SwiftData | FR83, FR84 | NFR-R7 |
+| [8.3](story-8.3-polish-dictee-terrain.md) | Polish dictée terrain — suppression de captures et nettoyage prochaine action | FR85, FR86 | NFR-U6 |
+| [8.4](story-8.4-service-dictee-partage.md) | Service de dictée one-shot partagé — dé-duplication audio | — | NFR-R3 |
+| [8.5](story-8.5-points-mineurs-revue.md) | Points mineurs de la revue — couleurs, batterie, cleanup | — | NFR-P10 |
 
 ---
 

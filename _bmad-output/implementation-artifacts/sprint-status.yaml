@@ -104,4 +104,16 @@ development_status:
   7-1-todos-dans-la-vue-tache: done
   7-2-edition-des-fiches-todo-alerte-astuce-achat: review
   7-3-pause-musique-pendant-la-dictee: review
-  7-4-correction-des-noms-titre-dynamique-piece-activite: review
+  # 7.4 mergée sur master via PR #26 (2026-07-02), validée sur device
+  7-4-correction-des-noms-titre-dynamique-piece-activite: done
+
+  # ─────────────────────────────────────────────────────
+  # Epic 8 : Consolidation & Robustesse (revue de code 2026-07-01)
+  # ─────────────────────────────────────────────────────
+  epic-8: in-progress
+  # 8.1 réalisée hors process (revue de code), rétro-documentée — PR #27
+  8-1-consolidation-logging-photos-titres-resize: done
+  8-2-export-donnees-et-plan-migration-schema: backlog
+  8-3-polish-dictee-terrain: backlog
+  8-4-service-dictee-one-shot-partage: backlog
+  8-5-points-mineurs-revue: backlog
