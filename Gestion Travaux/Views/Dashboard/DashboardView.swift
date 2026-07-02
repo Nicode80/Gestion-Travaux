@@ -29,6 +29,9 @@ struct DashboardView: View {
     @State private var showNoteSaison = false
     // QF1: direct access to TacheDetailView from the hero chevron.
     @State private var showHeroDetail = false
+    // Story 8.2: export archive URL — non-nil presents the share sheet.
+    @State private var exportURL: URL?
+    @State private var exportEnCours = false
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -135,6 +138,33 @@ struct DashboardView: View {
             .sheet(isPresented: $showNoteSaison, onDismiss: { viewModel.charger() }, content: {
                 NoteSaisonCreationView(modelContext: modelContext, onSave: {})
             })
+            // Story 8.2: share sheet for the export archive.
+            .sheet(isPresented: Binding(
+                get: { exportURL != nil },
+                set: { if !$0 { exportURL = nil } }
+            )) {
+                if let url = exportURL {
+                    ShareSheet(items: [url])
+                }
+            }
+            .alert("Erreur", isPresented: Binding(
+                get: { viewModel.exportError != nil },
+                set: { if !$0 { viewModel.exportError = nil } }
+            )) {
+                Button("OK", role: .cancel) { viewModel.exportError = nil }
+            } message: {
+                Text(viewModel.exportError ?? "")
+            }
+        }
+    }
+
+    // MARK: - Story 8.2: Export
+
+    private func exporterDonnees() {
+        exportEnCours = true
+        Task {
+            exportURL = await viewModel.exporterDonnees()
+            exportEnCours = false
         }
     }
 
@@ -307,6 +337,21 @@ struct DashboardView: View {
                     Label("Note de Saison", systemImage: "leaf.fill")
                         .foregroundStyle(Color.orange)
                 }
+
+                // Story 8.2: full data export (FR83) — builds a .zip then shares it.
+                Button {
+                    exporterDonnees()
+                } label: {
+                    HStack {
+                        Label("Exporter mes données", systemImage: "square.and.arrow.up")
+                            .foregroundStyle(Color(hex: Constants.Couleurs.texteSecondaire))
+                        Spacer()
+                        if exportEnCours {
+                            ProgressView()
+                        }
+                    }
+                }
+                .disabled(exportEnCours)
             }
         }
         .listStyle(.insetGrouped)
