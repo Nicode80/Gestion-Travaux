@@ -20,14 +20,33 @@ struct AlerteListView: View {
         _viewModel = State(initialValue: AlerteListViewModel(modelContext: modelContext))
     }
 
+    /// Empty-state title for the 4 filter combinations (Story 9.1).
+    private var titreEtatVide: String {
+        switch (viewModel.afficherResolues, viewModel.filtreTache) {
+        case (false, .active): return "Aucune alerte active"
+        case (false, _): return "Aucune alerte sur des tâches terminées"
+        case (true, .active): return "Aucune alerte résolue"
+        case (true, _): return "Aucune alerte résolue sur des tâches terminées"
+        }
+    }
+
     var body: some View {
         List {
             Section {
-                Picker("Filtre", selection: $viewModel.filtreTache) {
-                    Text("Actives").tag(StatutTache.active)
-                    Text("Tâches terminées").tag(StatutTache.terminee)
+                VStack(spacing: 8) {
+                    Picker("Filtre", selection: $viewModel.filtreTache) {
+                        Text("Actives").tag(StatutTache.active)
+                        Text("Tâches terminées").tag(StatutTache.terminee)
+                    }
+                    .pickerStyle(.segmented)
+
+                    // Story 9.1: second filter, cumulative with the task filter.
+                    Picker("Résolution", selection: $viewModel.afficherResolues) {
+                        Text("En cours").tag(false)
+                        Text("Résolues").tag(true)
+                    }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.segmented)
             }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
@@ -35,12 +54,11 @@ struct AlerteListView: View {
             if viewModel.alertesGroupedByTache.isEmpty {
                 Section {
                     ContentUnavailableView(
-                        viewModel.filtreTache == .active
-                            ? "Aucune alerte active"
-                            : "Aucune alerte sur des tâches terminées",
+                        titreEtatVide,
                         systemImage: "checkmark.shield.fill",
                         description: Text(
-                            viewModel.filtreTache == .active ? "Tout est sous contrôle ✅" : ""
+                            !viewModel.afficherResolues && viewModel.filtreTache == .active
+                                ? "Tout est sous contrôle ✅" : ""
                         )
                     )
                 }
@@ -55,6 +73,19 @@ struct AlerteListView: View {
                                     alerteAEditer = alerte
                                 }
                             )
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                // Lockdown: no state changes while recording.
+                                if !chantier.boutonVert {
+                                    Button {
+                                        viewModel.basculerResolution(alerte)
+                                    } label: {
+                                        alerte.resolue
+                                            ? Label("Rouvrir", systemImage: "arrow.uturn.backward")
+                                            : Label("Résoudre", systemImage: "checkmark")
+                                    }
+                                    .tint(alerte.resolue ? Color.texteSecondaire : .green)
+                                }
+                            }
                         }
                     }
                 }
@@ -67,6 +98,7 @@ struct AlerteListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { viewModel.load() }
         .onChange(of: viewModel.filtreTache) { viewModel.load() }
+        .onChange(of: viewModel.afficherResolues) { viewModel.load() }
         .alert("Erreur", isPresented: Binding(
             get: { viewModel.loadError != nil },
             set: { if !$0 { viewModel.loadError = nil } }

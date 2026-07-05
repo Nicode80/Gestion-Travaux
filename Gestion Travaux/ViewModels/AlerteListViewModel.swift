@@ -18,6 +18,10 @@ final class AlerteListViewModel {
     /// Current filter: show alerts from active tasks or terminated tasks.
     var filtreTache: StatutTache = .active
 
+    /// Second filter, cumulative with filtreTache: false shows unresolved
+    /// alerts (default), true shows resolved ones (Story 9.1).
+    var afficherResolues: Bool = false
+
     /// Non-resolved alerts for the current filter, grouped by parent task.
     /// Sorted alphabetically by task name; nil-tache group sorts to the end.
     var alertesGroupedByTache: [(TacheEntity?, [AlerteEntity])] = []
@@ -44,10 +48,28 @@ final class AlerteListViewModel {
         }
     }
 
+    // MARK: - Résolution (Story 9.1)
+
+    /// Toggles the resolved flag. Reversible action — no confirmation needed.
+    /// Rolls back the in-memory mutation if save() fails so the swipe stays retryable.
+    func basculerResolution(_ alerte: AlerteEntity) {
+        let ancienne = alerte.resolue
+        alerte.resolue = !ancienne
+        do {
+            try modelContext.save()
+            load()
+        } catch {
+            alerte.resolue = ancienne
+            Log.persistence.error("AlerteList basculerResolution() save failed: \(error)")
+            editError = "Impossible de modifier cette alerte. Réessayez."
+        }
+    }
+
     func load() {
         loadError = nil
+        let resolues = afficherResolues
         let descriptor = FetchDescriptor<AlerteEntity>(
-            predicate: #Predicate { !$0.resolue },
+            predicate: #Predicate { $0.resolue == resolues },
             sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
         )
         let all: [AlerteEntity]

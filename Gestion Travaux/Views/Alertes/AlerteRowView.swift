@@ -20,8 +20,9 @@ struct AlerteRowView: View {
             showDetail = true
         } label: {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(Color.alerte)
+                // Story 9.1: resolved alerts show a muted checkmark instead of the red triangle.
+                Image(systemName: alerte.resolue ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(alerte.resolue ? Color.texteSecondaire : Color.alerte)
                     .frame(width: 20)
                     .padding(.top, 2)
 
