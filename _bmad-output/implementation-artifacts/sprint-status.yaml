@@ -129,6 +129,7 @@ development_status:
   # ─────────────────────────────────────────────────────
   # Epic 9 : Retours Terrain V2
   # ─────────────────────────────────────────────────────
-  epic-9: in-progress
+  epic-9: done
   # FR31 (auto-résolution) abandonné au profit de la résolution manuelle — décision 2026-07-04
-  9-1-resolution-manuelle-alertes: review
+  # 9.1 mergée sur master via PR #37 (2026-07-06) — bouton Résoudre dans CaptureDetailView + swipe page Alertes
+  9-1-resolution-manuelle-alertes: done

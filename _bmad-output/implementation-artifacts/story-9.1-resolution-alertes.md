@@ -2,7 +2,7 @@
 story: "9.1"
 epic: 9
 title: "Résolution manuelle des alertes — action réversible et filtre cumulatif"
-status: review
+status: done
 frs: [FR88]
 nfrs: [NFR-U1, NFR-U6]
 ---
