@@ -108,6 +108,16 @@ Issu d'une revue de code globale du MVP (2026-07-01) pendant la phase de test te
 
 ---
 
+## Epic 9 — Retours Terrain V2 *(ajouté 2026-07-04)*
+
+Suite de l'usage réel : cycle de vie des alertes (le flag `resolue` existait depuis la story 3.2 mais aucune UI ne le pilotait).
+
+| Story | Titre | FRs | NFRs |
+|-------|-------|-----|------|
+| [9.1](story-9.1-resolution-alertes.md) | Résolution manuelle des alertes — action réversible et filtre cumulatif | FR88 | NFR-U1, NFR-U6 |
+
+---
+
 ## Couverture des FRs
 
 | FR | Story | FR | Story | FR | Story |

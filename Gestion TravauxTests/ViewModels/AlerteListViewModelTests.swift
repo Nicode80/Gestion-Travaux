@@ -196,6 +196,122 @@ struct AlerteListViewModelTests {
         #expect(termineeAlertes.count == 0)
     }
 
+    // MARK: - Story 9.1: résolution manuelle et filtre cumulatif
+
+    @Test("load() shows only resolved alerts when afficherResolues is true")
+    func loadShowsOnlyResolvedWhenFilterActive() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let tache = TacheEntity()
+        context.insert(tache)
+
+        let enCours = AlerteEntity(); enCours.tache = tache; context.insert(enCours)
+        let resolue = AlerteEntity(); resolue.resolue = true; resolue.tache = tache; context.insert(resolue)
+        try context.save()
+
+        let vm = AlerteListViewModel(modelContext: context)
+        vm.afficherResolues = true
+        vm.load()
+
+        let allAlertes = vm.alertesGroupedByTache.flatMap { $0.1 }
+        #expect(allAlertes.count == 1)
+        #expect(allAlertes.first?.resolue == true)
+    }
+
+    @Test("resolution filter cumulates with task-status filter")
+    func resolutionFilterCumulatesWithTaskFilter() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let tacheActive = TacheEntity()
+        let tacheTerminee = TacheEntity()
+        tacheTerminee.statut = .terminee
+        context.insert(tacheActive)
+        context.insert(tacheTerminee)
+
+        // One alert per (task status × resolution) combination.
+        for (tache, resolue) in [(tacheActive, false), (tacheActive, true),
+                                 (tacheTerminee, false), (tacheTerminee, true)] {
+            let alerte = AlerteEntity()
+            alerte.tache = tache
+            alerte.resolue = resolue
+            context.insert(alerte)
+        }
+        try context.save()
+
+        let vm = AlerteListViewModel(modelContext: context)
+
+        for (filtreTache, afficherResolues) in [(StatutTache.active, false), (.active, true),
+                                                (.terminee, false), (.terminee, true)] {
+            vm.filtreTache = filtreTache
+            vm.afficherResolues = afficherResolues
+            vm.load()
+
+            let alertes = vm.alertesGroupedByTache.flatMap { $0.1 }
+            #expect(alertes.count == 1)
+            #expect(alertes.first?.resolue == afficherResolues)
+            #expect(alertes.first?.tache?.statut == filtreTache)
+        }
+    }
+
+    @Test("basculerResolution() persists the flag and removes the alert from the current list")
+    func basculerResolutionPersistsAndReloads() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let tache = TacheEntity()
+        context.insert(tache)
+
+        let alerte = AlerteEntity()
+        alerte.tache = tache
+        context.insert(alerte)
+        try context.save()
+
+        let vm = AlerteListViewModel(modelContext: context)
+        vm.load()
+        #expect(vm.alertesGroupedByTache.flatMap { $0.1 }.count == 1)
+
+        vm.basculerResolution(alerte)
+
+        #expect(alerte.resolue == true)
+        #expect(vm.alertesGroupedByTache.isEmpty)
+
+        // Verify persistence with a fresh context on the same container.
+        let freshContext = ModelContext(container)
+        let persisted = try freshContext.fetch(FetchDescriptor<AlerteEntity>())
+        #expect(persisted.count == 1)
+        #expect(persisted.first?.resolue == true)
+    }
+
+    @Test("basculerResolution() reopens a resolved alert")
+    func basculerResolutionReopens() throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+        let tache = TacheEntity()
+        context.insert(tache)
+
+        let alerte = AlerteEntity()
+        alerte.resolue = true
+        alerte.tache = tache
+        context.insert(alerte)
+        try context.save()
+
+        let vm = AlerteListViewModel(modelContext: context)
+        vm.afficherResolues = true
+        vm.load()
+        #expect(vm.alertesGroupedByTache.flatMap { $0.1 }.count == 1)
+
+        vm.basculerResolution(alerte)
+
+        #expect(alerte.resolue == false)
+        // The resolved list is now empty…
+        #expect(vm.alertesGroupedByTache.isEmpty)
+
+        // …and the alert is back in the default (en cours) list.
+        vm.afficherResolues = false
+        vm.load()
+        #expect(vm.alertesGroupedByTache.flatMap { $0.1 }.count == 1)
+    }
+
     @Test("load() collects alerts from multiple tasks at once")
     func loadAggregatesAcrossAllTasks() throws {
         let container = try makeContainer()

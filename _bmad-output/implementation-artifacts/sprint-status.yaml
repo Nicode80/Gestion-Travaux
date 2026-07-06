@@ -125,3 +125,11 @@ development_status:
   8-4-service-dictee-one-shot-partage: done
   # 8.5 mergée sur master via PR #32 (2026-07-03)
   8-5-points-mineurs-revue: done
+
+  # ─────────────────────────────────────────────────────
+  # Epic 9 : Retours Terrain V2
+  # ─────────────────────────────────────────────────────
+  epic-9: done
+  # FR31 (auto-résolution) abandonné au profit de la résolution manuelle — décision 2026-07-04
+  # 9.1 mergée sur master via PR #37 (2026-07-06) — bouton Résoudre dans CaptureDetailView + swipe page Alertes
+  9-1-resolution-manuelle-alertes: done

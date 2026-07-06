@@ -14,6 +14,10 @@ struct CaptureDetailView: View {
     var titre: String = "Capture"
     /// When non-nil, a pencil button appears in the toolbar. Tap calls onModifier then dismisses.
     var onModifier: (() -> Void)? = nil
+    /// Story 9.1: when non-nil, a full-width action button appears at the bottom.
+    /// Tap calls onResoudre then dismisses. estResolue drives the label (Résoudre/Rouvrir).
+    var estResolue: Bool = false
+    var onResoudre: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
 
@@ -54,6 +58,27 @@ struct CaptureDetailView: View {
                 }
             }
             .background(Color.backgroundBureau)
+            .safeAreaInset(edge: .bottom) {
+                if let onResoudre {
+                    Button {
+                        onResoudre()
+                        dismiss()
+                    } label: {
+                        Label(
+                            estResolue ? "Rouvrir l'alerte" : "Marquer comme résolue",
+                            systemImage: estResolue ? "arrow.uturn.backward" : "checkmark"
+                        )
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 60) // NFR-U1
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(estResolue ? Color.texteSecondaire : .green)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+                    .background(Color.backgroundBureau)
+                }
+            }
             .navigationTitle(titre)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

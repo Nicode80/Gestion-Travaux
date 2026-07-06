@@ -11,6 +11,8 @@ struct AlerteRowView: View {
 
     let alerte: AlerteEntity
     var onModifier: (() -> Void)? = nil
+    /// Story 9.1: toggles the resolved flag from the detail sheet's bottom button.
+    var onResoudre: (() -> Void)? = nil
 
     @State private var showDetail = false
     @State private var pendingEdit = false
@@ -20,8 +22,9 @@ struct AlerteRowView: View {
             showDetail = true
         } label: {
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(Color.alerte)
+                // Story 9.1: resolved alerts show a muted checkmark instead of the red triangle.
+                Image(systemName: alerte.resolue ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(alerte.resolue ? Color.texteSecondaire : Color.alerte)
                     .frame(width: 20)
                     .padding(.top, 2)
 
@@ -60,7 +63,9 @@ struct AlerteRowView: View {
                 titre: "Alerte",
                 onModifier: onModifier == nil ? nil : {
                     pendingEdit = true
-                }
+                },
+                estResolue: alerte.resolue,
+                onResoudre: onResoudre
             )
         }
         .onChange(of: showDetail) { _, isShown in

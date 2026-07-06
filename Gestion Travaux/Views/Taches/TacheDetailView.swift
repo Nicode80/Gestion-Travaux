@@ -108,6 +108,10 @@ struct TacheDetailView: View {
                 titre: "Alerte",
                 onModifier: chantier.boutonVert ? nil : {
                     alerteAEditer = alerte
+                },
+                estResolue: alerte.resolue,
+                onResoudre: chantier.boutonVert ? nil : {
+                    vm.basculerResolution(alerte)
                 }
             )
         }
