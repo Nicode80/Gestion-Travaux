@@ -71,6 +71,9 @@ struct AlerteListView: View {
                                 alerte: alerte,
                                 onModifier: chantier.boutonVert ? nil : {
                                     alerteAEditer = alerte
+                                },
+                                onResoudre: chantier.boutonVert ? nil : {
+                                    viewModel.basculerResolution(alerte)
                                 }
                             )
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {

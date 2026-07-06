@@ -11,6 +11,8 @@ struct AlerteRowView: View {
 
     let alerte: AlerteEntity
     var onModifier: (() -> Void)? = nil
+    /// Story 9.1: toggles the resolved flag from the detail sheet's bottom button.
+    var onResoudre: (() -> Void)? = nil
 
     @State private var showDetail = false
     @State private var pendingEdit = false
@@ -61,7 +63,9 @@ struct AlerteRowView: View {
                 titre: "Alerte",
                 onModifier: onModifier == nil ? nil : {
                     pendingEdit = true
-                }
+                },
+                estResolue: alerte.resolue,
+                onResoudre: onResoudre
             )
         }
         .onChange(of: showDetail) { _, isShown in

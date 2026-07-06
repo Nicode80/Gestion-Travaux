@@ -32,8 +32,18 @@ affichages actifs mais reste consultable et exportée (`ExportService`).
 3. **Deux filtres cumulatifs** dans AlerteListView : le filtre existant par
    statut de tâche (Actives / Tâches terminées) est conservé tel quel ; un
    second filtre (En cours / Résolues) s'y ajoute.
-4. **Lockdown Mode Chantier respecté** : swipe désactivé quand
+4. **Lockdown Mode Chantier respecté** : swipe et bouton désactivés quand
    `ModeChantierState.boutonVert == true` (même règle que l'édition).
+5. **Résolution là où l'alerte est consultée** (retour UX Nico, 2026-07-06) :
+   passer par la page Alertes pour résoudre n'est pas intuitif — en usage
+   normal les alertes se lisent depuis le Dashboard ou la page tâche. Tous
+   les points de consultation ouvrent la même sheet `CaptureDetailView` :
+   un bouton pleine largeur « Marquer comme résolue » / « Rouvrir l'alerte »
+   y est ajouté, disponible depuis la BriefingCard (Dashboard), la page
+   tâche et la page Alertes. Le swipe de la page Alertes est conservé comme
+   raccourci. `BriefingView` (briefing de reprise) reste hors scope — la
+   sheet n'y reçoit pas l'entité, et on n'y fait que consulter avant de
+   reprendre le chantier.
 
 ## Implémentation
 
@@ -50,14 +60,20 @@ affichages actifs mais reste consultable et exportée (`ExportService`).
   combinaisons de filtres.
 - `AlerteRowView` : icône et couleur adaptées quand `resolue == true`
   (checkmark gris au lieu du triangle rouge).
+- `CaptureDetailView` : paramètres optionnels `estResolue` + `onResoudre` —
+  bouton pleine largeur en `safeAreaInset(edge: .bottom)` (60pt, NFR-U1),
+  action puis dismiss. Branché depuis `BriefingCard`, `TacheDetailView`
+  (via `TacheDetailViewModel.basculerResolution()`) et `AlerteRowView`.
 
 ## Acceptance Criteria
 
 ### AC1 — Résoudre une alerte (FR88)
-**Given** la page Alertes, filtre « En cours »
-**When** Nico swipe une alerte et tape « Résoudre »
-**Then** `resolue = true` est persisté et l'alerte quitte la liste
-**And** elle disparaît du Dashboard (BriefingCard), du Briefing et de la
+**Given** une alerte consultée depuis le Dashboard, la page tâche ou la page
+Alertes (sheet `CaptureDetailView`)
+**When** Nico tape « Marquer comme résolue » (ou swipe « Résoudre » dans la
+page Alertes)
+**Then** `resolue = true` est persisté et la sheet se ferme
+**And** l'alerte disparaît du Dashboard (BriefingCard), du Briefing et de la
 section ALERTES de TacheDetailView
 
 ### AC2 — Rouvrir une alerte

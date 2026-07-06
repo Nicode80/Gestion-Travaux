@@ -83,6 +83,17 @@ struct BriefingCard: View {
                 titre: "Alerte",
                 onModifier: chantier.boutonVert ? nil : {
                     alerteAEditer = alerte
+                },
+                estResolue: alerte.resolue,
+                onResoudre: chantier.boutonVert ? nil : {
+                    alerte.resolue = true
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        alerte.resolue = false
+                        Log.persistence.error("BriefingCard alerte resolve save failed: \(error)")
+                        editError = "Impossible de modifier cette alerte. Réessayez."
+                    }
                 }
             )
         }

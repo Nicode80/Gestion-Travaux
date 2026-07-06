@@ -150,6 +150,21 @@ final class TacheDetailViewModel {
         }
     }
 
+    // MARK: - Résolution des alertes (Story 9.1)
+
+    /// Toggles the resolved flag. Reversible — rolls back if save() fails.
+    func basculerResolution(_ alerte: AlerteEntity) {
+        let ancienne = alerte.resolue
+        alerte.resolue = !ancienne
+        do {
+            try modelContext.save()
+        } catch {
+            alerte.resolue = ancienne
+            Self.logger.error("basculerResolution() save failed: \(error)")
+            errorMessage = "Impossible de modifier cette alerte. Réessayez."
+        }
+    }
+
     func modifierTexteAlerte(_ alerte: AlerteEntity, nouveauxBlocks: [ContentBlock]) {
         alerte.blocksData = nouveauxBlocks.toData()
         do {

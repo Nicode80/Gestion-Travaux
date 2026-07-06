@@ -36,6 +36,35 @@ struct TacheDetailViewModelTests {
         #expect(vm.showTerminaisonAlert)
     }
 
+    // MARK: - basculerResolution (Story 9.1)
+
+    @Test("basculerResolution() toggles and persists the resolue flag")
+    func basculerResolutionTogglesAndPersists() throws {
+        let container = try makeContainer()
+        let ctx = container.mainContext
+        let tache = TacheEntity()
+        ctx.insert(tache)
+        let alerte = AlerteEntity()
+        alerte.tache = tache
+        ctx.insert(alerte)
+        try ctx.save()
+
+        let vm = TacheDetailViewModel(tache: tache, modelContext: ctx)
+
+        vm.basculerResolution(alerte)
+        #expect(alerte.resolue == true)
+        #expect(vm.errorMessage == nil)
+
+        // Reversible: a second call reopens the alert.
+        vm.basculerResolution(alerte)
+        #expect(alerte.resolue == false)
+
+        vm.basculerResolution(alerte)
+        let fresh = ModelContext(container)
+        let persisted = try fresh.fetch(FetchDescriptor<AlerteEntity>())
+        #expect(persisted.first?.resolue == true)
+    }
+
     // MARK: - terminer()
 
     @Test("terminer() changes statut to .terminee")
