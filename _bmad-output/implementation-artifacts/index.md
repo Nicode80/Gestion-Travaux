@@ -115,6 +115,7 @@ Suite de l'usage réel : cycle de vie des alertes (le flag `resolue` existait de
 | Story | Titre | FRs | NFRs |
 |-------|-------|-----|------|
 | [9.1](story-9.1-resolution-alertes.md) | Résolution manuelle des alertes — action réversible et filtre cumulatif | FR88 | NFR-U1, NFR-U6 |
+| [9.2](story-9.2-nettoyage-debug.md) | Écran de nettoyage DEBUG — suppression des données de démo | FR89 | NFR-U9 |
 
 ---
 
