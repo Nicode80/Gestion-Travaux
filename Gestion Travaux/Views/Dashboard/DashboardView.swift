@@ -353,6 +353,19 @@ struct DashboardView: View {
                 }
                 .disabled(exportEnCours)
             }
+
+            #if DEBUG
+            // Story 9.2: hidden maintenance screen — DEBUG builds only,
+            // absent from TestFlight (Release).
+            Section("Développement") {
+                NavigationLink {
+                    DataCleanupView(modelContext: modelContext)
+                } label: {
+                    Label("Nettoyage des données", systemImage: "trash.slash")
+                        .foregroundStyle(Color.texteSecondaire)
+                }
+            }
+            #endif
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
