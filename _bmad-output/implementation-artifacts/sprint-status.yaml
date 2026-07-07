@@ -129,9 +129,10 @@ development_status:
   # ─────────────────────────────────────────────────────
   # Epic 9 : Retours Terrain V2
   # ─────────────────────────────────────────────────────
-  epic-9: in-progress
+  epic-9: done
   # FR31 (auto-résolution) abandonné au profit de la résolution manuelle — décision 2026-07-04
   # 9.1 mergée sur master via PR #37 (2026-07-06) — bouton Résoudre dans CaptureDetailView + swipe page Alertes
   9-1-resolution-manuelle-alertes: done
   # Écran caché build DEBUG uniquement — ménage données démo/réelles sur le device
-  9-2-nettoyage-debug: in-progress
+  # 9.2 mergée sur master via PR #38 (2026-07-07) — utilisation : lancer depuis Xcode sur le device
+  9-2-nettoyage-debug: done

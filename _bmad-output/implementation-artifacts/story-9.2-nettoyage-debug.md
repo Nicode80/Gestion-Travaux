@@ -2,7 +2,7 @@
 story: "9.2"
 epic: 9
 title: "Écran de nettoyage DEBUG — suppression des données de démo"
-status: in-progress
+status: done
 frs: [FR89]
 nfrs: [NFR-U9]
 ---
