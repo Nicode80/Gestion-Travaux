@@ -418,11 +418,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = KF8L4UPN25;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Appareil photo requis pour documenter le chantier en photos sans interrompre l'enregistrement vocal.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone requis pour capturer vos notes de chantier en Mode Chantier, mains libres.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "La reconnaissance vocale transcrit vos notes de chantier en temps réel, sans connexion internet.";
@@ -454,11 +455,12 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = KF8L4UPN25;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Appareil photo requis pour documenter le chantier en photos sans interrompre l'enregistrement vocal.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Microphone requis pour capturer vos notes de chantier en Mode Chantier, mains libres.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "La reconnaissance vocale transcrit vos notes de chantier en temps réel, sans connexion internet.";
